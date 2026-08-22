@@ -176,6 +176,79 @@
 
 
 % =========================================================
+% Figure helpers
+%
+% Use \ReportFigure for one figure.
+% Use \ReportFigurePair for two independent figures in one row.
+% Missing files are replaced with an informative placeholder.
+% =========================================================
+
+% Internal helper: image or fixed-size placeholder.
+% Arguments: file path, display width, display height.
+\newcommand{\ReportImageOrPlaceholder}[3]{%
+    \parbox[c][#3][c]{#2}{%
+        \centering
+        \IfFileExists{#1}
+        {%
+            \includegraphics[
+                width=\linewidth,
+                height=#3,
+                keepaspectratio
+            ]{#1}%
+        }
+        {%
+            \fbox{%
+                \parbox[c][
+                    \dimexpr#3-2\fboxsep-2\fboxrule\relax
+                ][c]{
+                    \dimexpr\linewidth-2\fboxsep-2\fboxrule\relax
+                }{%
+                    \centering
+                    \small
+                    \textbf{Figure Placeholder}\\[2mm]
+                    Add the image at\\
+                    \path{#1}%
+                }%
+            }%
+        }%
+    }%
+}
+
+% One figure.
+% Arguments: file path, caption, unique label.
+\newcommand{\ReportFigure}[3]{%
+    \begin{figure}[H]
+        \centering
+        \ReportImageOrPlaceholder{#1}{0.72\linewidth}{35mm}
+        \caption{#2}
+        \label{#3}
+    \end{figure}
+}
+
+% Two independent figures placed side by side.
+% Each figure has its own caption, number, and label.
+% Arguments: left path/caption/label, then right path/caption/label.
+\newcommand{\ReportFigurePair}[6]{%
+    \begin{figure}[H]
+        \centering
+        \begin{minipage}[t]{0.48\linewidth}
+            \centering
+            \ReportImageOrPlaceholder{#1}{\linewidth}{35mm}
+            \caption{#2}
+            \label{#3}
+        \end{minipage}%
+        \hfill
+        \begin{minipage}[t]{0.48\linewidth}
+            \centering
+            \ReportImageOrPlaceholder{#4}{\linewidth}{35mm}
+            \caption{#5}
+            \label{#6}
+        \end{minipage}
+    \end{figure}
+}
+
+
+% =========================================================
 % Header / Footer
 % =========================================================
 \pagestyle{fancy}
@@ -363,45 +436,22 @@ Focus on the main observation rather than repeating every number.
 
 
 % =========================================================
-% FIGURE TEMPLATE
+% FIGURE EXAMPLE
+% Each helper argument is: file path, caption, unique label.
 %
-% Put the actual figure at:
-%   figures/main-result.pdf
+% For one figure, use:
+% \ReportFigure{figures/main-result.pdf}{Caption text.}{fig:main-result}
 %
-% PDF is recommended for plots/vector graphics.
-% PNG/JPG also work.
-%
-% If the file does not exist, a placeholder is shown,
-% so this template still compiles.
+% The example below places two independent figures side by side.
+% PDF, PNG, and JPG files are supported.
 % =========================================================
-\begin{figure}[H]
-    \centering
-
-    \IfFileExists{figures/main-result.pdf}
-    {
-        \includegraphics[
-            width=0.72\linewidth
-        ]{figures/main-result.pdf}
-    }
-    {
-        % Placeholder shown before you add the actual figure.
-        \fbox{
-            \parbox[c][35mm][c]{0.72\linewidth}{
-                \centering
-                \textbf{Figure Placeholder}\\[2mm]
-                Replace with\\
-                \texttt{figures/main-result.pdf}
-            }
-        }
-    }
-
-    \caption{
-        Main experimental result.
-        State what is plotted and the key experimental condition.
-    }
-
-    \label{fig:main-result}
-\end{figure}
+\ReportFigurePair
+    {figures/result-a.pdf}
+    {Result A. Replace with a concise description.}
+    {fig:result-a}
+    {figures/result-b.pdf}
+    {Result B. Replace with a concise description.}
+    {fig:result-b}
 
 
 % =========================================================

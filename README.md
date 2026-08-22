@@ -15,7 +15,8 @@ The template is designed as a self-contained `.tex` file. No custom document cla
 - Automatic monthly week identifier in `yyyy-mm-Wn` format
 - Four-day majority rule for assigning boundary weeks to months
 - Table templates for experimental results and future plans
-- Figure template with an automatic placeholder
+- Helpers for one figure or two independent side-by-side figures
+- Automatic placeholders for missing figure files
 - Compact layout suitable for laboratory meetings
 - No custom `.cls` or `.sty` files
 
@@ -122,45 +123,51 @@ Replace the metric names and values as needed.
 
 ## Figure Template
 
-The default figure path is:
+Figures can be added by copying a helper command and changing only its arguments. Each figure needs:
 
-```text
-figures/main-result.pdf
-```
+- An image file path
+- A caption
+- A unique label used for cross-references
 
-If this file exists, it is automatically inserted into the report.
-
-```latex
-\includegraphics[
-    width=0.72\linewidth
-]{figures/main-result.pdf}
-```
-
-PDF is recommended for plots and other vector graphics.
-
-PNG or JPEG can also be used by changing the file path.
-
-For example:
+### One Figure
 
 ```latex
-\includegraphics[
-    width=0.72\linewidth
-]{figures/main-result.png}
+\ReportFigure
+    {figures/main-result.pdf}
+    {Main experimental result.}
+    {fig:main-result}
+```
+
+Copy the whole command again wherever another figure is needed. Change all three arguments, especially the label, which must be unique.
+
+### Two Figures in One Row
+
+Use `\ReportFigurePair` to place two independent figures side by side:
+
+```latex
+\ReportFigurePair
+    {figures/result-a.pdf}
+    {Result A.}
+    {fig:result-a}
+    {figures/result-b.pdf}
+    {Result B.}
+    {fig:result-b}
+```
+
+The first three arguments belong to the left figure, and the next three belong to the right figure. Each receives its own figure number, caption, and label. This does not use subfigures.
+
+PDF is recommended for plots and other vector graphics. PNG and JPEG files also work; use the actual extension in the path:
+
+```latex
+\ReportFigure
+    {figures/main-result.png}
+    {Main experimental result.}
+    {fig:main-result}
 ```
 
 ## Figure Placeholder
 
-The template uses:
-
-```latex
-\IfFileExists
-```
-
-to determine whether the requested figure exists.
-
-If the figure has not yet been generated, a placeholder box is displayed instead.
-
-This allows the report to remain compilable while experiments or plots are still being prepared.
+Both helpers check whether each requested image exists. If a file is missing, a fixed-size placeholder displays the exact path where the image should be added. The report therefore remains compilable while plots are being prepared, and replacing a placeholder requires no LaTeX layout changes.
 
 ## Recommended Writing Style
 
