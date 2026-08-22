@@ -64,22 +64,18 @@
 % ---------------------------------------------------------
 % Integer registers
 % ---------------------------------------------------------
-% \WeekMondayJulian:
-%   Julian day corresponding to Monday of the current week.
+% \ReportDateJulian:
+%   Julian day corresponding to the compilation date.
 %
 % \WeekdayIndex:
 %   Monday=0, ..., Sunday=6.
-%
-% \ScratchJulian:
-%   Temporary register used for Thursday and Sunday.
 %
 % \ReportWeekNumber:
 %   Week number within the reporting month.
 % ---------------------------------------------------------
 
-\newcount\WeekMondayJulian
+\newcount\ReportDateJulian
 \newcount\WeekdayIndex
-\newcount\ScratchJulian
 \newcount\ReportWeekNumber
 
 
@@ -93,7 +89,7 @@
 
 \pgfcalendardatetojulian
     {\the\year-\the\month-\the\day}
-    {\WeekMondayJulian}
+    {\ReportDateJulian}
 
 
 % =========================================================
@@ -111,53 +107,33 @@
 % =========================================================
 
 \pgfcalendarjuliantoweekday
-    {\WeekMondayJulian}
+    {\ReportDateJulian}
     {\WeekdayIndex}
 
 
 % =========================================================
 % STEP 3
-% Move backward to Monday.
-%
-% Example:
-%   Saturday -> weekday index = 5
-%   today - 5 days = Monday
+% Move to Thursday, which determines the reporting month.
 % =========================================================
 
-\advance\WeekMondayJulian by -\WeekdayIndex
+\advance\ReportDateJulian by 3
+\advance\ReportDateJulian by -\WeekdayIndex
 
 
 % =========================================================
 % STEP 4
-% Convert Monday back to a calendar date.
+% Convert Thursday back to a calendar date.
 % =========================================================
 
 \pgfcalendarjuliantodate
-    {\WeekMondayJulian}
-    {\WeekStartYear}
-    {\WeekStartMonth}
-    {\WeekStartDay}
-
-
-% =========================================================
-% STEP 5
-% Thursday = Monday + 3 days.
-%
-% The Thursday determines the reporting month.
-% =========================================================
-
-\ScratchJulian=\WeekMondayJulian
-\advance\ScratchJulian by 3
-
-\pgfcalendarjuliantodate
-    {\ScratchJulian}
+    {\ReportDateJulian}
     {\ReportYear}
     {\ReportMonth}
     {\ReportThursdayDay}
 
 
 % =========================================================
-% STEP 6
+% STEP 5
 % Determine the monthly week number.
 %
 % Thursday:
@@ -180,23 +156,6 @@
 
 
 % =========================================================
-% STEP 7
-% Sunday = Monday + 6 days.
-%
-% Reuse \ScratchJulian; Thursday is no longer needed.
-% =========================================================
-
-\ScratchJulian=\WeekMondayJulian
-\advance\ScratchJulian by 6
-
-\pgfcalendarjuliantodate
-    {\ScratchJulian}
-    {\WeekEndYear}
-    {\WeekEndMonth}
-    {\WeekEndDay}
-
-
-% =========================================================
 % Formatting helpers
 % =========================================================
 
@@ -210,28 +169,9 @@
 
 
 % Example:
-%   August 2026, Week 3
+%   2026-08-W3
 \newcommand{\ReportWeekLabel}{%
-    \pgfcalendarmonthname{\ReportMonth}%
-    \ \ReportYear, Week~\the\ReportWeekNumber%
-}
-
-
-% Example:
-%   2026-08-17 -- 2026-08-23
-\newcommand{\ReportWeekRange}{%
-    \WeekStartYear-%
-    \TwoDigits{\WeekStartMonth}-%
-    \TwoDigits{\WeekStartDay}%
-    \,--\,%
-    \WeekEndYear-%
-    \TwoDigits{\WeekEndMonth}-%
-    \TwoDigits{\WeekEndDay}%
-}
-
-% ISO-formatted compilation date
-\newcommand{\ReportDateISO}{%
-    \CurrentYear-\CurrentMonth-\CurrentDay%
+    \ReportYear-\TwoDigits{\ReportMonth}-W\the\ReportWeekNumber%
 }
 
 
@@ -310,15 +250,11 @@ Name
     \\
 
 Project
-    & Project / Research Topic
-    & Date
-    & \today
+    & \multicolumn{3}{X}{Project / Research Topic}
     \\
 
 Advisor
-    & Advisor Name
-    & Period
-    & \ReportWeekRange
+    & \multicolumn{3}{X}{Advisor Name}
     \\
 
 Main Goal

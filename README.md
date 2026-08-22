@@ -11,26 +11,16 @@ The template is designed as a self-contained `.tex` file. No custom document cla
   - **Progress**
   - **Problems**
   - **Plans**
-- Automatic reporting date using the LaTeX compilation date
-- Automatic Monday--Sunday reporting period
-- Automatic monthly week number
+- Automatic monthly week identifier in `yyyy-mm-Wn` format
 - Four-day majority rule for assigning boundary weeks to months
 - Table templates for experimental results and future plans
 - Figure template with an automatic placeholder
 - Compact layout suitable for laboratory meetings
 - No custom `.cls` or `.sty` files
 
-## Automatic Date
+## Automatic Reporting Week
 
-The report uses the date on which LaTeX is compiled.
-
-The displayed date is produced by:
-
-```latex
-\today
-```
-
-Date calculations use the corresponding TeX primitives:
+The report uses the date on which LaTeX is compiled to calculate the reporting week. Date calculations use the TeX primitives:
 
 ```latex
 \year
@@ -38,16 +28,15 @@ Date calculations use the corresponding TeX primitives:
 \day
 ```
 
-Therefore, the report normally requires no manual date entry.
+Therefore, the report requires no manual week entry.
 
 For example, if the document is compiled on August 22, 2026:
 
 ```text
-Date:
-August 22, 2026
+2026-08-W3
 ```
 
-## Reporting Week Convention
+### Reporting Week Convention
 
 A reporting week runs from:
 
@@ -98,7 +87,7 @@ Advisor
 
 and the `Main Goal` field.
 
-The date, reporting week, and reporting period are generated automatically.
+The reporting week is generated automatically in `yyyy-mm-Wn` format. The form does not display a separate creation date or reporting period.
 
 ## Table Template
 
