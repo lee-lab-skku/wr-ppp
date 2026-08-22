@@ -7,6 +7,7 @@ The template is designed as a self-contained `.tex` file. No custom document cla
 ## Features
 
 - Two-page A4 weekly research report
+- Editable report title with `Weekly Report` as the subtitle
 - PPP structure:
   - **Progress**
   - **Problems**
@@ -68,24 +69,22 @@ Most weekly editing should be limited to the content sections.
 
 ### Basic Information
 
-Edit:
+Replace the title placeholder:
+
+```latex
+Write Your Report Title Here
+```
+
+Then edit the name and project/team placeholders in the single-line information row:
 
 ```latex
 Name
     & Your Name
+    & Project
+    & Project / Team
+    & Reporting Week
+    & \ReportWeekLabel
 ```
-
-```latex
-Project
-    & Project / Research Topic
-```
-
-```latex
-Advisor
-    & Advisor Name
-```
-
-and the `Main Goal` field.
 
 The reporting week is generated automatically in `yyyy-mm-Wn` format. The form does not display a separate creation date or reporting period.
 
