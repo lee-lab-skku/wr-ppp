@@ -1,0 +1,674 @@
+\documentclass[10pt,a4paper]{article}
+
+% =========================================================
+% Packages
+% =========================================================
+\usepackage[
+    a4paper,
+    top=15mm,
+    bottom=15mm,
+    left=18mm,
+    right=18mm
+]{geometry}
+
+\usepackage{fontspec}      % Compile with XeLaTeX
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{pgfcalendar}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{hyperref}
+
+% =========================================================
+% General formatting
+% =========================================================
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\renewcommand{\arraystretch}{1.20}
+
+\definecolor{mainblue}{RGB}{38,70,110}
+\definecolor{lightblue}{RGB}{238,244,250}
+\definecolor{lightgray}{RGB}{246,246,246}
+\definecolor{linegray}{RGB}{190,190,190}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=mainblue,
+    urlcolor=mainblue
+}
+
+% =========================================================
+% Automatic reporting week
+%
+% Week convention:
+%   Monday -- Sunday
+%
+% Month assignment:
+%   A week belongs to the month containing its Thursday.
+%   This is equivalent to assigning the week to the month
+%   containing at least four of its seven days.
+%
+% Example:
+%   Mon Aug 31 -- Sun Sep 6
+%   Thursday = Sep 3
+%   => September, Week 1
+% =========================================================
+
+\usepackage{pgfcalendar}
+
+% ---------------------------------------------------------
+% Integer registers
+% ---------------------------------------------------------
+% \WeekMondayJulian:
+%   Julian day corresponding to Monday of the current week.
+%
+% \WeekdayIndex:
+%   Monday=0, ..., Sunday=6.
+%
+% \ScratchJulian:
+%   Temporary register used for Thursday and Sunday.
+%
+% \ReportWeekNumber:
+%   Week number within the reporting month.
+% ---------------------------------------------------------
+
+\newcount\WeekMondayJulian
+\newcount\WeekdayIndex
+\newcount\ScratchJulian
+\newcount\ReportWeekNumber
+
+
+% =========================================================
+% STEP 1
+% Convert compilation date into a Julian day.
+%
+% \year, \month, and \day are built-in TeX values.
+% They correspond to the same date displayed by \today.
+% =========================================================
+
+\pgfcalendardatetojulian
+    {\the\year-\the\month-\the\day}
+    {\WeekMondayJulian}
+
+
+% =========================================================
+% STEP 2
+% Determine the weekday.
+%
+% PGF convention:
+%   Monday    = 0
+%   Tuesday   = 1
+%   Wednesday = 2
+%   Thursday  = 3
+%   Friday    = 4
+%   Saturday  = 5
+%   Sunday    = 6
+% =========================================================
+
+\pgfcalendarjuliantoweekday
+    {\WeekMondayJulian}
+    {\WeekdayIndex}
+
+
+% =========================================================
+% STEP 3
+% Move backward to Monday.
+%
+% Example:
+%   Saturday -> weekday index = 5
+%   today - 5 days = Monday
+% =========================================================
+
+\advance\WeekMondayJulian by -\WeekdayIndex
+
+
+% =========================================================
+% STEP 4
+% Convert Monday back to a calendar date.
+% =========================================================
+
+\pgfcalendarjuliantodate
+    {\WeekMondayJulian}
+    {\WeekStartYear}
+    {\WeekStartMonth}
+    {\WeekStartDay}
+
+
+% =========================================================
+% STEP 5
+% Thursday = Monday + 3 days.
+%
+% The Thursday determines the reporting month.
+% =========================================================
+
+\ScratchJulian=\WeekMondayJulian
+\advance\ScratchJulian by 3
+
+\pgfcalendarjuliantodate
+    {\ScratchJulian}
+    {\ReportYear}
+    {\ReportMonth}
+    {\ReportThursdayDay}
+
+
+% =========================================================
+% STEP 6
+% Determine the monthly week number.
+%
+% Thursday:
+%
+%    1--7  -> Week 1
+%    8--14 -> Week 2
+%   15--21 -> Week 3
+%   22--28 -> Week 4
+%   29--31 -> Week 5
+%
+% Formula:
+%
+%   floor((Thursday day - 1) / 7) + 1
+% =========================================================
+
+\ReportWeekNumber=\ReportThursdayDay
+\advance\ReportWeekNumber by -1
+\divide\ReportWeekNumber by 7
+\advance\ReportWeekNumber by 1
+
+
+% =========================================================
+% STEP 7
+% Sunday = Monday + 6 days.
+%
+% Reuse \ScratchJulian; Thursday is no longer needed.
+% =========================================================
+
+\ScratchJulian=\WeekMondayJulian
+\advance\ScratchJulian by 6
+
+\pgfcalendarjuliantodate
+    {\ScratchJulian}
+    {\WeekEndYear}
+    {\WeekEndMonth}
+    {\WeekEndDay}
+
+
+% =========================================================
+% Formatting helpers
+% =========================================================
+
+% Add a leading zero to a one-digit number.
+% 8 -> 08
+% 12 -> 12
+\newcommand{\TwoDigits}[1]{%
+    \ifnum\numexpr#1\relax<10 0\fi
+    \number\numexpr#1\relax
+}
+
+
+% Example:
+%   August 2026, Week 3
+\newcommand{\ReportWeekLabel}{%
+    \pgfcalendarmonthname{\ReportMonth}%
+    \ \ReportYear, Week~\the\ReportWeekNumber%
+}
+
+
+% Example:
+%   2026-08-17 -- 2026-08-23
+\newcommand{\ReportWeekRange}{%
+    \WeekStartYear-%
+    \TwoDigits{\WeekStartMonth}-%
+    \TwoDigits{\WeekStartDay}%
+    \,--\,%
+    \WeekEndYear-%
+    \TwoDigits{\WeekEndMonth}-%
+    \TwoDigits{\WeekEndDay}%
+}
+
+% ISO-formatted compilation date
+\newcommand{\ReportDateISO}{%
+    \CurrentYear-\CurrentMonth-\CurrentDay%
+}
+
+
+% =========================================================
+% Header / Footer
+% =========================================================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+
+\fancyfoot[L]{\footnotesize Weekly Research Report}
+\fancyfoot[R]{\footnotesize \thepage~/~2}
+
+
+% =========================================================
+% PPP box
+% =========================================================
+\newtcolorbox{pppbox}[1]{
+    enhanced,
+    breakable,
+    colback=white,
+    colframe=mainblue,
+    boxrule=0.8pt,
+    arc=1.5mm,
+    left=3mm,
+    right=3mm,
+    top=2mm,
+    bottom=2mm,
+    title={#1},
+    fonttitle=\bfseries\large,
+    coltitle=white,
+    colbacktitle=mainblue
+}
+
+
+% =========================================================
+% Document
+% =========================================================
+\begin{document}
+
+% =========================================================
+% PAGE 1
+% =========================================================
+
+\begin{center}
+    {\LARGE\bfseries Weekly Research Report}\\[1mm]
+    {\small Progress / Problems / Plans}
+\end{center}
+
+\vspace{2mm}
+
+
+% =========================================================
+% Basic information
+% =========================================================
+\begin{tcolorbox}[
+    colback=lightgray,
+    colframe=linegray,
+    boxrule=0.5pt,
+    arc=1mm,
+    left=2mm,
+    right=2mm,
+    top=2mm,
+    bottom=2mm
+]
+
+\begin{tabularx}{\textwidth}{
+    >{\bfseries}p{25mm} X
+    >{\bfseries}p{30mm} X
+}
+
+Name
+    & Your Name
+    & Reporting Week
+    & \ReportWeekLabel
+    \\
+
+Project
+    & Project / Research Topic
+    & Date
+    & \today
+    \\
+
+Advisor
+    & Advisor Name
+    & Period
+    & \ReportWeekRange
+    \\
+
+Main Goal
+    & \multicolumn{3}{X}{
+        Write the primary research objective for this week in one sentence.
+      }
+
+\end{tabularx}
+
+\end{tcolorbox}
+
+
+\vspace{3mm}
+
+
+% =========================================================
+% Weekly Highlight
+% =========================================================
+\begin{tcolorbox}[
+    colback=lightblue,
+    colframe=mainblue,
+    boxrule=0.6pt,
+    arc=1mm,
+    title={Weekly Highlight},
+    fonttitle=\bfseries,
+    colbacktitle=mainblue
+]
+
+Summarize the most important result or conclusion of the week
+in two to four sentences.
+
+For example, the proposed loss formulation improved validation
+accuracy by 2.3 percentage points over the baseline. The gain was
+particularly noticeable in the low-data regime. Additional ablation
+experiments will be conducted next week to determine the primary
+source of this improvement.
+
+\end{tcolorbox}
+
+
+\vspace{3mm}
+
+
+% =========================================================
+% P1. Progress
+% =========================================================
+\begin{pppbox}{P1. Progress}
+
+\textbf{1. Research Activities}
+
+Briefly describe the main research activities performed this week.
+
+\begin{itemize}[
+    leftmargin=5mm,
+    itemsep=1mm,
+    topsep=1mm
+]
+    \item Experiment A: purpose and experimental setup.
+    \item Experiment B: modified conditions or new approach.
+    \item Implementation: major code or pipeline changes.
+\end{itemize}
+
+
+\vspace{2mm}
+
+\textbf{2. Quantitative Results}
+
+Summarize the primary quantitative results in the table below.
+
+% =========================================================
+% TABLE TEMPLATE
+% Replace the column names and values directly.
+% =========================================================
+\begin{table}[H]
+    \centering
+    \small
+
+    \begin{tabularx}{0.95\linewidth}{
+        l
+        >{\centering\arraybackslash}X
+        >{\centering\arraybackslash}X
+        >{\centering\arraybackslash}X
+    }
+        \toprule
+        Method
+            & Metric 1
+            & Metric 2
+            & Metric 3
+            \\
+
+        \midrule
+
+        Baseline
+            & 00.0
+            & 00.0
+            & 00.0
+            \\
+
+        Proposed A
+            & 00.0
+            & 00.0
+            & 00.0
+            \\
+
+        Proposed B
+            & \textbf{00.0}
+            & \textbf{00.0}
+            & \textbf{00.0}
+            \\
+
+        \bottomrule
+    \end{tabularx}
+
+    \caption{
+        Main experimental results.
+        Replace this text with a concise description of the table.
+    }
+    \label{tab:main-results}
+\end{table}
+
+
+Write two or three sentences interpreting the table.
+Focus on the main observation rather than repeating every number.
+
+\end{pppbox}
+
+
+\vspace{2mm}
+
+
+% =========================================================
+% FIGURE TEMPLATE
+%
+% Put the actual figure at:
+%   figures/main-result.pdf
+%
+% PDF is recommended for plots/vector graphics.
+% PNG/JPG also work.
+%
+% If the file does not exist, a placeholder is shown,
+% so this template still compiles.
+% =========================================================
+\begin{figure}[H]
+    \centering
+
+    \IfFileExists{figures/main-result.pdf}
+    {
+        \includegraphics[
+            width=0.72\linewidth
+        ]{figures/main-result.pdf}
+    }
+    {
+        % Placeholder shown before you add the actual figure.
+        \fbox{
+            \parbox[c][35mm][c]{0.72\linewidth}{
+                \centering
+                \textbf{Figure Placeholder}\\[2mm]
+                Replace with\\
+                \texttt{figures/main-result.pdf}
+            }
+        }
+    }
+
+    \caption{
+        Main experimental result.
+        State what is plotted and the key experimental condition.
+    }
+
+    \label{fig:main-result}
+\end{figure}
+
+
+% =========================================================
+% PAGE 2
+% =========================================================
+\newpage
+
+
+% =========================================================
+% P2. Problems
+% =========================================================
+\begin{pppbox}{P2. Problems}
+
+\textbf{1. Main Issue}
+
+Describe the most important unresolved issue or bottleneck.
+
+For example, training remains unstable on a particular dataset,
+with substantial variation across random seeds. It is currently
+unclear whether this behavior originates from the learning rate,
+data distribution, or optimization procedure.
+
+
+\vspace{2mm}
+
+\textbf{2. Working Hypotheses}
+
+\begin{itemize}[
+    leftmargin=5mm,
+    itemsep=1mm,
+    topsep=1mm
+]
+    \item Hypothesis 1: possible explanation and supporting evidence.
+    \item Hypothesis 2: alternative explanation.
+    \item Hypothesis 3: additional factor that should be tested.
+\end{itemize}
+
+
+\vspace{2mm}
+
+\textbf{3. Attempts Made}
+
+List approaches already attempted and their outcomes.
+
+\begin{itemize}[
+    leftmargin=5mm,
+    itemsep=1mm,
+    topsep=1mm
+]
+    \item Attempt 1 $\rightarrow$ observed outcome.
+    \item Attempt 2 $\rightarrow$ observed outcome.
+\end{itemize}
+
+
+\vspace{2mm}
+
+\textbf{4. Questions for Discussion}
+
+\begin{itemize}[
+    leftmargin=5mm,
+    itemsep=1mm,
+    topsep=1mm
+]
+    \item Question or decision to discuss with the advisor.
+    \item Additional question requiring feedback.
+\end{itemize}
+
+\end{pppbox}
+
+
+\vspace{3mm}
+
+
+% =========================================================
+% P3. Plans
+% =========================================================
+\begin{pppbox}{P3. Plans}
+
+\textbf{1. Objectives for Next Week}
+
+\begin{enumerate}[
+    leftmargin=6mm,
+    itemsep=1mm,
+    topsep=1mm
+]
+    \item \textbf{High:}
+          Perform the highest-priority experiment or analysis.
+
+    \item \textbf{High:}
+          Conduct an additional experiment addressing the main issue.
+
+    \item \textbf{Medium:}
+          Implement supporting code or review relevant literature.
+
+    \item \textbf{Low:}
+          Perform optional analysis if time permits.
+\end{enumerate}
+
+
+\vspace{2mm}
+
+\textbf{2. Execution Plan}
+
+% =========================================================
+% PLANNING TABLE TEMPLATE
+% =========================================================
+\begin{table}[H]
+    \centering
+    \small
+
+    \begin{tabularx}{0.96\linewidth}{
+        >{\centering\arraybackslash}p{18mm}
+        X
+        >{\centering\arraybackslash}p{31mm}
+    }
+        \toprule
+        Priority
+            & Task
+            & Expected Output
+            \\
+
+        \midrule
+
+        High
+            & Run Experiment A with three random seeds.
+            & Result table
+            \\
+
+        High
+            & Perform an ablation study on component B.
+            & Ablation plot
+            \\
+
+        Medium
+            & Review two or three related papers.
+            & Literature notes
+            \\
+
+        \bottomrule
+    \end{tabularx}
+
+    \caption{Planned tasks for the next reporting period.}
+    \label{tab:next-week}
+\end{table}
+
+
+\textbf{3. Expected Outcome}
+
+State the concrete result that should be available before the next
+weekly meeting.
+
+For example, complete experiments with at least three random seeds
+and prepare a comparison table and plot showing the difference
+between the baseline and the proposed method.
+
+\end{pppbox}
+
+
+\vfill
+
+
+% =========================================================
+% Meeting notes
+% =========================================================
+\begin{tcolorbox}[
+    colback=lightgray,
+    colframe=linegray,
+    boxrule=0.5pt,
+    arc=1mm,
+    title={Meeting Notes / Feedback},
+    fonttitle=\bfseries,
+    coltitle=black,
+    colbacktitle=lightgray
+]
+
+\vspace{14mm}
+
+% Write advisor / lab feedback here during the meeting.
+
+\end{tcolorbox}
+
+
+\end{document}
