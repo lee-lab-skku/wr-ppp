@@ -2,7 +2,7 @@
 
 A compact two-page LaTeX template for weekly laboratory research reports following the **PPP structure: Progress, Problems, and Plans**.
 
-The template is designed as a self-contained `.tex` file. No custom document class or external style file is required. Report content can be edited directly in the provided sections.
+The entry point contains the report content and editable values, while layout, date calculation, and reusable helpers are kept in a separate local style file.
 
 ## Features
 
@@ -18,7 +18,15 @@ The template is designed as a self-contained `.tex` file. No custom document cla
 - Helpers for one figure or two independent side-by-side figures
 - Automatic placeholders for missing figure files
 - Compact layout suitable for laboratory meetings
-- No custom `.cls` or `.sty` files
+- Minimal `template.tex` entry point
+- Local `weekly-report.sty` package for reusable formatting
+
+## File Structure
+
+- `template.tex`: the entry point; edit report information, prose, table rows, and figure helper calls here
+- `weekly-report.sty`: packages, page styling, automatic week calculation, and reusable layout helpers
+
+Keep both files in the same directory when compiling. Routine report writing should not require editing `weekly-report.sty`.
 
 ## Automatic Reporting Week
 
@@ -66,60 +74,51 @@ Sunday     2026-09-06
 
 ## Editing the Report
 
-Most weekly editing should be limited to the content sections.
+Weekly editing should be limited to `template.tex`. The file begins with only the document class, the local style package, and the report body:
+
+```latex
+\documentclass[10pt,a4paper]{article}
+\usepackage{weekly-report}
+
+\begin{document}
+```
 
 ### Basic Information
 
-Replace the title placeholder:
+Replace the three values passed to `\ReportHeader`:
 
 ```latex
-Write Your Report Title Here
+\ReportHeader
+    {Write Your Report Title Here}
+    {Your Name}
+    {Project / Team}
 ```
 
-Then edit the name and project/team placeholders in the single-line information row:
-
-```latex
-Name
-    & Your Name
-    & Project
-    & Project / Team
-    & Reporting Week
-    & \ReportWeekLabel
-```
-
-The reporting week is generated automatically in `yyyy-mm-Wn` format. The form does not display a separate creation date or reporting period.
+The arguments are the report title, name, and project/team. The reporting week is generated automatically in `yyyy-mm-Wn` format.
 
 ## Table Template
 
-Experimental results can be inserted directly into the provided table.
+Experimental results can be inserted through `\ReportResultsTable`. Its three arguments are the table rows, caption, and unique label.
 
 Example:
 
 ```latex
-\begin{table}[H]
-    \centering
-    \small
-
-    \begin{tabularx}{0.95\linewidth}{
-        l
-        >{\centering\arraybackslash}X
-        >{\centering\arraybackslash}X
-        >{\centering\arraybackslash}X
-    }
+\ReportResultsTable
+    {
         \toprule
         Method & Accuracy & F1 & AUROC \\
         \midrule
         Baseline   & 81.2 & 79.8 & 85.1 \\
         Proposed   & 83.5 & 82.0 & 87.4 \\
         \bottomrule
-    \end{tabularx}
-
-    \caption{Main experimental results.}
-    \label{tab:main-results}
-\end{table}
+    }
+    {Main experimental results.}
+    {tab:main-results}
 ```
 
 Replace the metric names and values as needed.
+
+The planning table uses `\ReportPlanTable` with the same three-argument structure. Its row block contains `Priority`, `Task`, and `Expected Output` columns, as shown in `template.tex`.
 
 ## Figure Template
 

@@ -1,337 +1,21 @@
 \documentclass[10pt,a4paper]{article}
+\usepackage{weekly-report}
 
-% =========================================================
-% Packages
-% =========================================================
-\usepackage[
-    a4paper,
-    top=15mm,
-    bottom=15mm,
-    left=18mm,
-    right=18mm
-]{geometry}
-
-\usepackage{fontspec}      % Compile with XeLaTeX
-\usepackage{xcolor}
-\usepackage{graphicx}
-\usepackage{pgfcalendar}
-\usepackage{tabularx}
-\usepackage{array}
-\usepackage{booktabs}
-\usepackage{enumitem}
-\usepackage[most]{tcolorbox}
-\usepackage{fancyhdr}
-\usepackage{float}
-\usepackage{hyperref}
-
-% =========================================================
-% General formatting
-% =========================================================
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{4pt}
-\renewcommand{\arraystretch}{1.20}
-
-\definecolor{mainblue}{RGB}{38,70,110}
-\definecolor{lightblue}{RGB}{238,244,250}
-\definecolor{lightgray}{RGB}{246,246,246}
-\definecolor{linegray}{RGB}{190,190,190}
-
-\hypersetup{
-    colorlinks=true,
-    linkcolor=mainblue,
-    urlcolor=mainblue
-}
-
-% =========================================================
-% Automatic reporting week
-%
-% Week convention:
-%   Monday -- Sunday
-%
-% Month assignment:
-%   A week belongs to the month containing its Thursday.
-%   This is equivalent to assigning the week to the month
-%   containing at least four of its seven days.
-%
-% Example:
-%   Mon Aug 31 -- Sun Sep 6
-%   Thursday = Sep 3
-%   => September, Week 1
-% =========================================================
-
-\usepackage{pgfcalendar}
-
-% ---------------------------------------------------------
-% Integer registers
-% ---------------------------------------------------------
-% \ReportDateJulian:
-%   Julian day corresponding to the compilation date.
-%
-% \WeekdayIndex:
-%   Monday=0, ..., Sunday=6.
-%
-% \ReportWeekNumber:
-%   Week number within the reporting month.
-% ---------------------------------------------------------
-
-\newcount\ReportDateJulian
-\newcount\WeekdayIndex
-\newcount\ReportWeekNumber
-
-
-% =========================================================
-% STEP 1
-% Convert compilation date into a Julian day.
-%
-% \year, \month, and \day are built-in TeX values.
-% They correspond to the same date displayed by \today.
-% =========================================================
-
-\pgfcalendardatetojulian
-    {\the\year-\the\month-\the\day}
-    {\ReportDateJulian}
-
-
-% =========================================================
-% STEP 2
-% Determine the weekday.
-%
-% PGF convention:
-%   Monday    = 0
-%   Tuesday   = 1
-%   Wednesday = 2
-%   Thursday  = 3
-%   Friday    = 4
-%   Saturday  = 5
-%   Sunday    = 6
-% =========================================================
-
-\pgfcalendarjuliantoweekday
-    {\ReportDateJulian}
-    {\WeekdayIndex}
-
-
-% =========================================================
-% STEP 3
-% Move to Thursday, which determines the reporting month.
-% =========================================================
-
-\advance\ReportDateJulian by 3
-\advance\ReportDateJulian by -\WeekdayIndex
-
-
-% =========================================================
-% STEP 4
-% Convert Thursday back to a calendar date.
-% =========================================================
-
-\pgfcalendarjuliantodate
-    {\ReportDateJulian}
-    {\ReportYear}
-    {\ReportMonth}
-    {\ReportThursdayDay}
-
-
-% =========================================================
-% STEP 5
-% Determine the monthly week number.
-%
-% Thursday:
-%
-%    1--7  -> Week 1
-%    8--14 -> Week 2
-%   15--21 -> Week 3
-%   22--28 -> Week 4
-%   29--31 -> Week 5
-%
-% Formula:
-%
-%   floor((Thursday day - 1) / 7) + 1
-% =========================================================
-
-\ReportWeekNumber=\ReportThursdayDay
-\advance\ReportWeekNumber by -1
-\divide\ReportWeekNumber by 7
-\advance\ReportWeekNumber by 1
-
-
-% =========================================================
-% Formatting helpers
-% =========================================================
-
-% Add a leading zero to a one-digit number.
-% 8 -> 08
-% 12 -> 12
-\newcommand{\TwoDigits}[1]{%
-    \ifnum\numexpr#1\relax<10 0\fi
-    \number\numexpr#1\relax
-}
-
-
-% Example:
-%   2026-08-W3
-\newcommand{\ReportWeekLabel}{%
-    \ReportYear-\TwoDigits{\ReportMonth}-W\the\ReportWeekNumber%
-}
-
-
-% =========================================================
-% Figure helpers
-%
-% Use \ReportFigure for one figure.
-% Use \ReportFigurePair for two independent figures in one row.
-% Missing files are replaced with an informative placeholder.
-% =========================================================
-
-% Internal helper: image or fixed-size placeholder.
-% Arguments: file path, display width, display height.
-\newcommand{\ReportImageOrPlaceholder}[3]{%
-    \parbox[c][#3][c]{#2}{%
-        \centering
-        \IfFileExists{#1}
-        {%
-            \includegraphics[
-                width=\linewidth,
-                height=#3,
-                keepaspectratio
-            ]{#1}%
-        }
-        {%
-            \fbox{%
-                \parbox[c][
-                    \dimexpr#3-2\fboxsep-2\fboxrule\relax
-                ][c]{
-                    \dimexpr\linewidth-2\fboxsep-2\fboxrule\relax
-                }{%
-                    \centering
-                    \small
-                    \textbf{Figure Placeholder}\\[2mm]
-                    Add the image at\\
-                    \path{#1}%
-                }%
-            }%
-        }%
-    }%
-}
-
-% One figure.
-% Arguments: file path, caption, unique label.
-\newcommand{\ReportFigure}[3]{%
-    \begin{figure}[H]
-        \centering
-        \ReportImageOrPlaceholder{#1}{0.72\linewidth}{35mm}
-        \caption{#2}
-        \label{#3}
-    \end{figure}
-}
-
-% Two independent figures placed side by side.
-% Each figure has its own caption, number, and label.
-% Arguments: left path/caption/label, then right path/caption/label.
-\newcommand{\ReportFigurePair}[6]{%
-    \begin{figure}[H]
-        \centering
-        \begin{minipage}[t]{0.48\linewidth}
-            \centering
-            \ReportImageOrPlaceholder{#1}{\linewidth}{35mm}
-            \caption{#2}
-            \label{#3}
-        \end{minipage}%
-        \hfill
-        \begin{minipage}[t]{0.48\linewidth}
-            \centering
-            \ReportImageOrPlaceholder{#4}{\linewidth}{35mm}
-            \caption{#5}
-            \label{#6}
-        \end{minipage}
-    \end{figure}
-}
-
-
-% =========================================================
-% Header / Footer
-% =========================================================
-\pagestyle{fancy}
-\fancyhf{}
-\renewcommand{\headrulewidth}{0pt}
-
-\fancyfoot[L]{\footnotesize Weekly Report}
-\fancyfoot[R]{\footnotesize \thepage~/~2}
-
-
-% =========================================================
-% PPP box
-% =========================================================
-\newtcolorbox{pppbox}[1]{
-    enhanced,
-    breakable,
-    colback=white,
-    colframe=mainblue,
-    boxrule=0.8pt,
-    arc=1.5mm,
-    left=3mm,
-    right=3mm,
-    top=2mm,
-    bottom=2mm,
-    title={#1},
-    fonttitle=\bfseries\large,
-    coltitle=white,
-    colbacktitle=mainblue
-}
-
-
-% =========================================================
-% Document
-% =========================================================
 \begin{document}
 
 % =========================================================
-% PAGE 1
+% Report information -- edit these three values.
 % =========================================================
-
-\begin{center}
-    {\LARGE\bfseries Write Your Report Title Here}\\[1mm]
-    {\small Weekly Report}
-\end{center}
-
-\vspace{2mm}
-
-
-% =========================================================
-% Basic information
-% =========================================================
-\begin{tabularx}{\textwidth}{
-    >{\bfseries}l X
-    >{\bfseries}l X
-    >{\bfseries}l l
-}
-
-Name
-    & Your Name
-    & Project
-    & Project / Team
-    & Reporting Week
-    & \ReportWeekLabel
-    \\
-
-\end{tabularx}
-
-
-\vspace{3mm}
+\ReportHeader
+    {Write Your Report Title Here}
+    {Your Name}
+    {Project / Team}
 
 
 % =========================================================
 % Abstract / Summary
 % =========================================================
-\begin{tcolorbox}[
-    colback=lightblue,
-    colframe=mainblue,
-    boxrule=0.6pt,
-    arc=1mm,
-    title={Abstract},
-    fonttitle=\bfseries,
-    colbacktitle=mainblue
-]
+\begin{reportabstract}
 
 Summarize the most important result or conclusion of the week
 in two to four sentences.
@@ -342,7 +26,7 @@ particularly noticeable in the low-data regime. Additional ablation
 experiments will be conducted next week to determine the primary
 source of this improvement.
 
-\end{tcolorbox}
+\end{reportabstract}
 
 
 \vspace{3mm}
@@ -357,11 +41,7 @@ source of this improvement.
 
 Briefly describe the main research activities performed this week.
 
-\begin{itemize}[
-    leftmargin=5mm,
-    itemsep=1mm,
-    topsep=1mm
-]
+\begin{itemize}
     \item Experiment A: purpose and experimental setup.
     \item Experiment B: modified conditions or new approach.
     \item Implementation: major code or pipeline changes.
@@ -374,20 +54,8 @@ Briefly describe the main research activities performed this week.
 
 Summarize the primary quantitative results in the table below.
 
-% =========================================================
-% TABLE TEMPLATE
-% Replace the column names and values directly.
-% =========================================================
-\begin{table}[H]
-    \centering
-    \small
-
-    \begin{tabularx}{0.95\linewidth}{
-        l
-        >{\centering\arraybackslash}X
-        >{\centering\arraybackslash}X
-        >{\centering\arraybackslash}X
-    }
+\ReportResultsTable
+    {
         \toprule
         Method
             & Metric 1
@@ -416,14 +84,12 @@ Summarize the primary quantitative results in the table below.
             \\
 
         \bottomrule
-    \end{tabularx}
-
-    \caption{
+    }
+    {
         Main experimental results.
         Replace this text with a concise description of the table.
     }
-    \label{tab:main-results}
-\end{table}
+    {tab:main-results}
 
 
 Write two or three sentences interpreting the table.
@@ -484,11 +150,7 @@ data distribution, or optimization procedure.
 
 \textbf{2. Working Hypotheses}
 
-\begin{itemize}[
-    leftmargin=5mm,
-    itemsep=1mm,
-    topsep=1mm
-]
+\begin{itemize}
     \item Hypothesis 1: possible explanation and supporting evidence.
     \item Hypothesis 2: alternative explanation.
     \item Hypothesis 3: additional factor that should be tested.
@@ -501,11 +163,7 @@ data distribution, or optimization procedure.
 
 List approaches already attempted and their outcomes.
 
-\begin{itemize}[
-    leftmargin=5mm,
-    itemsep=1mm,
-    topsep=1mm
-]
+\begin{itemize}
     \item Attempt 1 $\rightarrow$ observed outcome.
     \item Attempt 2 $\rightarrow$ observed outcome.
 \end{itemize}
@@ -515,11 +173,7 @@ List approaches already attempted and their outcomes.
 
 \textbf{4. Questions for Discussion}
 
-\begin{itemize}[
-    leftmargin=5mm,
-    itemsep=1mm,
-    topsep=1mm
-]
+\begin{itemize}
     \item Question or decision to discuss with the advisor.
     \item Additional question requiring feedback.
 \end{itemize}
@@ -537,11 +191,7 @@ List approaches already attempted and their outcomes.
 
 \textbf{1. Objectives for Next Week}
 
-\begin{enumerate}[
-    leftmargin=6mm,
-    itemsep=1mm,
-    topsep=1mm
-]
+\begin{enumerate}
     \item \textbf{High:}
           Perform the highest-priority experiment or analysis.
 
@@ -560,18 +210,8 @@ List approaches already attempted and their outcomes.
 
 \textbf{2. Execution Plan}
 
-% =========================================================
-% PLANNING TABLE TEMPLATE
-% =========================================================
-\begin{table}[H]
-    \centering
-    \small
-
-    \begin{tabularx}{0.96\linewidth}{
-        >{\centering\arraybackslash}p{18mm}
-        X
-        >{\centering\arraybackslash}p{31mm}
-    }
+\ReportPlanTable
+    {
         \toprule
         Priority
             & Task
@@ -596,11 +236,9 @@ List approaches already attempted and their outcomes.
             \\
 
         \bottomrule
-    \end{tabularx}
-
-    \caption{Planned tasks for the next reporting period.}
-    \label{tab:next-week}
-\end{table}
+    }
+    {Planned tasks for the next reporting period.}
+    {tab:next-week}
 
 
 \textbf{3. Expected Outcome}
