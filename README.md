@@ -21,6 +21,47 @@ The entry point contains the report content and editable values, while layout, d
 - Minimal `template.tex` entry point
 - Local `weekly-report.sty` package for reusable formatting
 
+## Docker Build Scripts
+
+After cloning the repository, configure the PDF output directory and Docker image:
+
+```bash
+./setup.sh /path/to/pdf-output texlive-docker-image-name
+```
+
+The settings are stored locally and used by both scripts.
+
+### Test style changes
+
+Run from the repository:
+
+```bash
+./test.sh
+```
+
+This compiles `template.tex` and writes the result to `template.pdf`.
+
+### Compile a report
+
+Run `report-build` from the report source directory:
+
+```bash
+cd /path/to/report
+report-build
+```
+
+By default it compiles `main.tex`.
+
+The resulting PDF is written to the output directory configured by `setup.sh`, using the current directory name as the PDF filename.
+
+For example:
+
+```text
+/path/to/reports/W1
+→
+/configured/pdf-output/W1.pdf
+```
+
 ## File Structure
 
 - `template.tex`: the entry point; edit report information, prose, table rows, and figure helper calls here
