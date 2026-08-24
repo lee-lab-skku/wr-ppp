@@ -196,11 +196,11 @@
     }%
 }
 
-% Arguments: file path, caption, unique label.
-\newcommand{\ReportFigure}[3]{%
+% Arguments: file path, caption, unique label, height.
+\newcommand{\ReportFigure}[4]{%
     \begin{figure}[H]
         \centering
-        \ReportImageOrPlaceholder{#1}{0.72\linewidth}{35mm}
+        \ReportImageOrPlaceholder{#1}{0.72\linewidth}{#4}
         \caption{#2}
         \label{#3}
     \end{figure}
