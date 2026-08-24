@@ -18,6 +18,6 @@ docker run --rm -i \
             -xelatex \
             -interaction=nonstopmode \
             -halt-on-error \
-            template.tex
+            template.tex >&2
         cat template.pdf
     ' > template.pdf
