@@ -241,6 +241,26 @@
 % =========================================================
 % Content boxes
 % =========================================================
+\newcounter{reportbox}
+\newcounter{reportsubsection}[reportbox]
+\renewcommand{\theHreportsubsection}{%
+    \arabic{reportbox}.\arabic{reportsubsection}%
+}
+\newlength{\ReportSubsectionBeforeSkip}
+\newlength{\ReportSubsectionAfterSkip}
+\setlength{\ReportSubsectionBeforeSkip}{2mm}
+\setlength{\ReportSubsectionAfterSkip}{0.5mm}
+
+\newcommand{\ReportSubsection}[1]{%
+    \par
+    \ifnum\value{reportsubsection}>0
+        \addvspace{\ReportSubsectionBeforeSkip}%
+    \fi
+    \refstepcounter{reportsubsection}%
+    \noindent{\bfseries\large\thereportsubsection. #1}\par
+    \nobreak\vspace{\ReportSubsectionAfterSkip}%
+}
+
 \newtcolorbox{reportabstract}{
     colback=lightblue,
     colframe=mainblue,
@@ -265,7 +285,8 @@
     title={#1},
     fonttitle=\bfseries\large,
     coltitle=white,
-    colbacktitle=mainblue
+    colbacktitle=mainblue,
+    before upper={\stepcounter{reportbox}}
 }
 
 % =========================================================

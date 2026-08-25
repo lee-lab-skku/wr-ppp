@@ -14,6 +14,7 @@ The entry point contains the report content and editable values, while layout, d
   - **Plans**
 - Automatic monthly week identifier in `yyyy-mm-Wn` format
 - Four-day majority rule for assigning boundary weeks to months
+- Automatically numbered subsection headings inside each PPP box
 - Table templates for experimental results and future plans
 - Helpers for one figure or two independent side-by-side figures
 - Automatic placeholders for missing figure files
@@ -138,6 +139,26 @@ Replace the three values passed to `\ReportHeader`:
 ```
 
 The arguments are the report title, name, and project/team. The reporting week is generated automatically in `yyyy-mm-Wn` format.
+
+### PPP Box Subsections
+
+Use `\ReportSubsection` for headings inside a `pppbox`:
+
+```latex
+\begin{pppbox}{P1. Progress}
+
+\ReportSubsection{Research Activities}
+
+Describe the work performed.
+
+\ReportSubsection{Quantitative Results}
+
+Summarize the results.
+
+\end{pppbox}
+```
+
+The numbering restarts at 1 for each `pppbox`. The command applies the heading font and vertical spacing automatically.
 
 ## Table Template
 
