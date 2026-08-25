@@ -7,7 +7,7 @@ The entry point contains the report content and editable values, while layout, d
 ## Features
 
 - Two-page A4 weekly research report
-- Editable report title with `Weekly Report` as the subtitle
+- Editable report title with a numbered `Weekly Report #N` subtitle
 - PPP structure:
   - **Progress**
   - **Problems**
@@ -52,7 +52,9 @@ report-build
 
 By default it compiles `main.tex`.
 
-The resulting PDF is written to the output directory configured by `setup.sh`, using the current directory name as the PDF filename.
+Before compiling, `report-build` counts the PDF files already present directly in the configured output directory. It adds one to that count and passes the result to the template as the report serial number. This serial number is independent of the automatic reporting week.
+
+The resulting PDF is written to the output directory configured by `setup.sh`, using the current directory name as the PDF filename. The subtitle and lower-left footer show `Weekly Report #N`; the footer also includes the report title.
 
 For example:
 

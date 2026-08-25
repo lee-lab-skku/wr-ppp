@@ -62,6 +62,10 @@ REPORT_NAME="\$(basename "\$SRC_DIR")"
 DEST="\$PDF_OUTPUT_DIR/\$REPORT_NAME.pdf"
 TMP_PDF="\$(mktemp --suffix=.pdf)"
 
+mkdir -p -- "\$PDF_OUTPUT_DIR"
+PDF_COUNT="\$(find "\$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' -printf x | wc -c)"
+REPORT_SERIAL_NUMBER="\$((PDF_COUNT + 1))"
+
 cleanup() {
     rm -f -- "\$TMP_PDF"
 }
@@ -71,6 +75,7 @@ echo "source : \$SRC_DIR" >&2
 echo "main   : \$MAIN" >&2
 echo "style  : \$STYLE_DIR" >&2
 echo "image  : \$DOCKER_IMAGE" >&2
+echo "serial : #\$REPORT_SERIAL_NUMBER" >&2
 echo "output : \$DEST" >&2
 
 if tar -C "\$SRC_DIR" -cf - . |
@@ -80,6 +85,7 @@ if tar -C "\$SRC_DIR" -cf - . |
         --tmpfs /work:rw,exec,nosuid,size=1g \
         -e 'TEXINPUTS=/style//:' \
         -e "MAIN=\$MAIN" \
+        -e "REPORT_SERIAL_NUMBER=\$REPORT_SERIAL_NUMBER" \
         "\$DOCKER_IMAGE" \
         sh -c '
             set -eu
@@ -90,6 +96,8 @@ if tar -C "\$SRC_DIR" -cf - . |
 
             latexmk \
                 -xelatex \
+                -usepretex \
+                -pretex="\\def\\ReportSerialNumber{\$REPORT_SERIAL_NUMBER}" \
                 -interaction=nonstopmode \
                 -halt-on-error \
                 "\$MAIN" >&2
@@ -100,7 +108,6 @@ if tar -C "\$SRC_DIR" -cf - . |
             cat "\$PDF"
         ' > "\$TMP_PDF"
 then
-    mkdir -p -- "\$PDF_OUTPUT_DIR"
     mv -f -- "\$TMP_PDF" "\$DEST"
     trap - EXIT
 
