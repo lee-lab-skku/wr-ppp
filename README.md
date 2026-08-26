@@ -1,12 +1,12 @@
 # Weekly Research Report Template
 
-A compact two-page LaTeX template for weekly laboratory research reports following the **PPP structure: Progress, Problems, and Plans**.
+A compact LaTeX template for weekly laboratory research reports following the **PPP structure: Progress, Problems, and Plans**. Reports are generally intended to stay within two A4 pages, but the layout and page counter support the length the week's content actually requires.
 
 The entry point contains the report content and editable values, while layout, date calculation, and reusable helpers are kept in a separate local style file.
 
 ## Features
 
-- Two-page A4 weekly research report
+- Compact A4 weekly research report with a two-page target rather than a hard limit
 - Editable report title with a numbered `Weekly Report #N` subtitle
 - PPP structure:
   - **Progress**
@@ -15,11 +15,12 @@ The entry point contains the report content and editable values, while layout, d
 - Automatic monthly week identifier in `yyyy-mm-Wn` format
 - Four-day majority rule for assigning boundary weeks to months
 - Automatically numbered subsection headings inside each PPP box
-- Table templates for experimental results and future plans
+- Optional table helpers for experimental results and future plans
 - Helpers for one figure or two independent side-by-side figures
 - Automatic placeholders for missing figure files
+- Footer page count based on the actual compiled document length
 - Compact layout suitable for laboratory meetings
-- Minimal `template.tex` entry point
+- Complete illustrative `template.tex` showing several writing and evidence formats
 - Local `weekly-report.sty` package for reusable formatting
 
 ## Docker Build Scripts
@@ -142,27 +143,29 @@ The arguments are the report title, name, and project/team. The reporting week i
 
 ### PPP Box Subsections
 
-Use `\ReportSubsection` for headings inside a `pppbox`:
+Use `\ReportSubsection` when headings help organize a `pppbox`:
 
 ```latex
-\begin{pppbox}{P1. Progress}
+\begin{pppbox}{Progress}
 
-\ReportSubsection{Research Activities}
+\ReportSubsection{Main Development}
 
-Describe the work performed.
+Describe the principal change in the work or understanding.
 
-\ReportSubsection{Quantitative Results}
+\ReportSubsection{Supporting Evidence}
 
-Summarize the results.
+Present only the evidence that helps explain that change.
 
 \end{pppbox}
 ```
 
-The numbering restarts at 1 for each `pppbox`. The command applies the heading font and vertical spacing automatically.
+The numbering restarts at 1 for each `pppbox`. The command applies the heading font and vertical spacing automatically. Subsection names and counts are not fixed: rename, duplicate, or omit them to fit the work being reported. Prose, lists, equations, tables, and figures may be mixed as needed.
+
+For `Problems`, describe a working hypothesis, attempted solutions, and their outcomes when those concepts apply. Some problems instead concern missing evidence, external constraints, resource allocation, or a decision requiring feedback; in those cases, state the uncertainty or constraint and what would move the work forward.
 
 ## Table Template
 
-Experimental results can be inserted through `\ReportResultsTable`. Its three arguments are the table rows, caption, and unique label.
+When a quantitative comparison helps explain the week, experimental results can be inserted through `\ReportResultsTable`. Its three arguments are the table rows, caption, and unique label. A table is optional and should not be added merely to fill the report.
 
 Example:
 
@@ -182,15 +185,34 @@ Example:
 
 Replace the metric names and values as needed.
 
-The planning table uses `\ReportPlanTable` with the same three-argument structure. Its row block contains `Priority`, `Task`, and `Expected Output` columns, as shown in `template.tex`.
+The optional planning table uses `\ReportPlanTable` with the same three-argument structure:
+
+```latex
+\ReportPlanTable
+    {
+        \toprule
+        Priority & Task & Expected Output \\
+        \midrule
+        High & Verify the revised model. & Validation notes \\
+        Medium & Review candidate journals. & Shortlist \\
+        \bottomrule
+    }
+    {Planned tasks for the next reporting period.}
+    {tab:next-week}
+```
+
+Use this when priorities and deliverables genuinely clarify the plan. A prose or list-based plan is equally valid.
 
 ## Figure Template
 
-Figures can be added by copying a helper command and changing only its arguments. Each figure needs:
+Figures can be added by copying a helper command and changing only its arguments. Each single figure needs:
 
 - An image file path
 - A caption
 - A unique label used for cross-references
+- A display height, written as a TeX dimension such as `45mm`
+
+When an image comes from an external source, identify that source in the caption or surrounding text.
 
 ### One Figure
 
@@ -199,9 +221,10 @@ Figures can be added by copying a helper command and changing only its arguments
     {figures/main-result.pdf}
     {Main experimental result.}
     {fig:main-result}
+    {45mm}
 ```
 
-Copy the whole command again wherever another figure is needed. Change all three arguments, especially the label, which must be unique.
+Copy the whole command again wherever another figure is needed. Change all four arguments, especially the label, which must be unique. The height may be adjusted for a wide screenshot, a compact plot, or another aspect ratio; the image is scaled without distortion.
 
 ### Two Figures in One Row
 
@@ -219,6 +242,8 @@ Use `\ReportFigurePair` to place two independent figures side by side:
 
 The first three arguments belong to the left figure, and the next three belong to the right figure. Each receives its own figure number, caption, and label. This does not use subfigures.
 
+Paired figures use a fixed height of `35mm`, so they do not take separate height arguments.
+
 PDF is recommended for plots and other vector graphics. PNG and JPEG files also work; use the actual extension in the path:
 
 ```latex
@@ -226,6 +251,7 @@ PDF is recommended for plots and other vector graphics. PNG and JPEG files also 
     {figures/main-result.png}
     {Main experimental result.}
     {fig:main-result}
+    {45mm}
 ```
 
 ## Figure Placeholder

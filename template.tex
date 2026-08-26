@@ -3,28 +3,29 @@
 
 \begin{document}
 
+% This file is a complete illustrative report rather than a checklist.
+% Replace the example content and keep only the structures that help
+% explain the work performed in a given week.
+
 % =========================================================
 % Report information -- edit these three values.
+% Give the report a title that captures the week's main topic.
 % =========================================================
 \ReportHeader
-    {Write Your Report Title Here}
-    {Your Name}
-    {Project / Team}
+    {Calibration-Aware Classification in the Low-Data Regime}
+    {Example Author}
+    {Demo Study}
 
 
 % =========================================================
-% Abstract / Summary
+% Abstract
 % =========================================================
 \begin{reportabstract}
 
-Summarize the most important result or conclusion of the week
-in two to four sentences.
-
-For example, the proposed loss formulation improved validation
-accuracy by 2.3 percentage points over the baseline. The gain was
-particularly noticeable in the low-data regime. Additional ablation
-experiments will be conducted next week to determine the primary
-source of this improvement.
+Adding a mild calibration penalty improved macro F1 by 2.3 percentage
+points while reducing calibration error. The gain was consistent in
+four of five random seeds, but the rarest class remains unstable. Next
+week's work will therefore focus on label quality and seed sensitivity.
 
 \end{reportabstract}
 
@@ -34,147 +35,124 @@ source of this improvement.
 
 % =========================================================
 % P1. Progress
+%
+% Rename, duplicate, or remove subsections to match the week's work.
+% Prose, lists, equations, tables, and figures may be mixed as needed.
 % =========================================================
 \begin{pppbox}{Progress}
 
-\ReportSubsection{Research Activities}
+\ReportSubsection{Loss Formulation and Working Interpretation}
 
-Briefly describe the main research activities performed this week.
+The baseline was extended with a Brier-style calibration term,
+
+\[
+    \mathcal{L}
+    = \mathcal{L}_{\mathrm{CE}}
+    + \frac{\lambda}{N}
+      \sum_{i=1}^{N}\left\lVert\mathbf{p}_i-\mathbf{y}_i\right\rVert_2^2,
+\]
+
+where $\lambda$ controls the trade-off between discrimination and
+calibration. A short sweep suggested the following interpretation:
 
 \begin{itemize}
-    \item Experiment A: purpose and experimental setup.
-    \item Experiment B: modified conditions or new approach.
-    \item Implementation: major code or pipeline changes.
+    \item $\lambda=0.05$ improved calibration without reducing accuracy.
+        \begin{itemize}
+            \item Larger values produced under-confident predictions.
+            \item The effect was strongest for examples near class boundaries.
+        \end{itemize}
+    \item Data splits and preprocessing were held fixed across methods.
 \end{itemize}
 
 
-\ReportSubsection{Quantitative Results}
-
-Summarize the primary quantitative results in the table below.
+\ReportSubsection{Quantitative Comparison}
 
 \ReportResultsTable
     {
         \toprule
-        Method
-            & Metric 1
-            & Metric 2
-            & Metric 3
-            \\
-
+        Method & Macro F1 $\uparrow$ & ECE $\downarrow$ & Worst-class F1 $\uparrow$ \\
         \midrule
-
-        Baseline
-            & 00.0
-            & 00.0
-            & 00.0
-            \\
-
-        Proposed A
-            & 00.0
-            & 00.0
-            & 00.0
-            \\
-
-        Proposed B
-            & \textbf{00.0}
-            & \textbf{00.0}
-            & \textbf{00.0}
-            \\
-
+        Baseline & 71.4 & 8.7 & 48.2 \\
+        Calibration penalty & \textbf{73.7} & 5.1 & \textbf{52.6} \\
+        Strong penalty & 72.8 & \textbf{3.9} & 49.7 \\
         \bottomrule
     }
-    {
-        Main experimental results.
-        Replace this text with a concise description of the table.
-    }
+    {Illustrative validation results averaged over five random seeds.}
     {tab:main-results}
 
+As shown in \cref{tab:main-results}, the moderate penalty gave the best
+overall balance. The stronger penalty minimized ECE but lost part of the
+rare-class gain, suggesting that calibration alone is not the objective.
 
-Write two or three sentences interpreting the table.
-Focus on the main observation rather than repeating every number.
+
+\ReportSubsection{Implementation and Supporting Work}
+
+\begin{itemize}
+    \item Added deterministic seed handling and a regression test for splits.
+    \item Built an error-analysis notebook grouped by class and confidence.
+    \item Reviewed two calibration studies and recorded why temperature
+          scaling was deferred until after the label audit.
+\end{itemize}
 
 \end{pppbox}
+
+
+% Missing image files intentionally render as fixed-size placeholders.
+% Replace each path to show real plots, screenshots, or other evidence.
+\ReportFigurePair
+    {figures/calibration-curve.pdf}
+    {Calibration curves for the baseline and revised loss.}
+    {fig:calibration-curve}
+    {figures/rare-class-errors.pdf}
+    {Error composition for the rarest validation class.}
+    {fig:rare-class-errors}
 
 
 \vspace{2mm}
 
 
 % =========================================================
-% FIGURE EXAMPLE
-% Each helper argument is: file path, caption, unique label.
-%
-% For one figure, use:
-% \ReportFigure{figures/main-result.pdf}{Caption text.}{fig:main-result}
-%
-% The example below places two independent figures side by side.
-% PDF, PNG, and JPG files are supported.
-% =========================================================
-\ReportFigurePair
-    {figures/result-a.pdf}
-    {Result A. Replace with a concise description.}
-    {fig:result-a}
-    {figures/result-b.pdf}
-    {Result B. Replace with a concise description.}
-    {fig:result-b}
-
-\ReportFigure
-    {figures/result-c.pdf}
-    {Single figure example. Replace with a concise description.}
-    {fig:result-c}
-    {35mm}
-
-
-% =========================================================
-% PAGE 2
-% =========================================================
-\newpage
-
-
-% =========================================================
 % P2. Problems
+%
+% Hypotheses, attempted solutions, and responses are encouraged when
+% meaningful. Decision problems and external constraints may instead
+% state what evidence, resource, or feedback would move the work forward.
 % =========================================================
 \begin{pppbox}{Problems}
 
-\ReportSubsection{Main Issue}
+\ReportSubsection{Rare-Class Instability}
 
-Describe the most important unresolved issue or bottleneck.
-
-For example, training remains unstable on a particular dataset,
-with substantial variation across random seeds. It is currently
-unclear whether this behavior originates from the learning rate,
-data distribution, or optimization procedure.
-
-
-\ReportSubsection{Working Hypotheses}
+Worst-class F1 still varied by 7.8 points across seeds, so the apparent
+gain is not yet strong enough to support a general conclusion.
 
 \begin{itemize}
-    \item Hypothesis 1: possible explanation and supporting evidence.
-    \item Hypothesis 2: alternative explanation.
-    \item Hypothesis 3: additional factor that should be tested.
+    \item \textbf{Working hypothesis:} a small cluster of inconsistently
+          labeled samples changes the decision boundary between splits.
+    \item \textbf{Attempts and evidence:} class weighting reduced mean
+          performance, while manual inspection found three ambiguous samples.
+    \item \textbf{Next response:} audit the rare-class labels and repeat the
+          comparison with stratified seeds and confidence intervals.
 \end{itemize}
 
 
-\ReportSubsection{Attempts Made}
+\ReportSubsection{Primary Metric Requires a Decision}
 
-List approaches already attempted and their outcomes.
-
-\begin{itemize}
-    \item Attempt 1 $\rightarrow$ observed outcome.
-    \item Attempt 2 $\rightarrow$ observed outcome.
-\end{itemize}
-
-
-\ReportSubsection{Questions for Discussion}
-
-\begin{itemize}
-    \item Question or decision to discuss with the advisor.
-    \item Additional question requiring feedback.
-\end{itemize}
+This is a decision problem rather than one with a causal hypothesis.
+Macro F1 communicates class balance, whereas ECE better reflects the
+deployment risk. Advisor feedback is needed on which should be the primary
+claim; both metrics will remain reported regardless of that decision.
 
 \end{pppbox}
 
 
-\vspace{3mm}
+\ReportFigure
+    {figures/seed-variance.pdf}
+    {Worst-class F1 across random seeds; error bars should be included in the final analysis.}
+    {fig:seed-variance}
+    {30mm}
+
+
+\vspace{2mm}
 
 
 % =========================================================
@@ -182,64 +160,24 @@ List approaches already attempted and their outcomes.
 % =========================================================
 \begin{pppbox}{Plans}
 
-\ReportSubsection{Objectives for Next Week}
-
-\begin{enumerate}
-    \item \textbf{High:}
-          Perform the highest-priority experiment or analysis.
-
-    \item \textbf{High:}
-          Conduct an additional experiment addressing the main issue.
-
-    \item \textbf{Medium:}
-          Implement supporting code or review relevant literature.
-
-    \item \textbf{Low:}
-          Perform optional analysis if time permits.
-\end{enumerate}
-
-
-\ReportSubsection{Execution Plan}
+\ReportSubsection{Validation and Decision Sequence}
 
 \ReportPlanTable
     {
         \toprule
-        Priority
-            & Task
-            & Expected Output
-            \\
-
+        Priority & Task & Expected Output \\
         \midrule
-
-        High
-            & Run Experiment A with three random seeds.
-            & Result table
-            \\
-
-        High
-            & Perform an ablation study on component B.
-            & Ablation plot
-            \\
-
-        Medium
-            & Review two or three related papers.
-            & Literature notes
-            \\
-
+        High & Audit rare-class labels with a second reviewer. & Reviewed label set \\
+        High & Repeat five-seed evaluation after the audit. & Confidence intervals \\
+        Medium & Compare macro F1 and ECE as primary metrics. & Recommendation note \\
         \bottomrule
     }
-    {Planned tasks for the next reporting period.}
+    {Planned work for the next reporting period.}
     {tab:next-week}
 
-
-\ReportSubsection{Expected Outcome}
-
-State the concrete result that should be available before the next
-weekly meeting.
-
-For example, complete experiments with at least three random seeds
-and prepare a comparison table and plot showing the difference
-between the baseline and the proposed method.
+If the label audit cannot be completed, the fallback is to run the seed
+study on the current labels and mark label quality as an explicit limitation.
+The week is successful if the instability is either reduced or explained.
 
 \end{pppbox}
 
