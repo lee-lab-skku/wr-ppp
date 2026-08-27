@@ -122,9 +122,10 @@ The reporting week is calculated from the build date and displayed as
 belongs to the month containing its Thursday.
 
 The report serial number is independent of the reporting week. Before each
-build, `report-build` counts the PDFs directly inside the configured output
-directory and uses the next number. The subtitle and footer display this number,
-and the footer also shows the actual page count.
+build, `report-build` removes an existing PDF whose name matches the current
+report, counts the remaining PDFs directly inside the configured output
+directory, and uses the next number. The subtitle and footer display this
+number, and the footer also shows the actual page count.
 
 If the reporting week or serial number does not match the expected reporting
 context, contact the repository maintainer.

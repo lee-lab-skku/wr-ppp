@@ -63,6 +63,10 @@ DEST="\$PDF_OUTPUT_DIR/\$REPORT_NAME.pdf"
 TMP_PDF="\$(mktemp --suffix=.pdf)"
 
 mkdir -p -- "\$PDF_OUTPUT_DIR"
+if [[ -e "\$DEST" || -L "\$DEST" ]]; then
+    rm -f -- "\$DEST"
+    echo "removed: \$DEST" >&2
+fi
 PDF_COUNT="\$(find "\$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' -printf x | wc -c)"
 REPORT_SERIAL_NUMBER="\$((PDF_COUNT + 1))"
 
