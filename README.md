@@ -38,6 +38,9 @@ finished PDFs in `~/report-output`:
 This saves the selected image and output directory in the repository's local
 configuration and installs the `report-build` command.
 
+Output directories must be absolute paths beginning with `/` or home-relative
+paths beginning with `~/`. Other relative paths are not accepted.
+
 Verify the setup by compiling the included template:
 
 ```bash
@@ -137,6 +140,17 @@ change:
 
 ```bash
 ./setup.sh ~/report-output danteev/texlive:latest
+```
+
+After the initial setup, either value can be updated independently. With no
+arguments, both saved values are reused. A single argument beginning with `/`
+or `~/` updates the output directory; any other single argument updates the
+Docker image. The omitted value is read from `.local-config`:
+
+```bash
+./setup.sh
+./setup.sh /mnt/reports
+./setup.sh danteev/texlive:latest
 ```
 
 The new values replace the previous local configuration and are used by both
