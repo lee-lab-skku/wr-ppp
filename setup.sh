@@ -104,14 +104,14 @@ fi
 
 REPORT_NAME="\$(basename "\$SRC_DIR")"
 DEST="\$PDF_OUTPUT_DIR/\$REPORT_NAME.pdf"
-TMP_PDF="\$(mktemp --suffix=.pdf)"
+TMP_PDF="\$(mktemp)"
 
 mkdir -p -- "\$PDF_OUTPUT_DIR"
 if [[ -e "\$DEST" || -L "\$DEST" ]]; then
     rm -f -- "\$DEST"
     echo "removed: \$DEST" >&2
 fi
-PDF_COUNT="\$(find "\$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' -printf x | wc -c)"
+PDF_COUNT="\$(find "\$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' | wc -l)"
 REPORT_SERIAL_NUMBER="\$((PDF_COUNT + 1))"
 
 cleanup() {
