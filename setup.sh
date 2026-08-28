@@ -94,7 +94,53 @@ fi
 
 source "\$CONFIG_FILE"
 
-MAIN="\${1:-main.tex}"
+usage() {
+    echo "Usage: \$0 [--here] [tex-source]" >&2
+    echo "       \$0 --help" >&2
+}
+
+OUTPUT_DIR="\$PDF_OUTPUT_DIR"
+MAIN="main.tex"
+MAIN_SET=0
+
+while [[ \$# -gt 0 ]]; do
+    case \$1 in
+        --here)
+            OUTPUT_DIR="\$PWD"
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            if [[ \$# -gt 1 || (\$# -eq 1 && \$MAIN_SET -eq 1) ]]; then
+                echo "Only one TeX source may be specified." >&2
+                usage
+                exit 2
+            elif [[ \$# -eq 1 ]]; then
+                MAIN="\$1"
+            fi
+            break
+            ;;
+        -*)
+            echo "Unknown option: \$1" >&2
+            usage
+            exit 2
+            ;;
+        *)
+            if [[ \$MAIN_SET -eq 1 ]]; then
+                echo "Only one TeX source may be specified." >&2
+                usage
+                exit 2
+            fi
+            MAIN="\$1"
+            MAIN_SET=1
+            ;;
+    esac
+    shift
+done
+
 SRC_DIR="\$PWD"
 
 if [[ ! -f "\$SRC_DIR/\$MAIN" ]]; then
@@ -103,16 +149,15 @@ if [[ ! -f "\$SRC_DIR/\$MAIN" ]]; then
 fi
 
 REPORT_NAME="\$(basename "\$SRC_DIR")"
-DEST="\$PDF_OUTPUT_DIR/\$REPORT_NAME.pdf"
+DEST="\$OUTPUT_DIR/\$REPORT_NAME.pdf"
 TMP_PDF="\$(mktemp)"
 
-mkdir -p -- "\$PDF_OUTPUT_DIR"
-if [[ -e "\$DEST" || -L "\$DEST" ]]; then
-    rm -f -- "\$DEST"
-    echo "removed: \$DEST" >&2
-fi
-PDF_COUNT="\$(find "\$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' | wc -l)"
+mkdir -p -- "\$OUTPUT_DIR"
+PDF_COUNT="\$(find "\$OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' | wc -l)"
 REPORT_SERIAL_NUMBER="\$((PDF_COUNT + 1))"
+if [[ -f "\$DEST" && ! -L "\$DEST" ]]; then
+    REPORT_SERIAL_NUMBER="\$((REPORT_SERIAL_NUMBER - 1))"
+fi
 
 cleanup() {
     rm -f -- "\$TMP_PDF"

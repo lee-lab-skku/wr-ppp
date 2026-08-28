@@ -85,6 +85,19 @@ file, pass it explicitly:
 report-build draft.tex
 ```
 
+To write the PDF directly into the directory where `report-build` is run,
+instead of the configured output directory, pass `--here`. The option may be
+combined with an explicit source filename:
+
+```bash
+report-build --here
+report-build --here draft.tex
+```
+
+The directory name is still used as the PDF filename. For example, running
+`report-build --here` inside `~/report-source/W1` writes
+`~/report-source/W1/W1.pdf`.
+
 The shared `weekly-report.sty` file does not need to be copied into each report
 directory; `report-build` makes it available during compilation.
 
@@ -127,10 +140,12 @@ The reporting week is calculated from the build date and displayed as
 belongs to the month containing its Thursday.
 
 The report serial number is independent of the reporting week. Before each
-build, `report-build` removes an existing PDF whose name matches the current
-report, counts the remaining PDFs directly inside the configured output
-directory, and uses the next number. The subtitle and footer display this
-number, and the footer also shows the actual page count.
+build, `report-build` counts the PDFs directly inside the selected output
+directory and uses the next number. When rebuilding an existing target, that
+target is excluded from the serial-number calculation without being deleted
+before the build. This preserves the existing PDF if compilation fails. The
+subtitle and footer display the resulting number, and the footer also shows the
+actual page count.
 
 If the reporting week or serial number does not match the expected reporting
 context, contact the repository maintainer.
