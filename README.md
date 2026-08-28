@@ -15,7 +15,9 @@ detail to the author. Two A4 pages are a target, not a hard limit.
 
 ## Requirements
 
-The provided scripts are intended for Linux systems. Before starting, make
+The provided scripts are intended for Linux systems &mdash; macOS compatibility
+is best-effort, not always ensured; Windows users are expected to take advantage
+from the WSL magic, as that's a Docker's dependency anyway. Before starting, make
 sure that:
 
 - Bash and Docker are installed.
