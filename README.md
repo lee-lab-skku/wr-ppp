@@ -96,9 +96,12 @@ report-build --here draft.tex
 
 The directory name is still used as the PDF filename. For example, running
 `report-build --here` inside `~/report-source/W1` writes
-`~/report-source/W1/W1.pdf`. If that local output file already exists, it is
-removed before the new build. PDFs in the current directory do not affect the
-report serial number.
+`~/report-source/W1/W1.pdf`.
+
+Before every build, `report-build` removes an existing PDF with that name from
+the current directory. With `--here`, the new PDF replaces it; without
+`--here`, the new PDF is written only to the configured output directory. Other
+PDFs in the current directory do not affect the report serial number.
 
 The shared `weekly-report.sty` file does not need to be copied into each report
 directory; `report-build` makes it available during compilation.

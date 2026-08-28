@@ -100,7 +100,6 @@ usage() {
 }
 
 OUTPUT_DIR="\$PDF_OUTPUT_DIR"
-OUTPUT_HERE=0
 MAIN="main.tex"
 MAIN_SET=0
 
@@ -108,7 +107,6 @@ while [[ \$# -gt 0 ]]; do
     case \$1 in
         --here)
             OUTPUT_DIR="\$PWD"
-            OUTPUT_HERE=1
             ;;
         -h|--help)
             usage
@@ -152,6 +150,7 @@ fi
 
 REPORT_NAME="\$(basename "\$SRC_DIR")"
 DEST="\$OUTPUT_DIR/\$REPORT_NAME.pdf"
+LOCAL_DEST="\$SRC_DIR/\$REPORT_NAME.pdf"
 CONFIGURED_DEST="\$PDF_OUTPUT_DIR/\$REPORT_NAME.pdf"
 TMP_PDF="\$(mktemp)"
 
@@ -161,9 +160,9 @@ REPORT_SERIAL_NUMBER="\$((PDF_COUNT + 1))"
 if [[ -f "\$CONFIGURED_DEST" && ! -L "\$CONFIGURED_DEST" ]]; then
     REPORT_SERIAL_NUMBER="\$((REPORT_SERIAL_NUMBER - 1))"
 fi
-if [[ \$OUTPUT_HERE -eq 1 && ( -e "\$DEST" || -L "\$DEST" ) ]]; then
-    rm -f -- "\$DEST"
-    echo "removed: \$DEST" >&2
+if [[ -e "\$LOCAL_DEST" || -L "\$LOCAL_DEST" ]]; then
+    rm -f -- "\$LOCAL_DEST"
+    echo "removed: \$LOCAL_DEST" >&2
 fi
 
 cleanup() {
