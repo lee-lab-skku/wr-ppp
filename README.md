@@ -94,6 +94,19 @@ report-build --here
 report-build --here draft.tex
 ```
 
+By default, the report date is the host's current local date and the serial
+number is selected automatically. Use `--date` and `--serial` to override
+either value for backdated or manually numbered reports:
+
+```bash
+report-build --date 2026-08-31
+report-build --serial 17
+report-build --date 2026-08-31 --serial 17 draft.tex
+```
+
+Dates must use the `YYYY-MM-DD` format, and serial numbers must be positive
+integers. All options may be combined with `--here`.
+
 The directory name is still used as the PDF filename. For example, running
 `report-build --here` inside `~/report-source/W1` writes
 `~/report-source/W1/W1.pdf`.
@@ -140,9 +153,12 @@ the expected file path.
 
 ## Automatic Values
 
-The reporting week is calculated from the build date and displayed as
-`yyyy-mm-Wn`. Weeks run from Monday through Sunday; a week spanning two months
-belongs to the month containing its Thursday.
+`report-build` resolves the report date on the host before starting the Docker
+container. It uses the host's current local date unless `--date` supplies one.
+The reporting week is calculated from that date and displayed as `yyyy-mm-Wn`.
+Weeks run from Monday through Sunday; a week spanning two months belongs to the
+month containing its Thursday. Both the resolved date and the week label are
+passed into LaTeX, so the container's time zone does not affect either value.
 
 The report serial number is independent of the reporting week and of the
 `--here` option. Before each build, `report-build` counts the PDFs directly
@@ -151,7 +167,7 @@ directory already contains a PDF for the current report, the existing target is
 excluded from the serial-number calculation without being deleted before the
 build. This preserves the configured PDF if compilation fails. The subtitle
 and footer display the resulting number, and the footer also shows the actual
-page count.
+page count. `--serial` bypasses the automatic count for that build.
 
 If the reporting week or serial number does not match the expected reporting
 context, contact the repository maintainer.
@@ -183,6 +199,7 @@ The new values replace the previous local configuration and are used by both
 
 - `template.tex`: the illustrative source copied to `main.tex` for a new report
 - `weekly-report.sty`: shared layout, automatic values, and reusable helpers
+- `report-metadata.sh`: host-side report date and reporting-week calculation
 - `setup.sh`: saves the build configuration and installs `report-build`
 - `test.sh`: verifies the setup and tests changes to the shared style
 
