@@ -93,20 +93,53 @@ if [[ ! -f "\$CONFIG_FILE" ]]; then
 fi
 
 source "\$CONFIG_FILE"
+source "\$STYLE_DIR/report-metadata.sh"
 
 usage() {
-    echo "Usage: \$0 [--here] [tex-source]" >&2
+    echo "Usage: \$0 [--here] [--serial number] [--date YYYY-MM-DD] [tex-source]" >&2
     echo "       \$0 --help" >&2
 }
 
 OUTPUT_DIR="\$PDF_OUTPUT_DIR"
 MAIN="main.tex"
 MAIN_SET=0
+REPORT_SERIAL_NUMBER=""
+REPORT_DATE=""
+SERIAL_SET=0
+DATE_SET=0
 
 while [[ \$# -gt 0 ]]; do
     case \$1 in
         --here)
             OUTPUT_DIR="\$PWD"
+            ;;
+        --serial)
+            if [[ \$SERIAL_SET -eq 1 ]]; then
+                echo "Report serial number specified more than once." >&2
+                usage
+                exit 2
+            elif [[ \$# -lt 2 ]]; then
+                echo "Missing value for --serial." >&2
+                usage
+                exit 2
+            fi
+            REPORT_SERIAL_NUMBER="\$2"
+            SERIAL_SET=1
+            shift
+            ;;
+        --date)
+            if [[ \$DATE_SET -eq 1 ]]; then
+                echo "Report date specified more than once." >&2
+                usage
+                exit 2
+            elif [[ \$# -lt 2 ]]; then
+                echo "Missing value for --date." >&2
+                usage
+                exit 2
+            fi
+            REPORT_DATE="\$2"
+            DATE_SET=1
+            shift
             ;;
         -h|--help)
             usage
@@ -141,6 +174,13 @@ while [[ \$# -gt 0 ]]; do
     shift
 done
 
+if [[ \$SERIAL_SET -eq 1 && ! \$REPORT_SERIAL_NUMBER =~ ^[1-9][0-9]*\$ ]]; then
+    echo "Invalid report serial number (expected a positive integer): \$REPORT_SERIAL_NUMBER" >&2
+    exit 2
+fi
+
+resolve_report_date "\$REPORT_DATE"
+
 SRC_DIR="\$PWD"
 
 if [[ ! -f "\$SRC_DIR/\$MAIN" ]]; then
@@ -155,10 +195,12 @@ CONFIGURED_DEST="\$PDF_OUTPUT_DIR/\$REPORT_NAME.pdf"
 TMP_PDF="\$(mktemp)"
 
 mkdir -p -- "\$PDF_OUTPUT_DIR" "\$OUTPUT_DIR"
-PDF_COUNT="\$(find "\$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' | wc -l)"
-REPORT_SERIAL_NUMBER="\$((PDF_COUNT + 1))"
-if [[ -f "\$CONFIGURED_DEST" && ! -L "\$CONFIGURED_DEST" ]]; then
-    REPORT_SERIAL_NUMBER="\$((REPORT_SERIAL_NUMBER - 1))"
+if [[ \$SERIAL_SET -eq 0 ]]; then
+    PDF_COUNT="\$(find "\$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' | wc -l)"
+    REPORT_SERIAL_NUMBER="\$((PDF_COUNT + 1))"
+    if [[ -f "\$CONFIGURED_DEST" && ! -L "\$CONFIGURED_DEST" ]]; then
+        REPORT_SERIAL_NUMBER="\$((REPORT_SERIAL_NUMBER - 1))"
+    fi
 fi
 if [[ -e "\$LOCAL_DEST" || -L "\$LOCAL_DEST" ]]; then
     rm -f -- "\$LOCAL_DEST"
@@ -175,6 +217,7 @@ echo "main   : \$MAIN" >&2
 echo "style  : \$STYLE_DIR" >&2
 echo "image  : \$DOCKER_IMAGE" >&2
 echo "serial : #\$REPORT_SERIAL_NUMBER" >&2
+echo "week   : \$REPORT_WEEK_LABEL" >&2
 echo "output : \$DEST" >&2
 
 if tar -C "\$SRC_DIR" -cf - . |
@@ -185,6 +228,8 @@ if tar -C "\$SRC_DIR" -cf - . |
         -e 'TEXINPUTS=/style//:' \
         -e "MAIN=\$MAIN" \
         -e "REPORT_SERIAL_NUMBER=\$REPORT_SERIAL_NUMBER" \
+        -e "REPORT_DATE=\$REPORT_DATE" \
+        -e "REPORT_WEEK_LABEL=\$REPORT_WEEK_LABEL" \
         "\$DOCKER_IMAGE" \
         sh -c '
             set -eu
@@ -196,7 +241,7 @@ if tar -C "\$SRC_DIR" -cf - . |
             latexmk \
                 -xelatex \
                 -usepretex \
-                -pretex="\\def\\ReportSerialNumber{\$REPORT_SERIAL_NUMBER}" \
+                -pretex="\\def\\ReportSerialNumber{\$REPORT_SERIAL_NUMBER}\\def\\ReportDate{\$REPORT_DATE}\\def\\ReportWeekLabel{\$REPORT_WEEK_LABEL}" \
                 -interaction=nonstopmode \
                 -halt-on-error \
                 "\$MAIN" >&2

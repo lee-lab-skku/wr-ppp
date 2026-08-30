@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{weekly-report}[2026/08/25 Weekly report layout and helpers]
+\ProvidesPackage{weekly-report}[2026/08/31 Weekly report layout and helpers]
 
 % =========================================================
 % Packages
@@ -14,7 +14,6 @@
 \RequirePackage{fontspec}      % Compile with XeLaTeX
 \RequirePackage{xcolor}
 \RequirePackage{graphicx}
-\RequirePackage{pgfcalendar}
 \RequirePackage{tabularx}
 \RequirePackage{array}
 \RequirePackage{booktabs}
@@ -60,48 +59,11 @@
 }
 
 % =========================================================
-% Automatic reporting week
+% Automatic report metadata
 %
-% Weeks run Monday--Sunday and belong to the month containing
-% Thursday, equivalent to a four-day majority rule.
+% report-build defines \ReportSerialNumber, \ReportDate, and
+% \ReportWeekLabel before this package is loaded.
 % =========================================================
-\newcount\ReportDateJulian
-\newcount\WeekdayIndex
-\newcount\ReportWeekNumber
-
-\pgfcalendardatetojulian
-    {\the\year-\the\month-\the\day}
-    {\ReportDateJulian}
-
-\pgfcalendarjuliantoweekday
-    {\ReportDateJulian}
-    {\WeekdayIndex}
-
-% Move from the compilation date to Thursday.
-\advance\ReportDateJulian by 3
-\advance\ReportDateJulian by -\WeekdayIndex
-
-\pgfcalendarjuliantodate
-    {\ReportDateJulian}
-    {\ReportYear}
-    {\ReportMonth}
-    {\ReportThursdayDay}
-
-% Thursday 1--7 is W1, 8--14 is W2, and so on.
-\ReportWeekNumber=\ReportThursdayDay
-\advance\ReportWeekNumber by -1
-\divide\ReportWeekNumber by 7
-\advance\ReportWeekNumber by 1
-
-\newcommand{\TwoDigits}[1]{%
-    \ifnum\numexpr#1\relax<10 0\fi
-    \number\numexpr#1\relax
-}
-
-\newcommand{\ReportWeekLabel}{%
-    \ReportYear-\TwoDigits{\ReportMonth}-W\the\ReportWeekNumber%
-}
-
 \DeclareRobustCommand{\SUPER}{%
     \smash{\leavevmode\hbox{\sffamily S\kern-.2em \raisebox{0.5ex}{U\kern-.275em \raisebox{-.05ex}{\scalebox{1.05}{P}}}\kern-.6em \raisebox{-.3ex}{3}\kern-.115em R}\kern-.3em}
 }
@@ -109,8 +71,6 @@
     \SUPER
 }
 
-% Supplied by report-build independently of the reporting week.
-\providecommand{\ReportSerialNumber}{1}
 \newcommand{\ReportTitle}{}
 
 % =========================================================
