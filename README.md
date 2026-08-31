@@ -159,6 +159,20 @@ The main content areas are:
 - **Plans:** prioritized next actions and their expected outputs or success
   criteria
 
+## AI-Assisted Workflow
+
+The optional `wr-wr` skill helps an agent work with any part of this report
+workflow. It can orient a new user to report sources and build conventions,
+turn available material into a draft, improve an existing report, address
+template-specific LaTeX or build problems, and review the resulting artifact.
+These are examples rather than a fixed sequence: the agent should start from
+the user's current files and intended outcome.
+
+AI assistance does not replace the author's responsibility for the report's
+accuracy. When supporting material is unavailable, the skill permits editorial
+and technical improvements but directs the agent not to invent or strengthen
+factual claims.
+
 Tables and figures are optional. The template includes a flexible table helper,
 one figure, and two independent figures in one row. `\ReportTable` takes a
 column layout followed by the rows, caption, and label:

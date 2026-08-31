@@ -1,26 +1,47 @@
 ---
 name: wr-wr
-description: Create, revise, and validate concise PPP weekly research reports using the wr-ppp LaTeX template and build workflow. Use for weekly Progress, Problems, and Plans reports; do not use for unrelated report formats.
+description: Help users complete any task whose intended artifact is a wr-ppp weekly report, from orientation and source organization through evidence-grounded writing, revision, LaTeX or build troubleshooting, and final validation. Use even when the user does not name PPP or know the repository workflow; do not use for generic LaTeX work or unrelated report formats.
 ---
 
-# Write Weekly Report
+# Work with Weekly Reports
 
-Create an evidence-grounded weekly report without changing the shared template or style during routine report writing.
+Help the user reach their intended report outcome at their current level of context and readiness. The supported situations are not a closed list: adapt whenever the task is directly about creating, understanding, changing, repairing, or evaluating a report built with this repository.
 
 ## Locate the Template Repository
 
-Run `scripts/resolve-repo-root` from this skill directory to locate the repository that provides `template.tex`, `weekly-report.sty`, and the report build configuration. Use that resolved path instead of assuming that the current working directory contains the template repository.
+Run `scripts/resolve-repo-root` from this skill directory to locate the repository that provides the template, style, documentation, and build scripts. Use the resolved path instead of assuming that the current working directory is the template repository.
 
-## Workflow
+## Determine What Help Is Needed
 
-1. Identify the reporting date, author, project, requested language, source directory, and available weekly evidence. Ask only for material information that cannot be inferred safely.
-1. Inspect the supplied notes, results, figures, previous reports, and authorized project artifacts before drafting. Do not invent measurements, completed work, citations, decisions, or figure paths.
-1. Organize verified content as Abstract, Progress, Problems, and Plans. Distinguish observations from interpretations, and give plans an expected output or success criterion when the evidence supports one.
-1. Copy the repository's `template.tex` to a new report source as `main.tex`. Replace the illustrative content and remove structures that do not help communicate the report. Do not edit the canonical template or style unless the user explicitly requests a template change.
-1. Build the report with `report-build`, using explicit date or serial overrides when the reporting context requires them. Treat the two-page target as guidance rather than a hard limit.
-1. Check that the PDF builds, the header metadata is correct, illustrative example content is gone, quantitative claims match their evidence, references are valid, and final figures are present. Missing-figure placeholders may remain in a draft but must be disclosed.
-1. Report the source and PDF paths together with any unresolved factual or build warnings. Do not publish or transmit the report without an explicit request.
+Establish only the context needed for the next useful action:
 
-## Repository Guidance
+- the outcome the user wants, which may be an explanation, a file operation, content work, technical repair, review, or a combination;
+- the artifacts that already exist, from no material through notes, figures, a partial source, a complete draft, a PDF, or a failed build;
+- what evidence is available to the agent and what exists only in the user's knowledge;
+- whether the user wants the agent to perform the work, guide them through it, or review their work.
 
-Read the resolved repository's `README.md` for current build behavior and `template.tex` for the supported report structures. Prefer those canonical files over duplicating their detailed instructions here.
+Infer these from the request and accessible files when practical. Do not turn them into a mandatory questionnaire or force the user through a fixed end-to-end workflow. Ask a focused question only when the answer materially affects factual correctness, the destination or identity of a report, preservation of existing work, or the requested outcome.
+
+## Choose and Combine Relevant Guidance
+
+Read only the references needed for the current request. Combine them when a problem crosses boundaries.
+
+- Read [references/report-conventions.md](references/report-conventions.md) when locating, naming, scaffolding, configuring, or building report sources and outputs.
+- Read [references/content-quality.md](references/content-quality.md) when selecting evidence, drafting content, revising claims, preserving authorial intent, or working without supporting material.
+- Read [references/latex-and-build.md](references/latex-and-build.md) when formatting content, using template helpers, diagnosing LaTeX, or validating a PDF.
+
+Consult the resolved repository's `README.md`, `template.tex`, `weekly-report.sty`, or scripts when their current behavior matters. Those files are canonical; do not copy their full interface into the skill.
+
+## Work Adaptively
+
+- Start from the user's actual artifact instead of recreating work that already exists.
+- Take the smallest set of actions that fully addresses the request. A conceptual question may need no file changes; a syntax problem may need no prose rewrite; a content revision may also reveal a build problem worth fixing.
+- Explain unfamiliar conventions at the point they become relevant, using language appropriate to the user's apparent experience. Do not require the user to know LaTeX or repository terminology before helping them.
+- Preserve the shared template and style during ordinary report work. Change them only when the user requests a reusable template or build-system change.
+- Never invent evidence, measurements, completed work, citations, decisions, or figure contents. Separate verified facts, author-supplied claims, interpretations, and unresolved questions.
+- When source material is unavailable, continue with work that does not require it. Improve clarity, organization, grammar, and LaTeX while preserving factual meaning; identify claims that cannot be strengthened or verified instead of silently changing them.
+- Protect existing work. Inspect before overwriting, keep changes scoped to the requested report, and disclose placeholders or unresolved problems.
+
+## Finish at the Right Level
+
+Validate in proportion to the work performed. This may range from explaining a convention, through checking a focused source edit, to compiling and reviewing the final PDF. When files change, report their paths and summarize material decisions, factual limitations, and remaining build or content warnings. Do not publish or transmit a report without an explicit request.
