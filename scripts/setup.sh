@@ -7,7 +7,7 @@ REPO_DIR="$(
 )"
 
 CONFIG_FILE="$REPO_DIR/.local-config"
-SKILL_NAME="write-weekly-report"
+SKILL_NAME="wr-wr"
 SKILL_SOURCE="$REPO_DIR/skills/$SKILL_NAME"
 
 usage() {

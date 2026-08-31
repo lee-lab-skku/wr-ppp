@@ -236,7 +236,7 @@ The new values replace the previous local configuration and are used by both
 - `scripts/report-metadata.sh`: host-side report date and reporting-week calculation
 - `scripts/setup.sh`: saves the build configuration and links `report-build`
 - `scripts/test.sh`: verifies the setup through the canonical build command
-- `skills/write-weekly-report`: service-neutral report-writing skill
+- `skills/wr-wr`: service-neutral report-writing skill
 
 Routine report writing should require changes only to the copied `main.tex` and
 its supporting figure files.
