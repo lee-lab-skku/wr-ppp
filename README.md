@@ -159,10 +159,30 @@ The main content areas are:
 - **Plans:** prioritized next actions and their expected outputs or success
   criteria
 
-Tables and figures are optional. The template includes helpers for results and
-planning tables, one figure, and two independent figures in one row. If a
-referenced image is not yet available, the PDF shows a placeholder containing
-the expected file path.
+Tables and figures are optional. The template includes a flexible table helper,
+one figure, and two independent figures in one row. `\ReportTable` takes a
+column layout followed by the rows, caption, and label:
+
+```latex
+\ReportTable
+    {L C R}
+    {
+        \toprule
+        Item & Score & Change \\
+        \midrule
+        Baseline & 71.4 & +0.0 \\
+        Updated model & 73.7 & +2.3 \\
+        \bottomrule
+    }
+    {Illustrative comparison.}
+    {tab:comparison}
+```
+
+The number of column specifiers determines the number of columns. `L`, `C`,
+and `R` create wrapping, flexible-width columns aligned left, center, and
+right. Standard `tabularx` specifiers such as `l`, `c`, `r`, and `p{20mm}` can
+also be mixed into the layout. If a referenced image is not yet available, the
+PDF shows a placeholder containing the expected file path.
 
 ## Automatic Values
 

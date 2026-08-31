@@ -92,37 +92,24 @@
 
 % =========================================================
 % Table helpers
-% Arguments: table rows, caption, unique label.
+% L, C, and R are wrapping, flexible-width columns. Standard tabularx column
+% types such as l, c, r, and p{<width>} may also be used in a column layout.
 % =========================================================
-\newcommand{\ReportResultsTable}[3]{%
-    \begin{table}[H]
-        \centering
-        \small
-        \caption{#2}
-        \label{#3}
-        \begin{tabularx}{0.95\linewidth}{
-            l
-            >{\centering\arraybackslash}X
-            >{\centering\arraybackslash}X
-            >{\centering\arraybackslash}X
-        }
-            #1
-        \end{tabularx}
-    \end{table}
-}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
 
-\newcommand{\ReportPlanTable}[3]{%
+% Arguments: column layout, table rows, caption, unique label.
+\newcommand{\ReportTable}[4]{%
     \begin{table}[H]
         \centering
         \small
-        \caption{#2}
-        \label{#3}
+        \caption{#3}
+        \label{#4}
         \begin{tabularx}{0.96\linewidth}{
-            >{\centering\arraybackslash}p{18mm}
-            X
-            >{\centering\arraybackslash}p{31mm}
-        }
             #1
+        }
+            #2
         \end{tabularx}
     \end{table}
 }
