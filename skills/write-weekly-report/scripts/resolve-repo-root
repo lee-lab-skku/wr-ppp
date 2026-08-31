@@ -10,7 +10,7 @@ REPO_DIR="$(
     pwd -P
 )"
 
-for required_file in template.tex weekly-report.sty setup.sh; do
+for required_file in template.tex weekly-report.sty scripts/setup.sh; do
     if [[ ! -f "$REPO_DIR/$required_file" ]]; then
         echo "Template repository file not found: $REPO_DIR/$required_file" >&2
         exit 1

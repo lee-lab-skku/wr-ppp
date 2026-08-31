@@ -26,7 +26,7 @@ sure that:
   `/usr/local/bin`.
 
 The recommended image is `danteev/texlive:latest`. Another compatible TeX Live
-Docker image may be supplied to `setup.sh` if preferred.
+Docker image may be supplied to `scripts/setup.sh` if preferred.
 
 ## Quick Start
 
@@ -34,17 +34,17 @@ Run the setup script from the cloned repository. The following example stores
 finished PDFs in `~/report-output`:
 
 ```bash
-./setup.sh ~/report-output danteev/texlive:latest
+./scripts/setup.sh ~/report-output danteev/texlive:latest
 ```
 
 This saves the selected image and output directory in the repository's local
-configuration and installs the `report-build` command.
+configuration and links the `report-build` command into `/usr/local/bin`.
 
 To also make the bundled report-writing skill available from any working
 directory, pass the supported services as a comma-separated `--skills` option:
 
 ```bash
-./setup.sh ~/report-output danteev/texlive:latest --skills=codex,claude
+./scripts/setup.sh ~/report-output danteev/texlive:latest --skills=codex,claude
 ```
 
 This links the repository's canonical skill into `~/.agents/skills` for Codex
@@ -59,7 +59,7 @@ paths beginning with `~/`. Other relative paths are not accepted.
 Verify the setup by compiling the included template:
 
 ```bash
-./test.sh
+./scripts/test.sh
 ```
 
 A successful test writes `template.pdf` in the repository. The same command is
@@ -187,11 +187,11 @@ context, contact the repository maintainer.
 
 ## Change the Setup
 
-Run `setup.sh` again whenever the output directory or Docker image needs to
-change:
+Run `scripts/setup.sh` again whenever the output directory or Docker image
+needs to change:
 
 ```bash
-./setup.sh ~/report-output danteev/texlive:latest
+./scripts/setup.sh ~/report-output danteev/texlive:latest
 ```
 
 After the initial setup, either value can be updated independently. With no
@@ -200,22 +200,23 @@ or `~/` updates the output directory; any other single argument updates the
 Docker image. The omitted value is read from `.local-config`:
 
 ```bash
-./setup.sh
-./setup.sh /mnt/reports
-./setup.sh danteev/texlive:latest
+./scripts/setup.sh
+./scripts/setup.sh /mnt/reports
+./scripts/setup.sh danteev/texlive:latest
 ```
 
 The new values replace the previous local configuration and are used by both
-`test.sh` and `report-build`.
+`scripts/test.sh` and `report-build`.
 
 ## Repository Files
 
 - `template.tex`: the illustrative source copied to `main.tex` for a new report
 - `weekly-report.sty`: shared layout, automatic values, and reusable helpers
-- `report-metadata.sh`: host-side report date and reporting-week calculation
-- `setup.sh`: saves the build configuration and installs `report-build`
+- `scripts/report-build`: canonical implementation of the installed build command
+- `scripts/report-metadata.sh`: host-side report date and reporting-week calculation
+- `scripts/setup.sh`: saves the build configuration and links `report-build`
+- `scripts/test.sh`: verifies the setup through the canonical build command
 - `skills/write-weekly-report`: service-neutral report-writing skill
-- `test.sh`: verifies the setup and tests changes to the shared style
 
 Routine report writing should require changes only to the copied `main.tex` and
 its supporting figure files.
