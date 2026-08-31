@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(
+    cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+    pwd -P
+)"
+REPO_DIR="$(
+    cd -- "$SCRIPT_DIR/../../.."
+    pwd -P
+)"
+
+for required_file in template.tex weekly-report.sty setup.sh; do
+    if [[ ! -f "$REPO_DIR/$required_file" ]]; then
+        echo "Template repository file not found: $REPO_DIR/$required_file" >&2
+        exit 1
+    fi
+done
+
+printf '%s\n' "$REPO_DIR"

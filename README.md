@@ -40,6 +40,19 @@ finished PDFs in `~/report-output`:
 This saves the selected image and output directory in the repository's local
 configuration and installs the `report-build` command.
 
+To also make the bundled report-writing skill available from any working
+directory, pass the supported services as a comma-separated `--skills` option:
+
+```bash
+./setup.sh ~/report-output danteev/texlive:latest --skills=codex,claude
+```
+
+This links the repository's canonical skill into `~/.agents/skills` for Codex
+and `~/.claude/skills` for Claude. Omitting `--skills` leaves user-level skill
+directories unchanged. An existing link to the same skill is accepted, while
+another file, directory, or link at the destination is preserved and reported
+as an error.
+
 Output directories must be absolute paths beginning with `/` or home-relative
 paths beginning with `~/`. Other relative paths are not accepted.
 
@@ -201,6 +214,7 @@ The new values replace the previous local configuration and are used by both
 - `weekly-report.sty`: shared layout, automatic values, and reusable helpers
 - `report-metadata.sh`: host-side report date and reporting-week calculation
 - `setup.sh`: saves the build configuration and installs `report-build`
+- `skills/write-weekly-report`: service-neutral report-writing skill
 - `test.sh`: verifies the setup and tests changes to the shared style
 
 Routine report writing should require changes only to the copied `main.tex` and
