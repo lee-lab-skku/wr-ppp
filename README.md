@@ -1,6 +1,6 @@
 # Weekly Research Report Template
 
-Repository version: `v1.0.0`
+Latest version: [![Latest repository version](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=release)](https://github.com/lee-lab-skku/wr-ppp/tags)
 
 A LaTeX template for concise weekly research reports organized around
 **Progress, Problems, and Plans (PPP)**. It keeps the report structure and
