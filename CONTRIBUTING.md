@@ -134,11 +134,22 @@ Compatibility means that documented usage continues to work with its stated
 semantics; it does not require byte-identical PDFs or prevent presentation
 refinements that preserve those semantics.
 
+Maintain `CHANGELOG.md` using the Keep a Changelog structure.
+
+Begin every changelog item with the most relevant component marker:
+`[latex]`, `[template]`, `[build]`, `[setup]`, `[skill]`, or `[docs]`. Describe
+notable user-facing differences rather than copying the commit log, and combine
+closely related commits into one entry when they deliver one change.
+
 If you are an AI agent, do not increment the version or create a release tag
 without explicit developer confirmation. Versions are recorded by Git tags
-named `vMAJOR.MINOR.PATCH`. For every confirmed release, update
-the version comment at the beginning of `template.tex`, commit that change, and
-create the matching tag on that exact commit.
+named `vMAJOR.MINOR.PATCH`. For every confirmed release, move the relevant
+changelog entries from `Unreleased` into a dated version section, update the
+version comment at the beginning of `template.tex`, commit those changes, and
+create the matching tag on that exact commit. Confirm that the latest-version
+badge near the beginning of `README.md` remains configured to derive its value
+from the repository's SemVer tags. Do not omit the changelog update, template
+update, badge check, or tag.
 
 The setup and build scripts report the version derived from the current Git
 checkout. A tagged release prints its tag, while later development commits may
