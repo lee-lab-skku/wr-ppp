@@ -53,7 +53,7 @@ resolve_report_date() {
         weekday="$(date -d "$REPORT_DATE 12:00:00" +%u)"
         thursday_offset="$((4 - weekday))"
         thursday="$(
-            date -d "$REPORT_DATE 12:00:00 $thursday_offset days" +%F
+            date -d "$thursday_offset days $REPORT_DATE 12:00:00" +%F
         )"
     else
         weekday="$(
