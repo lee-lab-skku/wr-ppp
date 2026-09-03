@@ -5,6 +5,10 @@ REPO_DIR="$(
     cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
     pwd -P
 )"
+REPOSITORY_VERSION="$(
+    git -C "$REPO_DIR" describe --tags --always --dirty --match 'v[0-9]*' \
+        2>/dev/null || echo "unknown"
+)"
 
 CONFIG_FILE="$REPO_DIR/.local-config"
 SKILL_NAME="wr-wr"
@@ -205,6 +209,8 @@ for service in "${SKILL_SERVICES[@]}"; do
             ;;
     esac
 done
+
+echo "Repository version: $REPOSITORY_VERSION"
 
 PDF_OUTPUT_DIR=""
 DOCKER_IMAGE=""

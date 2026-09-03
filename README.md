@@ -1,5 +1,7 @@
 # Weekly Research Report Template
 
+Repository version: `v1.0.0`
+
 A LaTeX template for concise weekly research reports organized around
 **Progress, Problems, and Plans (PPP)**. It keeps the report structure and
 layout consistent while leaving the weekly content, evidence, and level of

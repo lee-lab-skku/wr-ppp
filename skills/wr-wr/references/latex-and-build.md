@@ -29,6 +29,8 @@ Missing figure files intentionally render as placeholders. That can support draf
 
 Use the canonical `report-build` command so the report sees the shared style and resolved metadata. On failure, identify the first actionable error rather than reacting only to the final generic failure message. Apply a repair, rebuild, and stop when the requested issue is resolved or when progress requires missing user information or authorization.
 
+Note the repository version printed by `report-build` when diagnosing version-sensitive behavior or comparing results from different checkouts. The command builds the current checkout; the displayed version identifies that checkout rather than selecting a version to build.
+
 For work intended as a final report, check as relevant:
 
 - successful compilation and a nonempty PDF;

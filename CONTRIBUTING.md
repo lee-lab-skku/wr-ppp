@@ -111,3 +111,38 @@ change.
 Keep commits limited to meaningful changes and explain user-visible behavior in
 the commit message. Do not include generated PDFs or local configuration unless
 the contribution specifically requires updating a tracked artifact.
+
+## Versioning and Releases
+
+Use Semantic Versioning for the repository as a whole. The public interface is
+the union of the documented LaTeX commands and environments, setup and build
+commands, output semantics, template usage, and skill behavior. Determine a
+release increment from every changed public surface and apply the highest
+required increment:
+
+- Increment MAJOR for any backward-incompatible public-interface change, such
+  as removing or changing a documented LaTeX interface, command option,
+  default, or output behavior in a way that requires user migration.
+- Increment MINOR for backward-compatible functionality, including a new
+  LaTeX interface, command option, setup capability, or skill capability, and
+  when deprecating public functionality without removing it.
+- Increment PATCH for backward-compatible bug fixes, portability and safety
+  corrections, documentation corrections, and internal changes that do not
+  alter the documented interface.
+
+Compatibility means that documented usage continues to work with its stated
+semantics; it does not require byte-identical PDFs or prevent presentation
+refinements that preserve those semantics.
+
+Do not increment the version or create a release tag without explicit developer
+confirmation. Versions are recorded by Git tags named `vMAJOR.MINOR.PATCH`; do
+not add a separate version metadata file. For every confirmed release, update
+the repository version near the beginning of `README.md` and the version comment
+at the beginning of `template.tex`, commit those changes, and create the matching
+tag on that exact commit. Do not omit any of these three locations.
+
+The setup and build scripts report the version derived from the current Git
+checkout. A tagged release prints its tag, while later development commits may
+include a commit suffix and a dirty checkout may include `-dirty`. The build
+always uses the current checkout; do not add a facility for selecting another
+repository version at build time.
