@@ -1,6 +1,6 @@
 ---
 name: wr-wr
-description: Help users complete any task whose intended artifact is a wr-ppp weekly report, from orientation and source organization through evidence-grounded writing, revision, LaTeX or build troubleshooting, and final validation. Use even when the user does not name PPP or know the repository workflow; do not use for generic LaTeX work or unrelated report formats.
+description: Help users complete any task whose intended artifact is a wr-ppp weekly report, from orientation and source organization through evidence-grounded writing, revision, LaTeX or build troubleshooting, and final validation. Use even when the user does not name PPP or know the repository workflow; do not use for generic LaTeX work, unrelated report formats, or tasks about the wr-ppp repository development itself.
 ---
 
 # Work with Weekly Reports
