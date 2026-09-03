@@ -23,6 +23,13 @@ The `report-build` implementation lives in `scripts/report-build`;
 generating another copy. Routine report content should not require changes to
 the template, style, or shared build scripts.
 
+Keep system-command and agent-skill link installation on the shared setup
+policy. Treat a link to the same source as an idempotent success, preserve
+conflicting destinations by default, and require the explicit replacement
+option before backing up and replacing a file or link. Never replace a
+directory. Preflight every requested destination before changing the local
+configuration or installing any link.
+
 ## Shell and Build Safety
 
 Write shell scripts for both Linux and macOS whenever practical. Bash is the

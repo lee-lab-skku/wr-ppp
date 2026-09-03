@@ -49,9 +49,27 @@ directory, pass the supported services as a comma-separated `--skills` option:
 
 This links the repository's canonical skill into `~/.agents/skills` for Codex
 and `~/.claude/skills` for Claude. Omitting `--skills` leaves user-level skill
-directories unchanged. An existing link to the same skill is accepted, while
-another file, directory, or link at the destination is preserved and reported
-as an error.
+directories unchanged.
+
+Setup applies the same destination policy to `/usr/local/bin/report-build` and
+each requested skill link. A missing destination is linked, and a link that
+already resolves to the same repository source is accepted without change. By
+default, any other file, link, or directory is preserved and reported as an
+error. All requested destinations are checked before the configuration or any
+links are changed.
+
+Use `--replace-existing` to replace conflicting files or links explicitly:
+
+```bash
+./scripts/setup.sh ~/report-output danteev/texlive:latest \
+    --skills=codex,claude --replace-existing
+```
+
+Each replaced entry is moved to an adjacent backup such as `report-build.backup`
+or `wr-wr.backup.1`, and setup prints a warning containing the backup path.
+Existing backup names are not overwritten. Directories are never replaced,
+even with `--replace-existing`. This option also provides the migration path
+for a regular `report-build` file installed by an older setup version.
 
 Output directories must be absolute paths beginning with `/` or home-relative
 paths beginning with `~/`. Other relative paths are not accepted.
@@ -237,10 +255,12 @@ Docker image. The omitted value is read from `.local-config`:
 ./scripts/setup.sh
 ./scripts/setup.sh /mnt/reports
 ./scripts/setup.sh danteev/texlive:latest
+./scripts/setup.sh --replace-existing
 ```
 
 The new values replace the previous local configuration and are used by both
-`scripts/test.sh` and `report-build`.
+`scripts/test.sh` and `report-build`. The `--skills` and `--replace-existing`
+options may be combined with any of these forms.
 
 ## Repository Files
 
