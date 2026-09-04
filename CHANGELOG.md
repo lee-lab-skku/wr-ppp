@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [setup] optional administrator mode installs `admin-wr` with requested agent services, preserves a private manager manifest, and stores an independently optional bundle output directory.
+- [skill] an `admin-wr` workflow for manifest-scoped AI candidate selection, evidence and issue reporting, draft review, explicit approval, and traceable final promotion.
+- [build] deterministic XeLaTeX administrator bundles with a one-page index, normalized source staging, page-range and source-hash validation, and atomic same-week replacement.
+- [docs] administrator installation, manifest configuration, selection and approval behavior, and contributor boundaries.
+
 ## [1.0.0] &mdash; 2026-09-03
 
 ### Added

@@ -1,0 +1,940 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(
+    cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+    pwd -P
+)"
+REPO_DIR="$("$SCRIPT_DIR/resolve-repo-root")"
+CONFIG_FILE="$REPO_DIR/.local-config"
+
+usage() {
+    echo "Usage: $0 --storage-root directory --plan file --date YYYY-MM-DD" >&2
+    echo "          [--output-dir directory] [--draft | --approved-with-issues]" >&2
+}
+
+die() {
+    echo "$1" >&2
+    exit "${2:-1}"
+}
+
+normalize_output_directory() {
+    local value=$1
+
+    if [[ $value == '~/'* ]]; then
+        value="${HOME:?HOME is not set}/${value#\~/}"
+    elif [[ $value != /* ]]; then
+        die "Relative output directories are not allowed: $value" 2
+    fi
+    if [[ $value == */../* || $value == */.. ||
+        $value == */./* || $value == */. ]]
+    then
+        die "Output directories cannot contain '.' or '..' components: $value" 2
+    fi
+
+    printf '%s\n' "$value"
+}
+
+canonical_directory_target() {
+    local candidate=$1
+    local suffix=""
+    local parent
+    local component
+    local existing
+
+    while [[ ! -d $candidate ]]; do
+        if [[ -e $candidate || -L $candidate ]]; then
+            die "Output path crosses a non-directory: $candidate" 2
+        fi
+        component="$(basename -- "$candidate")"
+        suffix="/$component$suffix"
+        parent="$(dirname -- "$candidate")"
+        [[ $parent != "$candidate" ]] ||
+            die "Unable to resolve output directory: $1" 2
+        candidate=$parent
+    done
+
+    existing="$(
+        cd -P -- "$candidate"
+        pwd -P
+    )"
+    if [[ $existing == / ]]; then
+        CANONICAL_DIRECTORY_TARGET="/${suffix#/}"
+    else
+        CANONICAL_DIRECTORY_TARGET="$existing$suffix"
+    fi
+}
+
+contains_tsv_control() {
+    local value=$1
+
+    [[ $value == *$'\t'* || $value == *$'\n'* || $value == *$'\r'* ]]
+}
+
+resolve_source_file() {
+    local source=$1
+    local source_dir
+    local source_name
+
+    if contains_tsv_control "$source"; then
+        die "Source paths cannot contain tabs or newlines." 2
+    elif [[ $source != /* ]]; then
+        die "Source paths must be absolute: $source" 2
+    elif [[ -L "$source" ]]; then
+        die "Source PDF links are not accepted: $source" 2
+    elif [[ ! -f "$source" ]]; then
+        die "Source PDF not found: $source" 2
+    fi
+
+    case $source in
+        *.[Pp][Dd][Ff])
+            ;;
+        *)
+            die "Source file does not have a PDF extension: $source" 2
+            ;;
+    esac
+
+    source_dir="$(
+        cd -P -- "$(dirname -- "$source")"
+        pwd -P
+    )"
+    source_name="$(basename -- "$source")"
+    RESOLVED_SOURCE="$source_dir/$source_name"
+
+    if [[ $STORAGE_ROOT == / ]]; then
+        RELATIVE_SOURCE=${RESOLVED_SOURCE#/}
+    else
+        case $RESOLVED_SOURCE in
+            "$STORAGE_ROOT"/*)
+                RELATIVE_SOURCE=${RESOLVED_SOURCE#"$STORAGE_ROOT/"}
+                ;;
+            *)
+                die "Source PDF escapes the configured storage root: $source" 2
+                ;;
+        esac
+    fi
+}
+
+sha256_file() {
+    local file=$1
+
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$file" | awk '{print $1}'
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$file" | awk '{print $1}'
+    else
+        die "No SHA-256 utility found (expected sha256sum or shasum)."
+    fi
+}
+
+file_mtime() {
+    local file=$1
+
+    if stat -c %Y "$file" >/dev/null 2>&1; then
+        stat -c %Y "$file"
+    elif stat -f %m "$file" >/dev/null 2>&1; then
+        stat -f %m "$file"
+    else
+        die "Unable to read file modification time: $file"
+    fi
+}
+
+tex_escape() {
+    local remaining=$1
+    local result=""
+    local char
+
+    while [[ -n $remaining ]]; do
+        char=${remaining%"${remaining#?}"}
+        remaining=${remaining#?}
+        case $char in
+            \\)
+                result="${result}\\textbackslash{}"
+                ;;
+            '{')
+                result="${result}\\{"
+                ;;
+            '}')
+                result="${result}\\}"
+                ;;
+            '#')
+                result="${result}\\#"
+                ;;
+            '$')
+                result="${result}\\$"
+                ;;
+            '%')
+                result="${result}\\%"
+                ;;
+            '&')
+                result="${result}\\&"
+                ;;
+            '_')
+                result="${result}\\_"
+                ;;
+            '^')
+                result="${result}\\textasciicircum{}"
+                ;;
+            '~')
+                result="${result}\\textasciitilde{}"
+                ;;
+            *)
+                result="$result$char"
+                ;;
+        esac
+    done
+
+    printf '%s' "$result"
+}
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    die "Configuration not found: $CONFIG_FILE. Run scripts/setup.sh first." 2
+fi
+
+PDF_OUTPUT_DIR=""
+DOCKER_IMAGE=""
+ADMIN_OUTPUT_DIR=""
+source "$CONFIG_FILE"
+source "$REPO_DIR/scripts/report-metadata.sh"
+[[ -n $DOCKER_IMAGE ]] ||
+    die "Docker image is not configured. Rerun scripts/setup.sh with an image." 2
+
+PLAN_FILE=""
+STORAGE_ROOT_VALUE=""
+REPORT_DATE_VALUE=""
+OUTPUT_DIR_VALUE=""
+DRAFT=0
+APPROVED_WITH_ISSUES=0
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --plan)
+            [[ $# -ge 2 ]] || die "Missing value for --plan." 2
+            [[ -z $PLAN_FILE ]] || die "Plan specified more than once." 2
+            PLAN_FILE=$2
+            shift
+            ;;
+        --storage-root)
+            [[ $# -ge 2 ]] || die "Missing value for --storage-root." 2
+            [[ -z $STORAGE_ROOT_VALUE ]] ||
+                die "Storage root specified more than once." 2
+            STORAGE_ROOT_VALUE=$2
+            shift
+            ;;
+        --date)
+            [[ $# -ge 2 ]] || die "Missing value for --date." 2
+            [[ -z $REPORT_DATE_VALUE ]] || die "Date specified more than once." 2
+            REPORT_DATE_VALUE=$2
+            shift
+            ;;
+        --output-dir)
+            [[ $# -ge 2 ]] || die "Missing value for --output-dir." 2
+            [[ -z $OUTPUT_DIR_VALUE ]] ||
+                die "Output directory specified more than once." 2
+            OUTPUT_DIR_VALUE=$2
+            shift
+            ;;
+        --draft)
+            [[ $DRAFT -eq 0 ]] || die "--draft specified more than once." 2
+            DRAFT=1
+            ;;
+        --approved-with-issues)
+            [[ $APPROVED_WITH_ISSUES -eq 0 ]] ||
+                die "--approved-with-issues specified more than once." 2
+            APPROVED_WITH_ISSUES=1
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            die "Unknown option: $1" 2
+            ;;
+    esac
+    shift
+done
+
+[[ -n $PLAN_FILE ]] || die "--plan is required." 2
+[[ -f $PLAN_FILE ]] || die "Bundle plan not found: $PLAN_FILE" 2
+[[ -n $STORAGE_ROOT_VALUE ]] || die "--storage-root is required." 2
+[[ -n $REPORT_DATE_VALUE ]] || die "--date is required." 2
+[[ $DRAFT -eq 0 || $APPROVED_WITH_ISSUES -eq 0 ]] ||
+    die "--draft and --approved-with-issues cannot be combined." 2
+
+if contains_tsv_control "$STORAGE_ROOT_VALUE"; then
+    die "Storage root cannot contain tabs or newlines." 2
+elif [[ $STORAGE_ROOT_VALUE != /* ]]; then
+    die "Storage root must be absolute: $STORAGE_ROOT_VALUE" 2
+elif [[ ! -d $STORAGE_ROOT_VALUE ]]; then
+    die "Storage root not found: $STORAGE_ROOT_VALUE" 2
+fi
+STORAGE_ROOT="$(
+    cd -P -- "$STORAGE_ROOT_VALUE"
+    pwd -P
+)"
+
+resolve_report_date "$REPORT_DATE_VALUE"
+
+if [[ $DRAFT -eq 1 ]]; then
+    if [[ -z $OUTPUT_DIR_VALUE ]]; then
+        die "Draft builds require an explicit temporary --output-dir." 2
+    fi
+else
+    if [[ -n $OUTPUT_DIR_VALUE ]]; then
+        die "--output-dir is accepted only for draft builds." 2
+    elif [[ -z $ADMIN_OUTPUT_DIR ]]; then
+        die "Administrator output is not configured. Rerun setup with --admin-output." 2
+    fi
+    OUTPUT_DIR_VALUE=$ADMIN_OUTPUT_DIR
+fi
+OUTPUT_DIR="$(normalize_output_directory "$OUTPUT_DIR_VALUE")"
+
+if [[ $DRAFT -eq 1 && -n $ADMIN_OUTPUT_DIR ]]; then
+    CONFIGURED_ADMIN_OUTPUT="$(normalize_output_directory "$ADMIN_OUTPUT_DIR")"
+    canonical_directory_target "$OUTPUT_DIR"
+    DRAFT_OUTPUT_TARGET=$CANONICAL_DIRECTORY_TARGET
+    canonical_directory_target "$CONFIGURED_ADMIN_OUTPUT"
+    CONFIGURED_OUTPUT_TARGET=$CANONICAL_DIRECTORY_TARGET
+    if [[ $DRAFT_OUTPUT_TARGET == "$CONFIGURED_OUTPUT_TARGET" ]]; then
+        die "A draft cannot be written to the configured administrator output." 2
+    fi
+fi
+
+if [[ -e $OUTPUT_DIR && ! -d $OUTPUT_DIR ]]; then
+    die "Output target is not a directory: $OUTPUT_DIR" 2
+fi
+
+TMP_ROOT="$(mktemp -d)"
+OUTPUT_STAGE_PDF=""
+OUTPUT_STAGE_MANIFEST=""
+cleanup() {
+    rm -rf -- "$TMP_ROOT"
+    if [[ -n $OUTPUT_STAGE_PDF ]]; then
+        rm -f -- "$OUTPUT_STAGE_PDF"
+    fi
+    if [[ -n $OUTPUT_STAGE_MANIFEST ]]; then
+        rm -f -- "$OUTPUT_STAGE_MANIFEST"
+    fi
+}
+trap cleanup EXIT
+
+ENTRIES="$TMP_ROOT/entries.tsv"
+SORTED_ENTRIES="$TMP_ROOT/entries-sorted.tsv"
+CANDIDATES="$TMP_ROOT/candidates.tsv"
+ISSUES="$TMP_ROOT/issues.tsv"
+: > "$ENTRIES"
+: > "$CANDIDATES"
+: > "$ISSUES"
+
+SCHEMA_SEEN=0
+LINE_NUMBER=0
+while IFS=$'\t' read -r record f1 f2 f3 f4 f5 f6 f7 extra ||
+    [[ -n $record ]]
+do
+    LINE_NUMBER="$((LINE_NUMBER + 1))"
+    case $record in
+        ""|\#*)
+            continue
+            ;;
+        schema)
+            if [[ $SCHEMA_SEEN -eq 1 || $f1 != "admin-wr-plan/v1" ||
+                -n $f2 || -n $f3 || -n $f4 || -n $f5 || -n $f6 ||
+                -n $f7 || -n $extra ]]
+            then
+                die "Invalid schema record at plan line $LINE_NUMBER." 2
+            fi
+            SCHEMA_SEEN=1
+            ;;
+        entry)
+            order=$f1
+            member_id=$f2
+            display_name=$f3
+            requirement=$f4
+            state=$f5
+            source_path=$f6
+            reason=$f7
+            if [[ -n $extra || ! $order =~ ^[1-9][0-9]*$ ||
+                ! $member_id =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ||
+                -z $display_name ||
+                ! $reason =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+            then
+                die "Invalid entry record at plan line $LINE_NUMBER." 2
+            fi
+            case $requirement in
+                required|optional)
+                    ;;
+                *)
+                    die "Invalid member requirement at plan line $LINE_NUMBER." 2
+                    ;;
+            esac
+            case $state in
+                included|exception)
+                    [[ $source_path != "-" ]] ||
+                        die "Selected entry lacks a source at plan line $LINE_NUMBER." 2
+                    resolve_source_file "$source_path"
+                    source_path=$RESOLVED_SOURCE
+                    ;;
+                missing)
+                    [[ $requirement == required && $source_path == "-" ]] ||
+                        die "Invalid missing entry at plan line $LINE_NUMBER." 2
+                    ;;
+                optional-missing)
+                    [[ $requirement == optional && $source_path == "-" ]] ||
+                        die "Invalid optional-missing entry at plan line $LINE_NUMBER." 2
+                    ;;
+                *)
+                    die "Invalid entry state at plan line $LINE_NUMBER." 2
+                    ;;
+            esac
+            contains_tsv_control "$display_name" &&
+                die "Display names cannot contain tabs or newlines." 2
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "$order" "$member_id" "$display_name" "$requirement" \
+                "$state" "$source_path" "$reason" >> "$ENTRIES"
+            ;;
+        candidate)
+            member_id=$f1
+            decision=$f2
+            source_path=$f3
+            reason=$f4
+            if [[ -n $f5 || -n $f6 || -n $f7 || -n $extra ||
+                ! $member_id =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ||
+                ! $reason =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+            then
+                die "Invalid candidate record at plan line $LINE_NUMBER." 2
+            fi
+            case $decision in
+                selected|rejected)
+                    ;;
+                *)
+                    die "Invalid candidate decision at plan line $LINE_NUMBER." 2
+                    ;;
+            esac
+            resolve_source_file "$source_path"
+            printf '%s\t%s\t%s\t%s\n' \
+                "$member_id" "$decision" "$RESOLVED_SOURCE" "$reason" \
+                >> "$CANDIDATES"
+            ;;
+        issue)
+            severity=$f1
+            code=$f2
+            member_id=$f3
+            message=$f4
+            if [[ -n $f5 || -n $f6 || -n $f7 || -n $extra ||
+                ! $code =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ||
+                -z $message ]]
+            then
+                die "Invalid issue record at plan line $LINE_NUMBER." 2
+            fi
+            case $severity in
+                error|warning)
+                    ;;
+                *)
+                    die "Invalid issue severity at plan line $LINE_NUMBER." 2
+                    ;;
+            esac
+            if [[ $member_id != "-" &&
+                ! $member_id =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+            then
+                die "Invalid issue member ID at plan line $LINE_NUMBER." 2
+            fi
+            contains_tsv_control "$message" &&
+                die "Issue messages cannot contain tabs or newlines." 2
+            printf '%s\t%s\t%s\t%s\n' \
+                "$severity" "$code" "$member_id" "$message" >> "$ISSUES"
+            ;;
+        *)
+            die "Unknown record at plan line $LINE_NUMBER: $record" 2
+            ;;
+    esac
+done < "$PLAN_FILE"
+
+[[ $SCHEMA_SEEN -eq 1 ]] || die "Bundle plan schema record is missing." 2
+[[ -s $ENTRIES ]] || die "Bundle plan has no member entries." 2
+
+TAB=$'\t'
+LC_ALL=C sort -t "$TAB" -k1,1n -k2,2 "$ENTRIES" > "$SORTED_ENTRIES"
+
+if ! awk -F '\t' '
+    seen_order[$1]++ { duplicate = 1 }
+    seen_id[$2]++ { duplicate = 1 }
+    END { exit duplicate }
+' "$SORTED_ENTRIES"
+then
+    die "Member entry order and IDs must be unique." 2
+fi
+
+if ! awk -F '\t' '
+    ($5 == "included" || $5 == "exception") && seen_path[$6]++ {
+        duplicate = 1
+    }
+    END { exit duplicate }
+' "$SORTED_ENTRIES"
+then
+    die "A source PDF cannot be selected for more than one member." 2
+fi
+
+if [[ -s $CANDIDATES ]] && ! awk -F '\t' '
+    NR == FNR { members[$2] = 1; next }
+    !($1 in members) { invalid = 1 }
+    END { exit invalid }
+' "$SORTED_ENTRIES" "$CANDIDATES"
+then
+    die "Candidate record refers to an unknown member." 2
+fi
+
+if [[ -s $ISSUES ]] && ! awk -F '\t' '
+    NR == FNR { members[$2] = 1; next }
+    $3 != "-" && !($3 in members) { invalid = 1 }
+    END { exit invalid }
+' "$SORTED_ENTRIES" "$ISSUES"
+then
+    die "Issue record refers to an unknown member." 2
+fi
+
+if ! awk -F '\t' '
+    NR == FNR {
+        if ($5 == "exception" || $5 == "missing") {
+            needs_issue[$2] = 1
+        }
+        next
+    }
+    $3 != "-" { has_issue[$3] = 1 }
+    END {
+        for (member in needs_issue) {
+            if (!(member in has_issue)) {
+                invalid = 1
+            }
+        }
+        exit invalid
+    }
+' "$SORTED_ENTRIES" "$ISSUES"
+then
+    die "Every exception or missing member requires a member-specific issue." 2
+fi
+
+if ! awk -F '\t' '
+    NR == FNR {
+        if ($5 == "included" || $5 == "exception") {
+            expected[$2] = $6
+        }
+        next
+    }
+    {
+        key = $1 SUBSEP $3
+        if (seen[key]++) {
+            invalid = 1
+        }
+        if ($2 == "selected") {
+            selected_count[$1]++
+            if (!($1 in expected) || expected[$1] != $3) {
+                invalid = 1
+            }
+        }
+    }
+    END {
+        for (member in expected) {
+            if (selected_count[member] != 1) {
+                invalid = 1
+            }
+        }
+        exit invalid
+    }
+' "$SORTED_ENTRIES" "$CANDIDATES"
+then
+    die "Candidate selections do not match member entries." 2
+fi
+
+PLAN_REQUIRES_APPROVAL=0
+if [[ -s $ISSUES ]] ||
+    awk -F '\t' '$5 == "exception" || $5 == "missing" { found = 1 }
+        END { exit !found }' "$SORTED_ENTRIES"
+then
+    PLAN_REQUIRES_APPROVAL=1
+fi
+
+if [[ $PLAN_REQUIRES_APPROVAL -eq 1 ]]; then
+    if [[ $DRAFT -eq 0 && $APPROVED_WITH_ISSUES -eq 0 ]]; then
+        die "Plans with issues require --draft or --approved-with-issues." 2
+    fi
+elif [[ $DRAFT -eq 1 || $APPROVED_WITH_ISSUES -eq 1 ]]; then
+    die "A clean plan must be built without an approval-mode flag." 2
+fi
+
+CANDIDATE_META="$TMP_ROOT/candidate-meta.tsv"
+: > "$CANDIDATE_META"
+while IFS=$'\t' read -r member_id decision source_path reason; do
+    resolve_source_file "$source_path"
+    relative_source=$RELATIVE_SOURCE
+    candidate_mtime="$(file_mtime "$source_path")"
+    candidate_hash="$(sha256_file "$source_path")"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$member_id" "$decision" "$source_path" "$relative_source" \
+        "$candidate_mtime" "$candidate_hash" "$reason" \
+        >> "$CANDIDATE_META"
+done < "$CANDIDATES"
+
+if ! command -v docker >/dev/null 2>&1 ||
+    ! docker info >/dev/null 2>&1
+then
+    die "Docker is unavailable. Start Docker and enable integration for this environment."
+fi
+
+if ! docker run --rm \
+    --pull=never \
+    --network none \
+    "$DOCKER_IMAGE" \
+    sh -c '
+        set -eu
+        command -v xelatex >/dev/null
+        command -v latexmk >/dev/null
+        kpsewhich pdfpages.sty >/dev/null
+        kpsewhich kotex.sty >/dev/null
+    '
+then
+    die "The configured Docker image is unavailable or lacks XeLaTeX, latexmk, pdfpages, or kotex."
+fi
+
+INCLUDED_COUNT="$(awk -F '\t' '
+    $5 == "included" || $5 == "exception" { count++ }
+    END { print count + 0 }
+' "$SORTED_ENTRIES")"
+REQUIRED_COUNT="$(awk -F '\t' '
+    $4 == "required" { count++ }
+    END { print count + 0 }
+' "$SORTED_ENTRIES")"
+REQUIRED_INCLUDED_COUNT="$(awk -F '\t' '
+    $4 == "required" && ($5 == "included" || $5 == "exception") { count++ }
+    END { print count + 0 }
+' "$SORTED_ENTRIES")"
+
+SOURCE_DIR="$TMP_ROOT/source"
+RESULT_DIR="$TMP_ROOT/result"
+mkdir -p -- "$SOURCE_DIR/input" "$RESULT_DIR"
+cp -- "$SCRIPT_DIR/../assets/bundle.tex" "$SOURCE_DIR/bundle.tex"
+
+SELECTED_META="$TMP_ROOT/selected-meta.tsv"
+PAGE_DATA="$TMP_ROOT/page-data.tsv"
+: > "$SELECTED_META"
+
+cat > "$SOURCE_DIR/page-probe.tex" <<'EOF'
+\documentclass{article}
+\newwrite\PageData
+\newcount\SourcePages
+\begin{document}
+\immediate\openout\PageData=page-data.tsv
+EOF
+
+STAGE_NUMBER=0
+while IFS=$'\t' read -r order member_id display_name requirement state \
+    source_path reason
+do
+    case $state in
+        included|exception)
+            STAGE_NUMBER="$((STAGE_NUMBER + 1))"
+            staged_name="$(printf 'input/%03d.pdf' "$STAGE_NUMBER")"
+            expected_mtime="$(awk -F '\t' -v id="$member_id" '
+                $1 == id && $2 == "selected" { print $5 }
+            ' "$CANDIDATE_META")"
+            expected_hash="$(awk -F '\t' -v id="$member_id" '
+                $1 == id && $2 == "selected" { print $6 }
+            ' "$CANDIDATE_META")"
+            cp -- "$source_path" "$SOURCE_DIR/$staged_name"
+            source_hash="$(sha256_file "$source_path")"
+            source_mtime="$(file_mtime "$source_path")"
+            staged_hash="$(sha256_file "$SOURCE_DIR/$staged_name")"
+            if [[ $source_mtime != "$expected_mtime" ||
+                $source_hash != "$expected_hash" ||
+                $staged_hash != "$expected_hash" ]]
+            then
+                die "Source PDF changed while it was being staged: $source_path"
+            fi
+            resolve_source_file "$source_path"
+            relative_source=$RELATIVE_SOURCE
+            printf '%s\t%s\t%s\t%s\t%s\n' \
+                "$member_id" "$relative_source" "$source_mtime" \
+                "$source_hash" "$staged_name" >> "$SELECTED_META"
+            printf '\\SourcePages=\\XeTeXpdfpagecount "%s"\\relax\n' \
+                "$staged_name" >> "$SOURCE_DIR/page-probe.tex"
+            printf '\\immediate\\write\\PageData{%s|\\the\\SourcePages}\n' \
+                "$member_id" >> "$SOURCE_DIR/page-probe.tex"
+            ;;
+    esac
+done < "$SORTED_ENTRIES"
+
+cat >> "$SOURCE_DIR/page-probe.tex" <<'EOF'
+\immediate\closeout\PageData
+\end{document}
+EOF
+
+if [[ $INCLUDED_COUNT -gt 0 ]]; then
+    if ! tar -C "$SOURCE_DIR" -cf - . |
+        docker run --rm -i \
+            --pull=never \
+            --network none \
+            --tmpfs /work:rw,exec,nosuid,size=1g \
+            "$DOCKER_IMAGE" \
+            sh -c '
+                set -eu
+                mkdir -p /work/src
+                tar -C /work/src -xf -
+                cd /work/src
+                xelatex -interaction=nonstopmode -halt-on-error \
+                    page-probe.tex >&2
+                cat page-data.tsv
+            ' > "$PAGE_DATA"
+    then
+        die "Unable to inspect selected PDFs with the configured TeX image."
+    fi
+else
+    : > "$PAGE_DATA"
+fi
+
+if ! awk -F '|' '
+    NF != 2 || $1 !~ /^[A-Za-z0-9][A-Za-z0-9._-]*$/ ||
+        $2 !~ /^[1-9][0-9]*$/ || seen[$1]++ {
+        invalid = 1
+    }
+    END { exit invalid }
+' "$PAGE_DATA"
+then
+    die "TeX returned invalid source page counts."
+fi
+
+if [[ "$(wc -l < "$PAGE_DATA" | tr -d ' ')" -ne $INCLUDED_COUNT ]]; then
+    die "TeX did not return a page count for every selected PDF."
+fi
+
+if [[ $DRAFT -eq 1 ]]; then
+    BUNDLE_STATE="draft"
+    APPROVAL_STATE="required"
+elif [[ $APPROVED_WITH_ISSUES -eq 1 ]]; then
+    BUNDLE_STATE="approved-with-issues"
+    APPROVAL_STATE="user-confirmed"
+else
+    BUNDLE_STATE="complete"
+    APPROVAL_STATE="not-required"
+fi
+
+cat > "$SOURCE_DIR/bundle-data.tex" <<EOF
+\\newif\\ifBundleDraft
+EOF
+if [[ $DRAFT -eq 1 ]]; then
+    echo '\BundleDrafttrue' >> "$SOURCE_DIR/bundle-data.tex"
+else
+    echo '\BundleDraftfalse' >> "$SOURCE_DIR/bundle-data.tex"
+fi
+cat >> "$SOURCE_DIR/bundle-data.tex" <<EOF
+\\def\\BundleWeek{$REPORT_WEEK_LABEL}
+\\def\\BundleWeekStart{$REPORT_WEEK_START}
+\\def\\BundleWeekEnd{$REPORT_WEEK_END}
+\\def\\BundleReportDate{$REPORT_DATE}
+\\def\\BundleIncludedCount{$INCLUDED_COUNT}
+\\def\\BundleRequiredIncludedCount{$REQUIRED_INCLUDED_COUNT}
+\\def\\BundleRequiredCount{$REQUIRED_COUNT}
+EOF
+
+: > "$SOURCE_DIR/bundle-rows.tex"
+: > "$SOURCE_DIR/bundle-includes.tex"
+NEXT_PAGE=2
+EXPECTED_PAGES=1
+while IFS=$'\t' read -r order member_id display_name requirement state \
+    source_path reason
+do
+    escaped_name="$(tex_escape "$display_name")"
+    pages="--"
+    case $state in
+        included)
+            status_label="Included"
+            ;;
+        exception)
+            if [[ $DRAFT -eq 1 ]]; then
+                status_label="Proposed exception"
+            else
+                status_label="Approved exception"
+            fi
+            ;;
+        missing)
+            status_label="Missing"
+            ;;
+        optional-missing)
+            status_label="Optional not included"
+            ;;
+    esac
+
+    case $state in
+        included|exception)
+            page_count="$(awk -F '|' -v id="$member_id" '
+                $1 == id { print $2 }
+            ' "$PAGE_DATA")"
+            page_end="$((NEXT_PAGE + page_count - 1))"
+            if [[ $page_count -eq 1 ]]; then
+                pages="$NEXT_PAGE"
+            else
+                pages="$NEXT_PAGE--$page_end"
+            fi
+            staged_name="$(awk -F '\t' -v id="$member_id" '
+                $1 == id { print $5 }
+            ' "$SELECTED_META")"
+            printf '\\includepdf[pages=-,pagecommand={\\thispagestyle{empty}}]{%s}\n' \
+                "$staged_name" >> "$SOURCE_DIR/bundle-includes.tex"
+            NEXT_PAGE="$((page_end + 1))"
+            EXPECTED_PAGES="$((EXPECTED_PAGES + page_count))"
+            ;;
+    esac
+
+    escaped_status="$(tex_escape "$status_label")"
+    printf '%s & %s & %s & %s \\\\\\\\\n' \
+        "$order" "$escaped_name" "$escaped_status" "$pages" \
+        >> "$SOURCE_DIR/bundle-rows.tex"
+done < "$SORTED_ENTRIES"
+echo '\bottomrule' >> "$SOURCE_DIR/bundle-rows.tex"
+
+cat > "$SOURCE_DIR/result-probe.tex" <<'EOF'
+\documentclass{article}
+\newwrite\PageData
+\newcount\BundlePages
+\begin{document}
+\immediate\openout\PageData=actual-pages.txt
+\BundlePages=\XeTeXpdfpagecount "bundle.pdf"\relax
+\immediate\write\PageData{\the\BundlePages}
+\immediate\closeout\PageData
+\end{document}
+EOF
+
+if ! tar -C "$SOURCE_DIR" -cf - . |
+    docker run --rm -i \
+        --pull=never \
+        --network none \
+        --tmpfs /work:rw,exec,nosuid,size=1g \
+        -e "EXPECTED_PAGES=$EXPECTED_PAGES" \
+        "$DOCKER_IMAGE" \
+        sh -c '
+            set -eu
+            mkdir -p /work/src
+            tar -C /work/src -xf -
+            cd /work/src
+            latexmk -xelatex -interaction=nonstopmode -halt-on-error \
+                bundle.tex >&2
+            xelatex -interaction=nonstopmode -halt-on-error \
+                result-probe.tex >&2
+            ACTUAL_PAGES="$(tr -d "[:space:]" < actual-pages.txt)"
+            if [ "$ACTUAL_PAGES" != "$EXPECTED_PAGES" ]; then
+                echo "Unexpected bundle page count: $ACTUAL_PAGES" >&2
+                exit 1
+            fi
+            tar -cf - bundle.pdf
+        ' |
+    tar -C "$RESULT_DIR" -xf -
+then
+    die "Bundle build failed; the configured output was not changed."
+fi
+
+[[ -f "$RESULT_DIR/bundle.pdf" ]] ||
+    die "Bundle build did not produce a PDF."
+
+BUNDLE_HASH="$(sha256_file "$RESULT_DIR/bundle.pdf")"
+CREATED_AT_EPOCH="$(date +%s)"
+MANIFEST_FILE="$TMP_ROOT/$REPORT_WEEK_LABEL.manifest.tsv"
+printf 'schema\tadmin-wr-bundle/v1\n' > "$MANIFEST_FILE"
+printf 'bundle\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$REPORT_DATE" "$REPORT_WEEK_LABEL" "$REPORT_WEEK_START" \
+    "$REPORT_WEEK_END" "$BUNDLE_STATE" "$APPROVAL_STATE" \
+    "$REPORT_WEEK_LABEL.pdf" "$BUNDLE_HASH" >> "$MANIFEST_FILE"
+printf 'created-at\t%s\n' "$CREATED_AT_EPOCH" >> "$MANIFEST_FILE"
+
+NEXT_PAGE=2
+while IFS=$'\t' read -r order member_id display_name requirement state \
+    source_path reason
+do
+    relative_source="-"
+    source_mtime="-"
+    source_hash="-"
+    page_count="0"
+    page_start="-"
+    page_end="-"
+    case $state in
+        included|exception)
+            relative_source="$(awk -F '\t' -v id="$member_id" '
+                $1 == id { print $2 }
+            ' "$SELECTED_META")"
+            source_mtime="$(awk -F '\t' -v id="$member_id" '
+                $1 == id { print $3 }
+            ' "$SELECTED_META")"
+            source_hash="$(awk -F '\t' -v id="$member_id" '
+                $1 == id { print $4 }
+            ' "$SELECTED_META")"
+            page_count="$(awk -F '|' -v id="$member_id" '
+                $1 == id { print $2 }
+            ' "$PAGE_DATA")"
+            page_start=$NEXT_PAGE
+            page_end="$((NEXT_PAGE + page_count - 1))"
+            NEXT_PAGE="$((page_end + 1))"
+            ;;
+    esac
+    printf 'entry\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$order" "$member_id" "$display_name" "$requirement" "$state" \
+        "$relative_source" "$source_mtime" "$source_hash" "$page_count" \
+        "$page_start" "$page_end" "$reason" >> "$MANIFEST_FILE"
+done < "$SORTED_ENTRIES"
+
+while IFS=$'\t' read -r member_id decision source_path relative_source \
+    candidate_mtime candidate_hash reason
+do
+    printf 'candidate\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$member_id" "$decision" "$relative_source" "$candidate_mtime" \
+        "$candidate_hash" "$reason" \
+        >> "$MANIFEST_FILE"
+done < "$CANDIDATE_META"
+
+while IFS=$'\t' read -r severity code member_id message; do
+    printf 'issue\t%s\t%s\t%s\t%s\n' \
+        "$severity" "$code" "$member_id" "$message" >> "$MANIFEST_FILE"
+done < "$ISSUES"
+
+while IFS=$'\t' read -r member_id relative_source source_mtime \
+    source_hash staged_name
+do
+    if [[ $STORAGE_ROOT == / ]]; then
+        source_path="/$relative_source"
+    else
+        source_path="$STORAGE_ROOT/$relative_source"
+    fi
+    resolve_source_file "$source_path"
+    if [[ $RESOLVED_SOURCE != "$source_path" ||
+        "$(file_mtime "$source_path")" != "$source_mtime" ||
+        "$(sha256_file "$source_path")" != "$source_hash" ]]
+    then
+        die "Selected source changed before publication: $source_path"
+    fi
+done < "$SELECTED_META"
+
+mkdir -p -- "$OUTPUT_DIR"
+OUTPUT_DIR="$(
+    cd -P -- "$OUTPUT_DIR"
+    pwd -P
+)"
+FINAL_PDF="$OUTPUT_DIR/$REPORT_WEEK_LABEL.pdf"
+FINAL_MANIFEST="$OUTPUT_DIR/$REPORT_WEEK_LABEL.manifest.tsv"
+if [[ ( -e $FINAL_PDF || -L $FINAL_PDF ) && ! -f $FINAL_PDF ]]; then
+    die "Existing bundle PDF target is not a regular file: $FINAL_PDF"
+fi
+if [[ ( -e $FINAL_MANIFEST || -L $FINAL_MANIFEST ) &&
+    ! -f $FINAL_MANIFEST ]]
+then
+    die "Existing bundle manifest target is not a regular file: $FINAL_MANIFEST"
+fi
+OUTPUT_STAGE_PDF="$(mktemp "$OUTPUT_DIR/.$REPORT_WEEK_LABEL.pdf.tmp.XXXXXX")"
+OUTPUT_STAGE_MANIFEST="$(
+    mktemp "$OUTPUT_DIR/.$REPORT_WEEK_LABEL.manifest.tsv.tmp.XXXXXX"
+)"
+
+cp -- "$RESULT_DIR/bundle.pdf" "$OUTPUT_STAGE_PDF"
+cp -- "$MANIFEST_FILE" "$OUTPUT_STAGE_MANIFEST"
+mv -f -- "$OUTPUT_STAGE_PDF" "$FINAL_PDF"
+OUTPUT_STAGE_PDF=""
+mv -f -- "$OUTPUT_STAGE_MANIFEST" "$FINAL_MANIFEST"
+OUTPUT_STAGE_MANIFEST=""
+
+echo "written: $FINAL_PDF" >&2
+echo "written: $FINAL_MANIFEST" >&2
+printf '%s\n%s\n' "$FINAL_PDF" "$FINAL_MANIFEST"

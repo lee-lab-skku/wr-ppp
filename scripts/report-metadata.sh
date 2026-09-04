@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# Resolve a report date and its reporting-week label on the host.
+# Resolve a report date, its reporting-week label, and its Monday-to-Sunday
+# reporting period on the host.
 # Arguments: optional date in YYYY-MM-DD format.
 resolve_report_date() {
     local requested_date="${1:-}"
@@ -12,6 +13,10 @@ resolve_report_date() {
     local thursday_adjustment
     local thursday_day
     local week_number
+    local monday_offset
+    local sunday_offset
+    local monday_adjustment
+    local sunday_adjustment
 
     if date -d "2000-01-01" +%F >/dev/null 2>&1; then
         date_implementation="gnu"
@@ -55,6 +60,14 @@ resolve_report_date() {
         thursday="$(
             date -d "$thursday_offset days $REPORT_DATE 12:00:00" +%F
         )"
+        monday_offset="$((1 - weekday))"
+        sunday_offset="$((7 - weekday))"
+        REPORT_WEEK_START="$(
+            date -d "$monday_offset days $REPORT_DATE 12:00:00" +%F
+        )"
+        REPORT_WEEK_END="$(
+            date -d "$sunday_offset days $REPORT_DATE 12:00:00" +%F
+        )"
     else
         weekday="$(
             date -j -f "%Y-%m-%d %H:%M:%S" \
@@ -68,6 +81,26 @@ resolve_report_date() {
         fi
         thursday="$(
             date -j -v"$thursday_adjustment" \
+                -f "%Y-%m-%d %H:%M:%S" "$REPORT_DATE 12:00:00" +%F
+        )"
+        monday_offset="$((1 - weekday))"
+        sunday_offset="$((7 - weekday))"
+        if [[ $monday_offset -ge 0 ]]; then
+            monday_adjustment="+${monday_offset}d"
+        else
+            monday_adjustment="${monday_offset}d"
+        fi
+        if [[ $sunday_offset -ge 0 ]]; then
+            sunday_adjustment="+${sunday_offset}d"
+        else
+            sunday_adjustment="${sunday_offset}d"
+        fi
+        REPORT_WEEK_START="$(
+            date -j -v"$monday_adjustment" \
+                -f "%Y-%m-%d %H:%M:%S" "$REPORT_DATE 12:00:00" +%F
+        )"
+        REPORT_WEEK_END="$(
+            date -j -v"$sunday_adjustment" \
                 -f "%Y-%m-%d %H:%M:%S" "$REPORT_DATE 12:00:00" +%F
         )"
     fi

@@ -76,15 +76,28 @@ for a regular `report-build` file installed by an older setup version.
 Output directories must be absolute paths beginning with `/` or home-relative
 paths beginning with `~/`. Other relative paths are not accepted.
 
+### Install Administrator Mode
+
+Administrator mode is a maintainer workflow documented in [CONTRIBUTING.md](CONTRIBUTING.md#administrator-weekly-bundles).
+Install it with `--admin`; use the optional `--admin-output` argument to configure the final bundle directory:
+
+```bash
+./scripts/setup.sh ~/report-output danteev/texlive:latest \
+    --skills=codex,claude \
+    --admin \
+    --admin-output=/absolute/path/to/admin-bundles
+```
+
+`--admin` requires `--skills`; `--admin-output` may be omitted until final bundle output is needed.
+
 Verify the setup by compiling the included template:
 
 ```bash
 ./scripts/test.sh
 ```
 
-A successful test writes `template.pdf` in the repository. The same command is
-also used after editing `weekly-report.sty` to check that the example report
-still builds.
+A successful test writes `template.pdf` in the repository.
+The same command is also used after editing `weekly-report.sty` to check that the example report still builds.
 
 ## Create a Weekly Report
 
@@ -260,9 +273,8 @@ Docker image. The omitted value is read from `.local-config`:
 ./scripts/setup.sh --replace-existing
 ```
 
-The new values replace the previous local configuration and are used by both
-`scripts/test.sh` and `report-build`. The `--skills` and `--replace-existing`
-options may be combined with any of these forms.
+The new values replace the previous local configuration and are used by both `scripts/test.sh` and `report-build`.
+The `--skills` and `--replace-existing` options may be combined with any of these forms.
 
 ## Repository Files
 

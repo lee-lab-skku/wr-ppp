@@ -15,6 +15,7 @@ Use the repository sources according to their roles:
 
 - `README.md` describes the user workflow.
 - The files under `scripts/` implement setup and build behavior.
+- The files under `skills/` define the report-writing and administrator agent workflows.
 - `weekly-report.sty` defines the shared LaTeX interfaces and presentation.
 - `template.tex` demonstrates the intended report structure and usage.
 
@@ -54,17 +55,88 @@ Quote path and variable expansions, preserve `set -euo pipefail` where it is
 already used, and resolve script-relative paths without assuming the caller's
 working directory.
 
-Preserve the build's isolation and output-safety properties: the TeX container
-runs without network access, reads the shared style through a read-only mount,
-and compiles in temporary storage. A completed PDF should replace its target
-only after a successful build, and the container must not modify source files.
+Preserve the builds' isolation and output-safety properties.
+TeX containers run without network access and compile in temporary storage.
+A completed PDF should replace its target only after a successful build and validation, and containers must not modify source files.
 
-## Editing the AI Skill
+## Administrator Weekly Bundles
 
-Use this order of reference when updating `skills/wr-wr`:
+Administrator mode is a maintainer workflow that installs the separate `admin-wr` skill alongside `wr-wr` for every service named by `--skills`:
 
-1. Read `skills/wr-wr/SKILL.md` and the reference file governing the behavior
-   being changed.
+```bash
+./scripts/setup.sh ~/report-output danteev/texlive:latest \
+    --skills=codex,claude \
+    --admin \
+    --admin-output=/absolute/path/to/admin-bundles
+```
+
+`--admin` requires `--skills` because it changes which skills are installed.
+`--admin-output` is optional and accepts only an absolute path or a path beginning with `~/`.
+If it is omitted, setup preserves any saved administrator output; a first installation without one succeeds and reports `Admin output: not configured`.
+The administrator output directory is required only for final promotion and is not created merely by setup.
+
+The first administrator-mode setup creates a private, Git-ignored `.manager-manifest.toml` skeleton with mode `0600`.
+Setup must preserve an existing regular manifest or valid symbolic link regardless of `--replace-existing`, reject a conflicting directory, and never infer member or storage values.
+Configure the manifest before discovery:
+
+```toml
+schema = 1
+storage_root = "/absolute/path/to/report-storage"
+timezone = "Asia/Seoul"
+
+[[members]]
+id = "member-a"
+display_name = "구성원 가"
+order = 10
+required = true
+search_roots = ["member-a"]
+
+[[members]]
+id = "member-b"
+display_name = "구성원 나"
+order = 20
+required = true
+search_roots = ["member-b/current-period"]
+```
+
+The manifest must use schema `1`, an absolute `storage_root`, an IANA timezone, and one or more members.
+Member IDs and positive integer orders must be unique, and every member must have at least one search root.
+Search roots are relative to `storage_root`; reject absolute roots, `..`, missing directories, directory-symlink components, and any physical resolution outside storage.
+Different members may use different directory depths, and report filenames and templates remain unrestricted.
+
+The agent recursively considers ordinary PDFs only inside each member's declared roots, uses NUL-delimited enumeration, excludes AppleDouble files, and never follows or expands through directory links.
+It evaluates prior bundle records, file changes, filesystem and PDF timestamps, filename hints, extractable dates and authors, and possible revision relationships without treating any single signal as mandatory.
+A missing internal week label, author header, or repository template is not an issue by itself.
+
+The agent writes its proposed selections and issues to a temporary TSV plan.
+`skills/admin-wr/scripts/build-bundle` consumes only that plan and its explicit PDFs; it does not parse TOML or search storage.
+It stages normalized PDF names, builds without container networking, verifies source hashes and page counts, and creates an A4 bundle whose first page is a fixed one-page index rather than an AI-written narrative.
+The remaining pages contain the selected reports in manifest order with their aspect ratios preserved.
+
+Missing required reports, unresolved or weak candidate choices, unreadable PDFs, invalid prior bundle hashes, and first runs require approval.
+The agent first writes a visibly marked draft outside the configured final directory and reports the proposed choices and issues.
+After explicit approval it rechecks source hashes and rebuilds the final bundle, retaining `Included`, `Missing`, `Approved exception`, and `Optional not included` statuses while removing the draft mark.
+A user-selected replacement candidate requires a new draft and approval for every remaining issue.
+
+Final artifacts use the canonical week label:
+
+```text
+2026-09-W1.pdf
+2026-09-W1.manifest.tsv
+```
+
+The execution manifest records the official date and period, completion and approval state, candidates, selection reasons, source paths relative to storage, mtimes, hashes, page ranges, missing members, and issue codes.
+The builder validates the new PDF completely before using hidden same-directory temporary files and atomic moves to replace an existing week without a backup.
+If only one artifact is replaced before an interruption, the next run must detect the PDF hash mismatch and require approval.
+Source PDFs must never be modified or deleted.
+
+The implementation is split across `skills/admin-wr` for agent behavior, `skills/admin-wr/scripts/build-bundle` and `skills/admin-wr/assets/bundle.tex` for deterministic assembly, and `scripts/resolve-repo-root` for repository resolution shared with `wr-wr`.
+
+## Editing AI Skills
+
+Use this order of reference when updating `skills/wr-wr` or `skills/admin-wr`:
+
+1. Read the selected skill's `SKILL.md` and the reference file governing the behavior being changed.
 1. Consult `README.md` and the scripts for workflow behavior, `template.tex`
    for intended report usage, and `weekly-report.sty` for exact LaTeX
    interfaces. These repository sources are authoritative.
@@ -73,15 +145,15 @@ Use this order of reference when updating `skills/wr-wr`:
 
 Keep `SKILL.md` focused on activation scope, task routing, cross-cutting
 safeguards, and completion behavior. Put detailed domain guidance in the
-relevant file under `references/`, and keep deterministic repository-location
-logic in the skill's script. Prefer extending an existing reference over adding
-a new one unless the change introduces a distinct concern.
+relevant file under `references/`, and keep deterministic repository-location logic in the shared `scripts/resolve-repo-root`.
+Prefer extending an existing reference over adding a new one unless the change introduces a distinct concern.
 
-Do not duplicate the repository's full interfaces in the skill. Refer to the
-canonical sources when exact behavior matters so that skill guidance does not
-become a stale parallel manual. The same skill should remain usable through the
-supported Codex and Claude links; avoid provider-specific instructions unless
-they are necessary and clearly scoped.
+When editing `admin-wr`, preserve the responsibility boundary defined in [Administrator Weekly Bundles](#administrator-weekly-bundles) rather than moving judgment into deterministic scripts.
+Changes to the plan or execution-manifest formats must update the workflow reference, tests, and user documentation together.
+
+Do not duplicate the repository's full interfaces in a skill.
+Refer to the canonical sources when exact behavior matters so that skill guidance does not become a stale parallel manual.
+Both skills should remain usable through the supported Codex and Claude links; avoid provider-specific instructions unless they are necessary and clearly scoped.
 
 Keep skill behavior adaptive, evidence-grounded, protective of existing user
 work, and limited to authorized actions. When its capabilities or expectations
@@ -90,11 +162,9 @@ workflow documentation together as applicable.
 
 ## Validation
 
-Validate in proportion to the change and its risks. Exercise the affected
-workflow and relevant error behavior, confirm documentation against the
-canonical sources, and compile the example when build or LaTeX behavior
-changes. Skill changes should cover representative activation, reference
-routing, repository resolution, and affected report tasks.
+Validate in proportion to the change and its risks.
+Exercise the affected workflow and relevant error behavior, confirm documentation against the canonical sources, and compile the example when build or LaTeX behavior changes.
+Skill changes should cover representative activation, reference routing, all shared repository-resolver entry points, and affected report tasks.
 
 Document checks that were not run when they would otherwise be relevant. Do
 not claim macOS compatibility was verified unless the affected workflow was
@@ -104,9 +174,8 @@ environment does not by itself block a contribution.
 
 ## Documentation and Scope
 
-Update `README.md` when setup arguments, generated command behavior, required
-software, report-writing instructions, or user-visible skill capabilities
-change.
+Update `README.md` when setup arguments, generated command behavior, required software, report-writing instructions, or user-visible skill capabilities change.
+Keep maintainer-only administrator details in this document and limit the README to a short pointer and basic setup options.
 
 Keep commits limited to meaningful changes and explain user-visible behavior in
 the commit message. Do not include generated PDFs or local configuration unless

@@ -11,27 +11,32 @@ REPOSITORY_VERSION="$(
 )"
 
 CONFIG_FILE="$REPO_DIR/.local-config"
-SKILL_NAME="wr-wr"
-SKILL_SOURCE="$REPO_DIR/skills/$SKILL_NAME"
+MANAGER_MANIFEST="$REPO_DIR/.manager-manifest.toml"
 REPORT_BUILD_TARGET="/usr/local/bin/report-build"
 REPORT_BUILD_SOURCE="$REPO_DIR/scripts/report-build"
+WRITER_SKILL_NAME="wr-wr"
+ADMIN_SKILL_NAME="admin-wr"
 
 usage() {
     echo "Usage: $0" >&2
     echo "       $0 <absolute-pdf-output-directory>" >&2
     echo "       $0 <docker-image>" >&2
     echo "       $0 <absolute-pdf-output-directory> <docker-image>" >&2
-    echo "       $0 [setup-arguments] [--skills=<codex|claude>[,...]] [--replace-existing]" >&2
+    echo "       $0 [setup-arguments] [--skills=<codex|claude>[,...]] [--admin]" >&2
+    echo "          [--admin-output=<absolute-directory>] [--replace-existing]" >&2
     echo "Output directories must start with '/' or '~/'." >&2
 }
 
 skill_link_for_service() {
-    case $1 in
+    local service=$1
+    local skill_name=$2
+
+    case $service in
         codex)
-            echo "${HOME:?HOME is not set}/.agents/skills/$SKILL_NAME"
+            echo "${HOME:?HOME is not set}/.agents/skills/$skill_name"
             ;;
         claude)
-            echo "${HOME:?HOME is not set}/.claude/skills/$SKILL_NAME"
+            echo "${HOME:?HOME is not set}/.claude/skills/$skill_name"
             ;;
     esac
 }
@@ -75,6 +80,21 @@ preflight_link() {
 
         echo "$description target already exists: $target" >&2
         echo "Use --replace-existing to back it up and install the link." >&2
+        return 1
+    fi
+}
+
+preflight_manager_manifest() {
+    if [[ -L "$MANAGER_MANIFEST" ]]; then
+        if [[ -f "$MANAGER_MANIFEST" ]]; then
+            return
+        fi
+        echo "Manager manifest link does not resolve to a regular file: $MANAGER_MANIFEST" >&2
+        return 1
+    fi
+
+    if [[ -e "$MANAGER_MANIFEST" && ! -f "$MANAGER_MANIFEST" ]]; then
+        echo "Manager manifest target must be a regular file: $MANAGER_MANIFEST" >&2
         return 1
     fi
 }
@@ -141,9 +161,63 @@ install_link() {
     echo "Linked: $description: $target -> $source"
 }
 
+normalize_output_directory() {
+    local value=$1
+
+    if [[ $value == '~/'* ]]; then
+        value="${HOME:?HOME is not set}/${value#\~/}"
+    elif [[ $value != /* ]]; then
+        echo "Relative output directories are not allowed: $value" >&2
+        return 1
+    fi
+
+    printf '%s\n' "$value"
+}
+
+create_manager_manifest() {
+    if [[ -L "$MANAGER_MANIFEST" ]]; then
+        if [[ ! -f "$MANAGER_MANIFEST" ]]; then
+            echo "Manager manifest link no longer resolves to a regular file: $MANAGER_MANIFEST" >&2
+            return 1
+        fi
+        echo "Preserved: manager manifest: $MANAGER_MANIFEST"
+        return
+    elif [[ -f "$MANAGER_MANIFEST" ]]; then
+        echo "Preserved: manager manifest: $MANAGER_MANIFEST"
+        return
+    elif [[ -e "$MANAGER_MANIFEST" ]]; then
+        echo "Manager manifest target appeared after setup preflight: $MANAGER_MANIFEST" >&2
+        return 1
+    fi
+
+    (
+        umask 077
+        cat > "$MANAGER_MANIFEST" <<'EOF'
+# Administrator report discovery manifest.
+# Set storage_root and add one [[members]] table per report author before use.
+schema = 1
+timezone = "Asia/Seoul"
+
+# storage_root = "/absolute/path/to/report-storage"
+
+# [[members]]
+# id = "stable-id"
+# display_name = "Display Name"
+# order = 10
+# required = true
+# search_roots = ["path/relative/to/storage-root"]
+EOF
+    )
+    chmod 0600 "$MANAGER_MANIFEST"
+    echo "Created: manager manifest: $MANAGER_MANIFEST"
+}
+
 SETUP_ARGS=()
 SKILL_SERVICES=()
 SKILLS_SET=0
+ADMIN=0
+ADMIN_OUTPUT_SET=0
+ADMIN_OUTPUT_VALUE=""
 REPLACE_EXISTING=0
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -168,6 +242,38 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skills)
             echo "Use --skills=<codex|claude>[,...]." >&2
+            usage
+            exit 2
+            ;;
+        --admin)
+            if [[ $ADMIN -eq 1 ]]; then
+                echo "--admin specified more than once." >&2
+                usage
+                exit 2
+            fi
+            ADMIN=1
+            ;;
+        --admin=*)
+            echo "--admin does not take a value." >&2
+            usage
+            exit 2
+            ;;
+        --admin-output=*)
+            if [[ $ADMIN_OUTPUT_SET -eq 1 ]]; then
+                echo "Administrator output specified more than once." >&2
+                usage
+                exit 2
+            fi
+            ADMIN_OUTPUT_VALUE=${1#--admin-output=}
+            if [[ -z $ADMIN_OUTPUT_VALUE ]]; then
+                echo "Administrator output directory cannot be empty." >&2
+                usage
+                exit 2
+            fi
+            ADMIN_OUTPUT_SET=1
+            ;;
+        --admin-output)
+            echo "Use --admin-output=<absolute-directory>." >&2
             usage
             exit 2
             ;;
@@ -198,6 +304,19 @@ if [[ $# -gt 2 ]]; then
     exit 2
 fi
 
+if [[ $ADMIN -eq 1 && $SKILLS_SET -eq 0 ]]; then
+    echo "--admin requires --skills=<codex|claude>[,...]." >&2
+    usage
+    exit 2
+fi
+
+if [[ $ADMIN_OUTPUT_SET -eq 1 && $ADMIN -eq 0 ]]; then
+    echo "--admin-output requires --admin." >&2
+    usage
+    exit 2
+fi
+
+VALIDATED_SERVICES=()
 for service in "${SKILL_SERVICES[@]}"; do
     case $service in
         codex|claude)
@@ -208,12 +327,22 @@ for service in "${SKILL_SERVICES[@]}"; do
             exit 2
             ;;
     esac
+
+    for existing_service in "${VALIDATED_SERVICES[@]}"; do
+        if [[ $service == "$existing_service" ]]; then
+            echo "Skill service specified more than once: $service" >&2
+            usage
+            exit 2
+        fi
+    done
+    VALIDATED_SERVICES+=("$service")
 done
 
 echo "Repository version: $REPOSITORY_VERSION"
 
 PDF_OUTPUT_DIR=""
 DOCKER_IMAGE=""
+ADMIN_OUTPUT_DIR=""
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
 fi
@@ -243,12 +372,9 @@ if [[ -z "$OUTPUT_DIR" || -z "$DOCKER_IMAGE" ]]; then
     exit 2
 fi
 
-if [[ $OUTPUT_DIR == '~/'* ]]; then
-    OUTPUT_DIR="${HOME:?HOME is not set}/${OUTPUT_DIR#\~/}"
-elif [[ $OUTPUT_DIR != /* ]]; then
-    echo "Relative output directories are not allowed: $OUTPUT_DIR" >&2
-    usage
-    exit 2
+OUTPUT_DIR="$(normalize_output_directory "$OUTPUT_DIR")"
+if [[ $ADMIN_OUTPUT_SET -eq 1 ]]; then
+    ADMIN_OUTPUT_DIR="$(normalize_output_directory "$ADMIN_OUTPUT_VALUE")"
 fi
 
 if [[ ! -x "$REPORT_BUILD_SOURCE" ]]; then
@@ -256,10 +382,21 @@ if [[ ! -x "$REPORT_BUILD_SOURCE" ]]; then
     exit 1
 fi
 
-if [[ ${#SKILL_SERVICES[@]} -gt 0 && ! -f "$SKILL_SOURCE/SKILL.md" ]]; then
-    echo "Skill source not found: $SKILL_SOURCE/SKILL.md" >&2
-    exit 1
+REQUESTED_SKILLS=()
+if [[ ${#SKILL_SERVICES[@]} -gt 0 ]]; then
+    REQUESTED_SKILLS+=("$WRITER_SKILL_NAME")
+    if [[ $ADMIN -eq 1 ]]; then
+        REQUESTED_SKILLS+=("$ADMIN_SKILL_NAME")
+    fi
 fi
+
+for skill_name in "${REQUESTED_SKILLS[@]}"; do
+    skill_source="$REPO_DIR/skills/$skill_name"
+    if [[ ! -f "$skill_source/SKILL.md" ]]; then
+        echo "Skill source not found: $skill_source/SKILL.md" >&2
+        exit 1
+    fi
+done
 
 PREFLIGHT_FAILED=0
 if ! preflight_link \
@@ -271,11 +408,20 @@ then
 fi
 
 for service in "${SKILL_SERVICES[@]}"; do
-    skill_link="$(skill_link_for_service "$service")"
-    if ! preflight_link "$SKILL_SOURCE" "$skill_link" "$service skill"; then
-        PREFLIGHT_FAILED=1
-    fi
+    for skill_name in "${REQUESTED_SKILLS[@]}"; do
+        skill_source="$REPO_DIR/skills/$skill_name"
+        skill_link="$(skill_link_for_service "$service" "$skill_name")"
+        if ! preflight_link \
+            "$skill_source" "$skill_link" "$service $skill_name skill"
+        then
+            PREFLIGHT_FAILED=1
+        fi
+    done
 done
+
+if [[ $ADMIN -eq 1 ]] && ! preflight_manager_manifest; then
+    PREFLIGHT_FAILED=1
+fi
 
 if [[ $PREFLIGHT_FAILED -eq 1 ]]; then
     exit 1
@@ -291,6 +437,7 @@ OUTPUT_DIR="$(
 cat > "$CONFIG_FILE" <<EOF
 PDF_OUTPUT_DIR=$(printf '%q' "$OUTPUT_DIR")
 DOCKER_IMAGE=$(printf '%q' "$DOCKER_IMAGE")
+ADMIN_OUTPUT_DIR=$(printf '%q' "$ADMIN_OUTPUT_DIR")
 EOF
 
 chmod 0600 "$CONFIG_FILE"
@@ -302,12 +449,28 @@ install_link \
     1
 
 for service in "${SKILL_SERVICES[@]}"; do
-    skill_link="$(skill_link_for_service "$service")"
-    install_link "$SKILL_SOURCE" "$skill_link" "$service skill" 0
+    for skill_name in "${REQUESTED_SKILLS[@]}"; do
+        skill_source="$REPO_DIR/skills/$skill_name"
+        skill_link="$(skill_link_for_service "$service" "$skill_name")"
+        install_link \
+            "$skill_source" "$skill_link" "$service $skill_name skill" 0
+    done
 done
 
+if [[ $ADMIN -eq 1 ]]; then
+    create_manager_manifest
+fi
+
 echo
-echo "Installed: $REPORT_BUILD_TARGET"
-echo "Style:     $REPO_DIR"
-echo "Image:     $DOCKER_IMAGE"
-echo "PDF dir:   $OUTPUT_DIR"
+echo "Installed:    $REPORT_BUILD_TARGET"
+echo "Style:        $REPO_DIR"
+echo "Image:        $DOCKER_IMAGE"
+echo "PDF dir:      $OUTPUT_DIR"
+if [[ $ADMIN -eq 1 ]]; then
+    if [[ -n $ADMIN_OUTPUT_DIR ]]; then
+        echo "Admin output: $ADMIN_OUTPUT_DIR"
+    else
+        echo "Admin output: not configured"
+    fi
+    echo "Admin config: $MANAGER_MANIFEST"
+fi

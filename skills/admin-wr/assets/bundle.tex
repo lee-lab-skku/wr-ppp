@@ -1,0 +1,81 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[
+    top=15mm,
+    bottom=15mm,
+    left=18mm,
+    right=18mm
+]{geometry}
+\usepackage{fontspec}
+\usepackage{kotex}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{pdfpages}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\pagestyle{empty}
+
+\definecolor{mainblue}{RGB}{38,70,110}
+\definecolor{draftred}{RGB}{155,30,30}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\input{bundle-data.tex}
+
+\newsavebox{\BundleCoverBox}
+
+\begin{document}
+
+\sbox{\BundleCoverBox}{%
+    \begin{minipage}{\textwidth}
+        \begin{center}
+            {\LARGE\bfseries Weekly Reports}\\[1mm]
+            {\large\color{mainblue}\BundleWeek}
+
+            \ifBundleDraft
+                \vspace{2mm}
+                {\bfseries\color{draftred}DRAFT --- approval required}
+            \fi
+        \end{center}
+
+        \vspace{3mm}
+
+        \begin{tabularx}{\textwidth}{@{}>{\bfseries}l L >{\bfseries}l L@{}}
+            Reporting period
+                & \BundleWeekStart{} -- \BundleWeekEnd
+                & Report date
+                & \BundleReportDate
+                \\
+            Reports included
+                & \BundleIncludedCount
+                & Required complete
+                & \BundleRequiredIncludedCount{} / \BundleRequiredCount
+                \\
+        \end{tabularx}
+
+        \vspace{5mm}
+
+        \small
+        \renewcommand{\arraystretch}{1.22}
+        \begin{tabularx}{\textwidth}{@{}r L l r@{}}
+            \toprule
+            \# & Member & Status & Bundle pages \\
+            \midrule
+            \input{bundle-rows.tex}
+        \end{tabularx}
+    \end{minipage}%
+}
+
+\ifdim\dimexpr\ht\BundleCoverBox+\dp\BundleCoverBox\relax>\textheight
+    \PackageError{admin-wr}{Bundle cover exceeds one page}
+        {Reduce the member count or shorten display names before rebuilding.}
+\fi
+
+\noindent\usebox{\BundleCoverBox}
+\clearpage
+
+\input{bundle-includes.tex}
+
+\end{document}
