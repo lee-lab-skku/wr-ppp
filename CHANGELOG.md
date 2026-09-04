@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] &mdash; 2026-09-05
+
 ### Added
 
 - [setup] optional administrator mode installs `admin-wr` with requested agent services, preserves a private manager manifest, and stores an independently optional bundle output directory.
@@ -43,5 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/lee-lab-skku/wr-ppp/tree/v1.0.0
