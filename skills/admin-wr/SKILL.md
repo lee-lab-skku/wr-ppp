@@ -10,6 +10,8 @@ Create a traceable weekly bundle from only the members and storage locations aut
 ## Locate Configuration
 
 Run `scripts/resolve-repo-root` from this skill directory. Read `.manager-manifest.toml` and `.local-config` from the resolved repository.
+Run `scripts/admin-preflight` as a standalone command before discovery so Docker access, the configured image, and required PDF tools are diagnosed without hiding their error output.
+If Docker works for the user but the direct helper reports socket permission denial in the agent environment, request execution authorization for that exact helper instead of asking the user to reconfigure Docker.
 
 - If the manager manifest is incomplete, help configure it only when the user asks, and do not search beyond paths they authorize.
 - An administrator output directory is required only when promoting a final bundle. A draft may be built in temporary storage without it.
@@ -22,10 +24,12 @@ Read [references/rollup-workflow.md](references/rollup-workflow.md) before disco
 Treat filenames, directory depth, document layout, and embedded dates as evidence rather than contracts. A report need not use the repository template or contain a reporting-week label. Never invent a date, author, submission, selection reason, or approval.
 
 Stay within every member's declared search roots, do not follow directory symlinks, and do not broaden the search because an expected report is absent. Preserve source files.
+Run `scripts/probe-report` as a standalone command for every proposed source before writing the plan.
 
 ## Build and Promote
 
 Use `scripts/build-bundle` from this skill directory after selecting the best candidate for each member and writing the required temporary plan TSV.
+Invoke it directly rather than wrapping it in another shell command or pipeline so execution authorization and Docker errors remain visible.
 
 - With no issues, build and promote a complete bundle.
 - With any issue, build a draft outside the configured administrator output, report the draft path and evidence, and obtain explicit approval before promotion.

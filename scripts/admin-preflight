@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(
+    cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+    pwd -P
+)"
+REPO_DIR="$("$SCRIPT_DIR/resolve-repo-root")"
+CONFIG_FILE="$REPO_DIR/.local-config"
+
+usage() {
+    echo "Usage: $0 [--quiet]" >&2
+    echo "Exit 2: usage or configuration error" >&2
+    echo "Exit 3: SHA-256 utility unavailable" >&2
+    echo "Exit 10: Docker CLI unavailable" >&2
+    echo "Exit 11: Docker socket access denied" >&2
+    echo "Exit 12: Docker daemon or environment integration unavailable" >&2
+    echo "Exit 13: configured Docker image unavailable locally" >&2
+    echo "Exit 14: configured image dependency unavailable" >&2
+    echo "Exit 15: configured container could not run" >&2
+}
+
+die() {
+    echo "$1" >&2
+    exit "${2:-1}"
+}
+
+QUIET=0
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --quiet)
+            [[ $QUIET -eq 0 ]] || die "--quiet specified more than once." 2
+            QUIET=1
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+ok() {
+    if [[ $QUIET -eq 0 ]]; then
+        printf 'OK: %s\n' "$1"
+    fi
+}
+
+print_command_error() {
+    local error_file=$1
+
+    if [[ -s $error_file ]]; then
+        echo "Docker error output:" >&2
+        cat "$error_file" >&2
+    fi
+}
+
+if [[ ! -f $CONFIG_FILE ]]; then
+    die "Configuration not found: $CONFIG_FILE. Run scripts/setup.sh first." 2
+fi
+
+DOCKER_IMAGE=""
+source "$CONFIG_FILE"
+[[ -n $DOCKER_IMAGE ]] ||
+    die "Docker image is not configured. Rerun scripts/setup.sh with an image." 2
+
+if command -v sha256sum >/dev/null 2>&1; then
+    ok "SHA-256 utility: sha256sum"
+elif command -v shasum >/dev/null 2>&1; then
+    ok "SHA-256 utility: shasum"
+else
+    die "No SHA-256 utility found (expected sha256sum or shasum)." 3
+fi
+
+DOCKER_COMMAND="$(command -v docker 2>/dev/null || true)"
+[[ -n $DOCKER_COMMAND ]] || die "Docker CLI not found in PATH." 10
+ok "Docker CLI: $DOCKER_COMMAND"
+
+TMP_ROOT="$(mktemp -d)"
+cleanup() {
+    rm -rf -- "$TMP_ROOT"
+}
+trap cleanup EXIT
+
+DOCKER_INFO_ERROR="$TMP_ROOT/docker-info.err"
+if docker info >/dev/null 2>"$DOCKER_INFO_ERROR"; then
+    ok "Docker daemon is reachable"
+else
+    docker_info_error="$(
+        LC_ALL=C tr '[:upper:]' '[:lower:]' < "$DOCKER_INFO_ERROR"
+    )"
+    print_command_error "$DOCKER_INFO_ERROR"
+    case $docker_info_error in
+        *permission\ denied*|*access\ is\ denied*|*operation\ not\ permitted*)
+            die "Docker socket access was denied. Check execution authorization or socket permissions." 11
+            ;;
+        *)
+            die "Docker daemon is unreachable. Start it or enable integration for this environment." 12
+            ;;
+    esac
+fi
+
+IMAGE_ERROR="$TMP_ROOT/docker-image.err"
+if docker image inspect "$DOCKER_IMAGE" >/dev/null 2>"$IMAGE_ERROR"; then
+    ok "Docker image is available locally: $DOCKER_IMAGE"
+else
+    print_command_error "$IMAGE_ERROR"
+    die "Configured Docker image is not available locally: $DOCKER_IMAGE" 13
+fi
+
+CAPABILITY_ERROR="$TMP_ROOT/docker-capabilities.err"
+if docker run --rm \
+    --pull=never \
+    --network none \
+    "$DOCKER_IMAGE" \
+    sh -c '
+        missing=0
+        for command_name in xelatex latexmk kpsewhich tar pdfinfo pdftotext; do
+            if ! command -v "$command_name" >/dev/null 2>&1; then
+                echo "admin-preflight: missing command: $command_name" >&2
+                missing=1
+            fi
+        done
+        if command -v kpsewhich >/dev/null 2>&1; then
+            for package_name in pdfpages.sty kotex.sty; do
+                if ! kpsewhich "$package_name" >/dev/null 2>&1; then
+                    echo "admin-preflight: missing TeX package: $package_name" >&2
+                    missing=1
+                fi
+            done
+        fi
+        if [ "$missing" -ne 0 ]; then
+            exit 42
+        fi
+    ' >/dev/null 2>"$CAPABILITY_ERROR"
+then
+    ok "Administrator container dependencies are available"
+else
+    capability_status=$?
+    print_command_error "$CAPABILITY_ERROR"
+    if [[ $capability_status -eq 42 ]]; then
+        die "Configured Docker image lacks an administrator workflow dependency." 14
+    fi
+    die "Configured Docker image could not run the administrator capability check." 15
+fi

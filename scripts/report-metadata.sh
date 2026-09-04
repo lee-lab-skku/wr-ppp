@@ -109,3 +109,68 @@ resolve_report_date() {
     week_number="$(((10#$thursday_day - 1) / 7 + 1))"
     REPORT_WEEK_LABEL="${thursday:0:7}-W$week_number"
 }
+
+report_metadata_usage() {
+    echo "Usage: $0 [--date YYYY-MM-DD]" >&2
+    echo "       $0 --help" >&2
+}
+
+report_metadata_main() {
+    local requested_date=""
+    local date_set=0
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --date)
+                if [[ $date_set -eq 1 ]]; then
+                    echo "Report date specified more than once." >&2
+                    report_metadata_usage
+                    return 2
+                elif [[ $# -lt 2 || -z $2 ]]; then
+                    echo "Missing value for --date." >&2
+                    report_metadata_usage
+                    return 2
+                fi
+                requested_date=$2
+                date_set=1
+                shift
+                ;;
+            --date=*)
+                if [[ $date_set -eq 1 ]]; then
+                    echo "Report date specified more than once." >&2
+                    report_metadata_usage
+                    return 2
+                fi
+                requested_date=${1#--date=}
+                if [[ -z $requested_date ]]; then
+                    echo "Missing value for --date." >&2
+                    report_metadata_usage
+                    return 2
+                fi
+                date_set=1
+                ;;
+            -h|--help)
+                report_metadata_usage
+                return 0
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                report_metadata_usage
+                return 2
+                ;;
+        esac
+        shift
+    done
+
+    resolve_report_date "$requested_date" || return
+    printf 'schema\treport-metadata/v1\n'
+    printf 'report-date\t%s\n' "$REPORT_DATE"
+    printf 'week-label\t%s\n' "$REPORT_WEEK_LABEL"
+    printf 'week-start\t%s\n' "$REPORT_WEEK_START"
+    printf 'week-end\t%s\n' "$REPORT_WEEK_END"
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    set -euo pipefail
+    report_metadata_main "$@"
+fi

@@ -1,0 +1,266 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(
+    cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+    pwd -P
+)"
+REPO_DIR="$("$SCRIPT_DIR/resolve-repo-root")"
+CONFIG_FILE="$REPO_DIR/.local-config"
+
+usage() {
+    echo "Usage: $0 --storage-root directory --file report.pdf" >&2
+    echo "       $0 --help" >&2
+}
+
+die() {
+    echo "$1" >&2
+    exit "${2:-1}"
+}
+
+contains_tsv_control() {
+    local value=$1
+
+    [[ $value == *$'\t'* || $value == *$'\n'* || $value == *$'\r'* ]]
+}
+
+sha256_file() {
+    local file=$1
+
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$file" | awk '{print $1}'
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$file" | awk '{print $1}'
+    else
+        die "No SHA-256 utility found (expected sha256sum or shasum)." 3
+    fi
+}
+
+file_mtime() {
+    local file=$1
+
+    if stat -c %Y "$file" >/dev/null 2>&1; then
+        stat -c %Y "$file"
+    elif stat -f %m "$file" >/dev/null 2>&1; then
+        stat -f %m "$file"
+    else
+        die "Unable to read file modification time: $file"
+    fi
+}
+
+STORAGE_ROOT_VALUE=""
+SOURCE_FILE_VALUE=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --storage-root)
+            [[ $# -ge 2 ]] || die "Missing value for --storage-root." 2
+            [[ -z $STORAGE_ROOT_VALUE ]] ||
+                die "Storage root specified more than once." 2
+            STORAGE_ROOT_VALUE=$2
+            shift
+            ;;
+        --file)
+            [[ $# -ge 2 ]] || die "Missing value for --file." 2
+            [[ -z $SOURCE_FILE_VALUE ]] || die "File specified more than once." 2
+            SOURCE_FILE_VALUE=$2
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+[[ -n $STORAGE_ROOT_VALUE ]] || die "--storage-root is required." 2
+[[ -n $SOURCE_FILE_VALUE ]] || die "--file is required." 2
+contains_tsv_control "$STORAGE_ROOT_VALUE" &&
+    die "Storage root cannot contain tabs or newlines." 2
+contains_tsv_control "$SOURCE_FILE_VALUE" &&
+    die "PDF path cannot contain tabs or newlines." 2
+[[ $STORAGE_ROOT_VALUE == /* ]] ||
+    die "Storage root must be absolute: $STORAGE_ROOT_VALUE" 2
+[[ $SOURCE_FILE_VALUE == /* ]] ||
+    die "PDF path must be absolute: $SOURCE_FILE_VALUE" 2
+[[ -d $STORAGE_ROOT_VALUE ]] ||
+    die "Storage root not found: $STORAGE_ROOT_VALUE" 2
+[[ ! -L $SOURCE_FILE_VALUE ]] ||
+    die "PDF symbolic links are not accepted: $SOURCE_FILE_VALUE" 2
+[[ -f $SOURCE_FILE_VALUE ]] || die "PDF not found: $SOURCE_FILE_VALUE" 2
+case $SOURCE_FILE_VALUE in
+    *.[Pp][Dd][Ff])
+        ;;
+    *)
+        die "File does not have a PDF extension: $SOURCE_FILE_VALUE" 2
+        ;;
+esac
+
+STORAGE_ROOT="$(
+    cd -P -- "$STORAGE_ROOT_VALUE"
+    pwd -P
+)"
+SOURCE_DIR="$(
+    cd -P -- "$(dirname -- "$SOURCE_FILE_VALUE")"
+    pwd -P
+)"
+SOURCE_FILE="$SOURCE_DIR/$(basename -- "$SOURCE_FILE_VALUE")"
+if [[ $STORAGE_ROOT == / ]]; then
+    :
+else
+    case $SOURCE_FILE in
+        "$STORAGE_ROOT"/*)
+            ;;
+        *)
+            die "PDF escapes the configured storage root: $SOURCE_FILE_VALUE" 2
+            ;;
+    esac
+fi
+
+"$SCRIPT_DIR/admin-preflight" --quiet
+
+DOCKER_IMAGE=""
+source "$CONFIG_FILE"
+
+TMP_ROOT="$(mktemp -d)"
+cleanup() {
+    rm -rf -- "$TMP_ROOT"
+}
+trap cleanup EXIT
+mkdir -p -- "$TMP_ROOT/source" "$TMP_ROOT/result"
+
+SOURCE_MTIME="$(file_mtime "$SOURCE_FILE")"
+SOURCE_HASH="$(sha256_file "$SOURCE_FILE")"
+cp -- "$SOURCE_FILE" "$TMP_ROOT/source/input.pdf"
+[[ "$(sha256_file "$TMP_ROOT/source/input.pdf")" == "$SOURCE_HASH" ]] ||
+    die "PDF changed while it was copied for inspection: $SOURCE_FILE" 22
+
+if ! tar -C "$TMP_ROOT/source" -cf - input.pdf |
+    docker run --rm -i \
+        --pull=never \
+        --network none \
+        --tmpfs /work:rw,exec,nosuid,size=1g \
+        "$DOCKER_IMAGE" \
+        sh -c '
+            set -u
+            mkdir -p /work/input /work/result
+            tar -C /work/input -xf -
+            pdfinfo_status=0
+            pdftotext_status=0
+            pdfinfo /work/input/input.pdf > /work/result/pdfinfo.txt ||
+                pdfinfo_status=$?
+            : > /work/result/text.txt
+            if [ "$pdfinfo_status" -eq 0 ]; then
+                pdftotext -enc UTF-8 /work/input/input.pdf \
+                    /work/result/text.txt || pdftotext_status=$?
+            fi
+            printf "pdfinfo\t%s\npdftotext\t%s\n" \
+                "$pdfinfo_status" "$pdftotext_status" \
+                > /work/result/status.tsv
+            tar -C /work/result -cf - status.tsv pdfinfo.txt text.txt
+        ' |
+    tar -C "$TMP_ROOT/result" -xf -
+then
+    die "PDF probe container failed; see the Docker error output above." 15
+fi
+
+PDFINFO_STATUS="$(
+    awk -F '\t' '$1 == "pdfinfo" { print $2 }' \
+        "$TMP_ROOT/result/status.tsv"
+)"
+PDFTOTEXT_STATUS="$(
+    awk -F '\t' '$1 == "pdftotext" { print $2 }' \
+        "$TMP_ROOT/result/status.tsv"
+)"
+[[ $PDFINFO_STATUS =~ ^[0-9]+$ && $PDFTOTEXT_STATUS =~ ^[0-9]+$ ]] ||
+    die "PDF probe returned invalid command statuses." 20
+
+PAGES="$(
+    LC_ALL=C awk -F ':' '
+        $1 == "Pages" {
+            value = $2
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            print value
+            exit
+        }
+    ' "$TMP_ROOT/result/pdfinfo.txt"
+)"
+ENCRYPTED="$(
+    LC_ALL=C awk -F ':' '
+        $1 == "Encrypted" {
+            value = $2
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            split(value, fields, /[[:space:]]+/)
+            print fields[1]
+            exit
+        }
+    ' "$TMP_ROOT/result/pdfinfo.txt"
+)"
+CREATION_DATE="$(
+    LC_ALL=C awk -F ':' '
+        $1 == "CreationDate" {
+            value = substr($0, index($0, ":") + 1)
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+            print value
+            exit
+        }
+    ' "$TMP_ROOT/result/pdfinfo.txt"
+)"
+[[ -n $CREATION_DATE ]] || CREATION_DATE="-"
+
+READABLE="yes"
+TEXT_STATUS="extracted"
+PROBE_EXIT=0
+if [[ $PDFINFO_STATUS -ne 0 || ! $PAGES =~ ^[1-9][0-9]*$ ]]; then
+    READABLE="no"
+    TEXT_STATUS="unavailable"
+    PROBE_EXIT=20
+else
+    case $ENCRYPTED in
+        [Yy][Ee][Ss])
+            READABLE="no"
+            TEXT_STATUS="unavailable"
+            PROBE_EXIT=21
+            ;;
+    esac
+fi
+if [[ $PROBE_EXIT -eq 0 && $PDFTOTEXT_STATUS -ne 0 ]]; then
+    READABLE="no"
+    TEXT_STATUS="unavailable"
+    PROBE_EXIT=20
+elif [[ $PROBE_EXIT -eq 0 && ! -s "$TMP_ROOT/result/text.txt" ]]; then
+    TEXT_STATUS="empty"
+fi
+[[ -n $ENCRYPTED ]] || ENCRYPTED="unknown"
+
+if [[ "$(file_mtime "$SOURCE_FILE")" != "$SOURCE_MTIME" ||
+    "$(sha256_file "$SOURCE_FILE")" != "$SOURCE_HASH" ]]
+then
+    die "PDF changed during inspection: $SOURCE_FILE" 22
+fi
+
+printf 'schema\tadmin-wr-probe/v1\n'
+printf 'file\t%s\n' "$SOURCE_FILE"
+printf 'mtime\t%s\n' "$SOURCE_MTIME"
+printf 'sha256\t%s\n' "$SOURCE_HASH"
+printf 'readable\t%s\n' "$READABLE"
+printf 'pages\t%s\n' "${PAGES:--}"
+printf 'encrypted\t%s\n' "$ENCRYPTED"
+printf 'creation-date\t%s\n' "$CREATION_DATE"
+printf 'text-status\t%s\n' "$TEXT_STATUS"
+printf 'text-begin\n'
+if [[ $TEXT_STATUS == extracted ]]; then
+    cat "$TMP_ROOT/result/text.txt"
+fi
+printf '\ntext-end\n'
+
+if [[ $PROBE_EXIT -eq 21 ]]; then
+    die "Encrypted PDFs are not accepted: $SOURCE_FILE" 21
+elif [[ $PROBE_EXIT -ne 0 ]]; then
+    die "PDF is unreadable or could not be inspected: $SOURCE_FILE" 20
+fi

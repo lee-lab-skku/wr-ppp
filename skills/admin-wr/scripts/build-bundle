@@ -573,26 +573,7 @@ while IFS=$'\t' read -r member_id decision source_path reason; do
         >> "$CANDIDATE_META"
 done < "$CANDIDATES"
 
-if ! command -v docker >/dev/null 2>&1 ||
-    ! docker info >/dev/null 2>&1
-then
-    die "Docker is unavailable. Start Docker and enable integration for this environment."
-fi
-
-if ! docker run --rm \
-    --pull=never \
-    --network none \
-    "$DOCKER_IMAGE" \
-    sh -c '
-        set -eu
-        command -v xelatex >/dev/null
-        command -v latexmk >/dev/null
-        kpsewhich pdfpages.sty >/dev/null
-        kpsewhich kotex.sty >/dev/null
-    '
-then
-    die "The configured Docker image is unavailable or lacks XeLaTeX, latexmk, pdfpages, or kotex."
-fi
+"$SCRIPT_DIR/admin-preflight" --quiet
 
 INCLUDED_COUNT="$(awk -F '\t' '
     $5 == "included" || $5 == "exception" { count++ }

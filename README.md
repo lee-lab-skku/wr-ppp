@@ -281,7 +281,7 @@ The `--skills` and `--replace-existing` options may be combined with any of thes
 - `template.tex`: the illustrative source copied to `main.tex` for a new report
 - `weekly-report.sty`: shared layout, automatic values, and reusable helpers
 - `scripts/report-build`: canonical implementation of the installed build command
-- `scripts/report-metadata.sh`: host-side report date and reporting-week calculation
+- `scripts/report-metadata.sh`: source-compatible report date and reporting-week CLI
 - `scripts/setup.sh`: saves the build configuration and links `report-build`
 - `scripts/test.sh`: verifies the setup through the canonical build command
 - `skills/wr-wr`: service-neutral report-writing skill

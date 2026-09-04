@@ -4,9 +4,25 @@
 
 Use this workflow to select source PDFs, prepare a deterministic bundle plan, classify issues, and decide whether promotion requires approval.
 
+## Preflight the Administrator Tools
+
+Run the following from this skill directory as its own command before reading report storage:
+
+```bash
+scripts/admin-preflight
+```
+
+Do not combine it with filters, pipelines, or unrelated shell commands. It checks the configured Docker image and the host and container tools required by the administrator workflow. Preserve its original Docker error output. If Docker succeeds for the user but this direct command reports socket access denial only in the agent environment, request execution authorization for this exact helper rather than diagnosing the user's Docker installation as broken.
+
 ## Resolve the Reporting Period
 
-Use a date supplied by the user. Otherwise resolve the current date in the manifest timezone, not the host's implicit timezone. Run the repository's `scripts/report-metadata.sh` helper with that explicit target date to obtain the canonical label and Monday-to-Sunday period, and always pass the same date to `scripts/build-bundle`. This canonical period identifies the bundle; it does not require each source PDF to contain the same label.
+Use a date supplied by the user. Otherwise resolve the current date in the manifest timezone, not the host's implicit timezone. Resolve the repository root and run the executable metadata helper with that explicit date:
+
+```bash
+/absolute/path/to/repository/scripts/report-metadata.sh --date 2026-09-04
+```
+
+The helper prints `report-metadata/v1` TSV containing the report date, canonical label, and Monday-to-Sunday period. Always pass the same date to `scripts/build-bundle`. The canonical period identifies the bundle; it does not require each source PDF to contain the same label.
 
 ## Discover Within Authorized Roots
 
@@ -22,13 +38,23 @@ Assess candidates from all available evidence:
 - extractable author, date, or reporting-period text;
 - whether multiple candidates appear to be revisions of the same report.
 
-No single signal is mandatory. Missing template fields or a missing internal week label is not an issue by itself.
+No single signal is mandatory. Missing template fields or a missing internal week label is not an issue by itself. A filesystem modification time alone is not sufficient evidence that a report belongs to the target period.
 
 ## Classify and Propose
 
-A required member with no plausible candidate is `missing`. An optional member with none is `optional-missing`. When several distinct readable candidates remain plausible, choose the best one as `exception` for the proposal and report the ambiguity. Use `included` only when the evidence is sufficiently clear and uncontradicted.
+A required member with no plausible candidate is `missing`. An optional member with none is `optional-missing`. When several distinct readable candidates remain plausible, choose the best one as `exception` for the proposal and report the ambiguity. Use `included` when the report identity, target-period relevance, and final-candidate status are clear.
 
-Probe a proposed PDF for readability before writing the plan. If it is damaged, encrypted, or cannot yield a page count, record it as a rejected candidate and an `unreadable-pdf` issue. Select a readable alternative as an `exception` when one exists; otherwise use `missing` or `optional-missing` so the draft can still be built with a status row and no invalid PDF. An unexpected builder probe failure must leave output untouched and be reported instead of bypassed.
+An explicit internal week that differs from the canonical week is `included` with an `internal-week-mismatch` warning when the author, target-period relevance, and lack of a competing final candidate are otherwise clear. The warning still requires draft review and approval. If another signal also conflicts or several candidates remain plausible, classify the selection as `exception` with an error instead.
+
+Probe every proposed PDF before writing the plan, running each invocation as a standalone command:
+
+```bash
+scripts/probe-report \
+    --storage-root /absolute/path/to/report-storage \
+    --file /absolute/path/to/report-storage/member-a/report-current.pdf
+```
+
+The probe prints `admin-wr-probe/v1` records for the canonical file path, mtime, SHA-256, readability, page count, encryption, creation date, and text status, followed by `text-begin` and `text-end` delimiters around extracted text. If it reports a damaged, encrypted, unreadable, or uninspectable PDF, record that candidate as rejected with an `unreadable-pdf` issue. Select a readable alternative as an `exception` when one exists; otherwise use `missing` or `optional-missing` so the draft can still be built with a status row and no invalid PDF. Do not bypass a probe failure.
 
 Approval is required for:
 
@@ -69,6 +95,8 @@ scripts/build-bundle \
     --plan /tmp/admin-wr-plan.tsv \
     --date 2026-09-04
 ```
+
+Run each builder invocation as its own command rather than wrapping it with `bash`, a pipeline, or unrelated verification commands.
 
 For a run with issues, first create a temporary draft:
 

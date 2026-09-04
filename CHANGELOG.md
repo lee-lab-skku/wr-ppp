@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [build] deterministic XeLaTeX administrator bundles with a one-page index, normalized source staging, page-range and source-hash validation, and atomic same-week replacement.
 - [docs] administrator installation, manifest configuration, selection and approval behavior, and contributor boundaries.
 
+### Changed
+
+- [build] the report metadata helper now provides a direct TSV interface, and administrator workflows require container-provided PDF inspection tools.
+- [skill] an otherwise clear report with a conflicting internal week remains included with an approval-requiring warning.
+
+### Fixed
+
+- [build] administrator preflight and PDF probing preserve Docker errors and distinguish CLI, access, daemon, image, dependency, and runtime failures.
+- [docs] administrator period resolution and PDF inspection instructions now match their executable interfaces.
+
 ## [1.0.0] &mdash; 2026-09-03
 
 ### Added

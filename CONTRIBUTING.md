@@ -107,6 +107,15 @@ Different members may use different directory depths, and report filenames and t
 The agent recursively considers ordinary PDFs only inside each member's declared roots, uses NUL-delimited enumeration, excludes AppleDouble files, and never follows or expands through directory links.
 It evaluates prior bundle records, file changes, filesystem and PDF timestamps, filename hints, extractable dates and authors, and possible revision relationships without treating any single signal as mandatory.
 A missing internal week label, author header, or repository template is not an issue by itself.
+A conflicting internal week remains `included` with an approval-requiring warning when the report identity, target-period evidence, and final candidate are otherwise clear; modification time alone is not sufficient evidence.
+If other evidence also conflicts or competing candidates remain, use an `exception` and error instead.
+
+Run `skills/admin-wr/scripts/admin-preflight` as a standalone command before discovery.
+It distinguishes a missing Docker CLI, denied socket access, an unreachable daemon or environment integration, an absent local image, missing image dependencies, and container runtime failure while preserving the underlying Docker error.
+The configured image must provide XeLaTeX, latexmk, `tar`, `pdfpages`, KoTeX, `pdfinfo`, and `pdftotext`; host Poppler tools are not required.
+
+Probe each proposed source with `skills/admin-wr/scripts/probe-report` before writing the temporary plan.
+The probe copies the PDF to temporary storage, runs without container networking, and reports its page count, encryption and creation metadata, extracted text, mtime, and SHA-256 without modifying the source.
 
 The agent writes its proposed selections and issues to a temporary TSV plan.
 `skills/admin-wr/scripts/build-bundle` consumes only that plan and its explicit PDFs; it does not parse TOML or search storage.
@@ -130,7 +139,8 @@ The builder validates the new PDF completely before using hidden same-directory 
 If only one artifact is replaced before an interruption, the next run must detect the PDF hash mismatch and require approval.
 Source PDFs must never be modified or deleted.
 
-The implementation is split across `skills/admin-wr` for agent behavior, `skills/admin-wr/scripts/build-bundle` and `skills/admin-wr/assets/bundle.tex` for deterministic assembly, and `scripts/resolve-repo-root` for repository resolution shared with `wr-wr`.
+The implementation is split across `skills/admin-wr` for agent behavior and deterministic assembly, root `scripts/` for administrator preflight and PDF probing, and `scripts/resolve-repo-root` for repository resolution shared with both skills.
+The administrator skill exposes relative links to the root helper implementations so diagnostics and probing have one canonical source.
 
 ## Editing AI Skills
 
