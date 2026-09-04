@@ -204,7 +204,9 @@ the user's current files and intended outcome.
 AI assistance does not replace the author's responsibility for the report's
 accuracy. When supporting material is unavailable, the skill permits editorial
 and technical improvements but directs the agent not to invent or strengthen
-factual claims.
+factual claims. It treats missing support as an authoring gap to raise with the
+author or record in an author-only source comment, rather than automatically
+rendering uncertainty language or placeholder values for the report's reader.
 
 Tables and figures are optional. The template includes a flexible table helper,
 one figure, and two independent figures in one row. `\ReportTable` takes a

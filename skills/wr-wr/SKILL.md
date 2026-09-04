@@ -39,8 +39,8 @@ Consult the resolved repository's `README.md`, `template.tex`, `weekly-report.st
 - Explain unfamiliar conventions at the point they become relevant, using language appropriate to the user's apparent experience. Do not require the user to know LaTeX or repository terminology before helping them.
 - Preserve the shared template and style during ordinary report work. Change them only when the user requests a reusable template or build-system change.
 - Never invent evidence, measurements, completed work, citations, decisions, or figure contents. Separate verified facts, author-supplied claims, interpretations, and unresolved questions.
-- When source material is unavailable, continue with work that does not require it. Improve clarity, organization, grammar, and LaTeX while preserving factual meaning; identify claims that cannot be strengthened or verified instead of silently changing them.
-- Protect existing work. Inspect before overwriting, keep changes scoped to the requested report, and disclose placeholders or unresolved problems.
+- When source material is unavailable, continue with work that does not require it. Improve clarity, organization, grammar, and LaTeX while preserving factual meaning; identify claims that cannot be strengthened or verified to the author or in author-only source comments instead of converting them into reader-facing uncertainty language.
+- Protect existing work. Inspect before overwriting, keep changes scoped to the requested report, and disclose placeholders or unresolved problems to the author without automatically rendering them in the report.
 
 ## Finish at the Right Level
 

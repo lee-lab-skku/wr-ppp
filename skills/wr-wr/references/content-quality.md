@@ -11,7 +11,7 @@ Build a lightweight mental inventory of available support: user notes, existing 
 - Do not turn missing data into plausible-looking numbers, citations, outcomes, or figure descriptions.
 - Preserve useful uncertainty. Distinguish direct observations, interpretations, hypotheses, decisions, and plans.
 
-If essential support is missing, choose the least disruptive response: proceed with editorial or structural work, leave a clearly identified gap, or ask one focused question. Do not block unrelated improvements merely because every fact cannot be independently verified.
+When required factual support is missing, treat it as an authoring gap rather than automatically making it report content. Ask the author when the gap blocks correctness. Otherwise omit the unsupported statement and notify the author in the handoff or an author-only source comment. Do not render `unknown`, `not verified`, TODOs, or placeholder values unless the user explicitly requests a visibly incomplete draft. Describe missing evidence in the report only when its absence is itself a relevant, author-approved finding or problem. Do not block unrelated improvements merely because every fact cannot be independently verified.
 
 ## Shape the Report
 
