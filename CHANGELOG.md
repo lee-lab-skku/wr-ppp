@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [skill] administrator draft builds print a review command that opens the temporary PDF on Linux, macOS, or WSL, and the agent presents a clickable draft path before approval.
+
+### Changed
+
+- [build] final administrator execution TSVs are stored in the repository's Git-ignored `.admin-wr/manifests/`, while draft TSVs stay in a temporary `.manifests/` subdirectory; legacy manifests beside final PDFs remain usable as history.
+
+### Fixed
+
+- [build] draft bundles are rejected inside descendants of the configured final output directory, including paths resolved through directory links.
+
 ## [1.1.1] &mdash; 2026-09-05
 
 ### Fixed

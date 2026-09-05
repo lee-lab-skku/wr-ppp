@@ -89,6 +89,7 @@ Install it with `--admin`; use the optional `--admin-output` argument to configu
 ```
 
 `--admin` requires `--skills`; `--admin-output` may be omitted until final bundle output is needed.
+The admin workflow opens temporary drafts for review and stores final execution TSVs in the repository's Git-ignored `.admin-wr/manifests/`, separately from the final PDFs.
 
 Verify the setup by compiling the included template:
 

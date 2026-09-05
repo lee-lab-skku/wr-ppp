@@ -28,7 +28,12 @@ The helper prints `report-metadata/v1` TSV containing the report date, canonical
 
 For each member in manifest order, recursively enumerate regular files ending in `.pdf`, case-insensitively, below only that member's search roots. Use NUL-delimited filesystem operations so spaces and Unicode names are preserved. Exclude AppleDouble files named `._*.pdf`; do not follow directory symlinks.
 
-Read prior `*.manifest.tsv` files from the administrator output when available. Prefer the most recent `complete` or `approved-with-issues` bundle whose report date precedes the target date. Verify that its recorded final PDF exists and its SHA-256 still matches before trusting it as history. A missing half of the PDF/manifest pair or a hash mismatch is an approval issue and makes that history untrusted.
+Read prior `*.manifest.tsv` files from the resolved repository's `.admin-wr/manifests/` when available.
+For older bundles, also read manifests beside the PDFs in the configured administrator output, but only for weeks without a manifest in the new location.
+Do not fall back to a legacy manifest to bypass an invalid newer record.
+Prefer the most recent `complete` or `approved-with-issues` bundle whose report date precedes the target date.
+Resolve the recorded PDF filename against the configured administrator output, regardless of where the manifest lives, and verify that the PDF exists and its SHA-256 still matches before trusting it as history.
+A missing half of the PDF/manifest pair or a hash mismatch is an approval issue and makes that history untrusted.
 
 Assess candidates from all available evidence:
 
@@ -109,7 +114,20 @@ scripts/build-bundle \
     --output-dir /tmp/admin-wr-review
 ```
 
-Report the proposed selections, rejected candidates, issues, and draft path. After explicit approval, recheck source hashes and run:
+The builder prints the absolute PDF and execution-manifest paths on stdout, one per line, and a shell-quoted `review command` on stderr for draft builds.
+The draft PDF remains in the requested temporary directory after the builder exits; its TSV is stored in that directory's `.manifests/` subdirectory and never replaces final history.
+Use the emitted command as a standalone invocation to show the PDF in the user's desktop viewer:
+
+```bash
+scripts/open-bundle /tmp/admin-wr-review/2026-09-W1.pdf
+```
+
+The helper uses `open` on macOS, `xdg-open` on Linux, or `wslview` / Windows PowerShell with `wslpath` on WSL.
+It reports a failure if no opener is available or the viewer cannot be launched; in that case, provide the printed PDF path (and Windows path when available) so the user can open it manually.
+Include a clickable absolute PDF path, proposed selections, rejected candidates, and issues in the review request.
+Keep the draft and plan available until the review is resolved.
+Opening the viewer does not establish approval.
+After explicit approval, recheck source hashes and run:
 
 ```bash
 scripts/build-bundle \
@@ -124,7 +142,13 @@ If the temporary directory or plan is no longer available, reconstruct it from c
 
 ## Read Execution History
 
-The final `<week>.manifest.tsv` uses schema `admin-wr-bundle/v1`. Its tab-separated records are:
+Final PDFs are written to the configured administrator output; final execution TSVs are written to `<repository>/.admin-wr/manifests/<week>.manifest.tsv`.
+New builds do not write TSVs beside final PDFs or move/delete legacy manifests.
+Existing history needs no migration to remain readable; administrators may move legacy TSVs into the new directory, preserving an existing new-location record for the same week.
+The PDF filename in a final manifest remains relative to the configured administrator output, including after a configuration change; a missing PDF or hash mismatch still requires reassessment.
+Each artifact is staged in its own destination directory and replaced atomically, but the PDF/TSV pair is not a single atomic transaction.
+
+The final `<week>.manifest.tsv` retains schema `admin-wr-bundle/v1`. Its tab-separated records are:
 
 ```text
 schema	admin-wr-bundle/v1

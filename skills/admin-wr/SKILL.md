@@ -32,8 +32,9 @@ Use `scripts/build-bundle` from this skill directory after selecting the best ca
 Invoke it directly rather than wrapping it in another shell command or pipeline so execution authorization and Docker errors remain visible.
 
 - With no issues, build and promote a complete bundle.
-- With any issue, build a draft outside the configured administrator output, report the draft path and evidence, and obtain explicit approval before promotion.
+- With any issue, build a draft outside the configured administrator output and use the printed `review command` to open it for the user with `scripts/open-bundle`. Include a clickable PDF path and the evidence in the review request, then obtain explicit approval before promotion.
 - On approval, confirm selected source hashes have not changed and rebuild with `--approved-with-issues`. If they changed, reassess instead of publishing stale choices.
-- Never use `--draft` with the configured administrator output directory.
+- Never use `--draft` with the configured administrator output directory or its descendants.
 
+Final execution TSVs live in the repository's Git-ignored `.admin-wr/manifests/`; draft TSVs live under `.manifests/` in the temporary review directory.
 Report the final PDF and execution-manifest paths, member statuses, unresolved limitations, and whether approval was required. Do not distribute the bundle beyond its configured output directory without a separate explicit request.

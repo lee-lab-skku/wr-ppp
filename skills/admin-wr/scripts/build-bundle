@@ -294,7 +294,9 @@ if [[ $DRAFT -eq 1 && -n $ADMIN_OUTPUT_DIR ]]; then
     DRAFT_OUTPUT_TARGET=$CANONICAL_DIRECTORY_TARGET
     canonical_directory_target "$CONFIGURED_ADMIN_OUTPUT"
     CONFIGURED_OUTPUT_TARGET=$CANONICAL_DIRECTORY_TARGET
-    if [[ $DRAFT_OUTPUT_TARGET == "$CONFIGURED_OUTPUT_TARGET" ]]; then
+    if [[ $DRAFT_OUTPUT_TARGET == "$CONFIGURED_OUTPUT_TARGET" ||
+        $DRAFT_OUTPUT_TARGET == "${CONFIGURED_OUTPUT_TARGET%/}/"* ]]
+    then
         die "A draft cannot be written to the configured administrator output." 2
     fi
 fi
@@ -302,6 +304,14 @@ fi
 if [[ -e $OUTPUT_DIR && ! -d $OUTPUT_DIR ]]; then
     die "Output target is not a directory: $OUTPUT_DIR" 2
 fi
+
+if [[ $DRAFT -eq 1 ]]; then
+    MANIFEST_DIR="$OUTPUT_DIR/.manifests"
+else
+    MANIFEST_DIR="$REPO_DIR/.admin-wr/manifests"
+fi
+canonical_directory_target "$MANIFEST_DIR"
+MANIFEST_DIR=$CANONICAL_DIRECTORY_TARGET
 
 TMP_ROOT="$(mktemp -d)"
 OUTPUT_STAGE_PDF=""
@@ -890,12 +900,13 @@ do
 done < "$SELECTED_META"
 
 mkdir -p -- "$OUTPUT_DIR"
+mkdir -p -- "$MANIFEST_DIR"
 OUTPUT_DIR="$(
     cd -P -- "$OUTPUT_DIR"
     pwd -P
 )"
 FINAL_PDF="$OUTPUT_DIR/$REPORT_WEEK_LABEL.pdf"
-FINAL_MANIFEST="$OUTPUT_DIR/$REPORT_WEEK_LABEL.manifest.tsv"
+FINAL_MANIFEST="$MANIFEST_DIR/$REPORT_WEEK_LABEL.manifest.tsv"
 if [[ ( -e $FINAL_PDF || -L $FINAL_PDF ) && ! -f $FINAL_PDF ]]; then
     die "Existing bundle PDF target is not a regular file: $FINAL_PDF"
 fi
@@ -906,7 +917,7 @@ then
 fi
 OUTPUT_STAGE_PDF="$(mktemp "$OUTPUT_DIR/.$REPORT_WEEK_LABEL.pdf.tmp.XXXXXX")"
 OUTPUT_STAGE_MANIFEST="$(
-    mktemp "$OUTPUT_DIR/.$REPORT_WEEK_LABEL.manifest.tsv.tmp.XXXXXX"
+    mktemp "$MANIFEST_DIR/.$REPORT_WEEK_LABEL.manifest.tsv.tmp.XXXXXX"
 )"
 
 cp -- "$RESULT_DIR/bundle.pdf" "$OUTPUT_STAGE_PDF"
@@ -918,4 +929,8 @@ OUTPUT_STAGE_MANIFEST=""
 
 echo "written: $FINAL_PDF" >&2
 echo "written: $FINAL_MANIFEST" >&2
+if [[ $DRAFT -eq 1 ]]; then
+    printf 'review command: %q %q\n' \
+        "$SCRIPT_DIR/open-bundle" "$FINAL_PDF" >&2
+fi
 printf '%s\n%s\n' "$FINAL_PDF" "$FINAL_MANIFEST"

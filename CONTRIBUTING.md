@@ -123,19 +123,27 @@ It stages normalized PDF names, builds without container networking, verifies so
 The remaining pages contain the selected reports in manifest order with their aspect ratios preserved.
 
 Missing required reports, unresolved or weak candidate choices, unreadable PDFs, invalid prior bundle hashes, and first runs require approval.
-The agent first writes a visibly marked draft outside the configured final directory and reports the proposed choices and issues.
+The agent first writes a visibly marked draft outside the configured final directory and its descendants.
+The builder prints a shell-quoted review command invoking `skills/admin-wr/scripts/open-bundle`, which opens the PDF using the desktop viewer on Linux, macOS, or WSL.
+The agent runs it to show the draft and includes a clickable PDF path with the proposed choices and issues; an unavailable viewer leaves the path available for manual review.
+Draft PDFs remain available after the builder exits, with their execution TSVs in the temporary review directory's `.manifests/` subdirectory.
 After explicit approval it rechecks source hashes and rebuilds the final bundle, retaining `Included`, `Missing`, `Approved exception`, and `Optional not included` statuses while removing the draft mark.
 A user-selected replacement candidate requires a new draft and approval for every remaining issue.
 
-Final artifacts use the canonical week label:
+Final artifacts use the canonical week label and separate output locations:
 
 ```text
-2026-09-W1.pdf
-2026-09-W1.manifest.tsv
+<admin-output>/2026-09-W1.pdf
+<repository>/.admin-wr/manifests/2026-09-W1.manifest.tsv
 ```
 
+The repository's `.admin-wr/` directory is Git-ignored; new builds keep execution history out of the final PDF directory.
+The builder continues to print the absolute PDF and TSV paths on stdout, one per line.
+Existing TSVs beside final PDFs remain readable as legacy history when no new-location record exists for the same week; new builds do not move or delete them.
+Administrators may move legacy TSVs into the new directory without overwriting newer records, but migration is not required for history lookup.
+Resolve the manifest's PDF filename against the configured administrator output, not the manifest directory.
 The execution manifest records the official date and period, completion and approval state, candidates, selection reasons, source paths relative to storage, mtimes, hashes, page ranges, missing members, and issue codes.
-The builder validates the new PDF completely before using hidden same-directory temporary files and atomic moves to replace an existing week without a backup.
+The builder validates the new PDF completely before using hidden temporary files in each artifact's destination directory and atomic moves to replace an existing week without a backup.
 If only one artifact is replaced before an interruption, the next run must detect the PDF hash mismatch and require approval.
 Source PDFs must never be modified or deleted.
 
@@ -175,6 +183,10 @@ workflow documentation together as applicable.
 Validate in proportion to the change and its risks.
 Exercise the affected workflow and relevant error behavior, confirm documentation against the canonical sources, and compile the example when build or LaTeX behavior changes.
 Skill changes should cover representative activation, reference routing, all shared repository-resolver entry points, and affected report tasks.
+
+Run the administrator workflow regression checks with `python3 -B -m unittest discover -s tests -v` (Python 3 standard library only).
+These checks use isolated repositories and substitute Docker and desktop openers to exercise artifact placement, failure handling, and platform command routing without publishing reports or opening windows.
+Also exercise a real Docker build when available; substituted commands do not validate TeX rendering or a desktop viewer.
 
 Document checks that were not run when they would otherwise be relevant. Do
 not claim macOS compatibility was verified unless the affected workflow was
