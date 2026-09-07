@@ -4,25 +4,20 @@
 
 \begin{document}
 
-% This file is a complete illustrative report rather than a checklist.
-% Replace the example content and remove any subsection, table, figure,
-% or other structure that does not help explain the week's research.
-% Keep the complete report within two A4 pages per person per week.
-% Exhaust reasonable cuts and reorganization before considering extra pages;
-% allow only the minimum excess needed to preserve essential research meaning
-% or evidence when no reasonable shorter presentation remains.
-% Explain any unavoidable excess in the submission note (see README.md).
-% Preserve readable typography and hierarchy instead of squeezing the layout.
-% Share standalone software, tooling, administrative, and workflow updates
-% briefly in project meetings. Include technical details only when needed
-% to explain a research result, its validity, or a research blocker.
-% Lead with the claim, support it with evidence, then state the implication.
-% Prose, lists, equations, tables, and figures may be mixed as needed ---
-% CHOOSE according to what communicates each point most directly.
+% This is an adaptable example of a weekly research report.
+% Keep the focus on research within two A4 pages per person per week.
+% See the repository README.md, "Write the Report" and "Length and Exceptions",
+% for the full report policy and the narrow exception to the page limit.
+% Adapt sections, subsections, and grouping to the week's actual research.
+% Choose prose, lists, equations, tables, and figures to suit the material.
+% Lead with important takeaways and connect claims, support, and implications;
+% these relationships need not form a fixed sequence or labels in every item.
+% Replace illustrative content and keep only structures that help the reader.
 
 % =========================================================
 % Report information -- edit these three values.
-% Give the report a title that captures the week's main topic.
+% Choose a title that reflects the scope of the week's research,
+% whether it concerns one finding or several research threads.
 % =========================================================
 \ReportHeader
     {Calibration-Aware Classification in the Low-Data Regime}
@@ -33,8 +28,9 @@
 % =========================================================
 % Abstract
 %
-% Briefly summarize the week's main change, the most relevant evidence,
-% the main unresolved issue, and the next direction.
+% Orient the reader to the week's scope and significant developments.
+% Synthesize what matters across threads as needed, using material supported
+% by the body. Include unresolved issues or next directions when they help.
 % =========================================================
 \begin{reportabstract}
 
@@ -52,8 +48,10 @@ week's work will therefore focus on label quality and seed sensitivity.
 % =========================================================
 % P1. Progress
 %
-% Order subsections by research importance, not the sequence of activities.
-% Keep supporting details subordinate to the main result.
+% Explain what changed in the research or understanding and why it matters,
+% with evidence or reasoning appropriate to the claim. Give important
+% takeaways prominence and keep supporting details subordinate to them.
+% Progress need not be a positive result or a completed experiment.
 % =========================================================
 \begin{pppbox}{Progress}
 
@@ -63,6 +61,9 @@ A moderate calibration penalty improved macro F1 by 2.3 percentage points
 and reduced ECE from 8.7 to 5.1 across five seeds
 (\cref{tab:main-results}). Data splits and preprocessing were held fixed.
 
+% Use a comparison table when it helps the reader assess the evidence.
+% Choose columns and captions that make the comparison interpretable;
+% explain its research significance in the surrounding discussion as needed.
 \ReportTable
     {L C C C}
     {
@@ -101,9 +102,9 @@ before attributing the rare-class gain to the loss formulation.
 \end{pppbox}
 
 
-% Missing image files intentionally render as fixed-size placeholders.
-% Replace each path with research evidence that supports the stated claim.
-% Remove any display that does not add necessary evidence within two pages.
+% Use paired figures when seeing both helps explain the evidence or reasoning.
+% Choose informative captions and connect the displays to the discussion.
+% Missing files render as placeholders; replace them or omit unused figures.
 \ReportFigurePair
     {figures/calibration-curve.pdf}
     {Calibration curves for the baseline and revised loss.}
@@ -119,9 +120,10 @@ before attributing the rare-class gain to the loss formulation.
 % =========================================================
 % P2. Problems
 %
-% Hypotheses, attempted solutions, and responses are encouraged when
-% meaningful. Decision problems and external constraints may instead
-% state what evidence, resource, or feedback would move the work forward.
+% Make relevant unresolved issues and their research consequences clear.
+% Choose hypotheses, attempted responses, or needed evidence and input
+% according to the actual issue; these prompts are not compulsory fields.
+% Distinguish observations from proposed explanations.
 % =========================================================
 \begin{pppbox}{Problems}
 
@@ -149,6 +151,8 @@ priority will determine the main claim; both metrics will remain reported.
 \end{pppbox}
 
 
+% Keep a standalone figure when it communicates necessary support more clearly
+% than prose alone; omit a display that only repeats another presentation.
 \ReportFigure
     {figures/seed-variance.pdf}
     {Worst-class F1 across random seeds; error bars should be included in the final analysis.}
@@ -162,9 +166,10 @@ priority will determine the main claim; both metrics will remain reported.
 % =========================================================
 % P3. Plans
 %
-% State prioritized next research actions and their expected outputs or success
-% criteria. Include dependencies or fallback actions when they affect
-% what can realistically be completed.
+% Explain the next research direction and intended learning or outcome.
+% Choose a level of detail suited to the state of the work. Priorities,
+% success criteria, dependencies, or fallbacks can clarify the direction
+% when relevant, without requiring a fixed set of fields for every plan.
 % =========================================================
 \begin{pppbox}{Plans}
 
@@ -173,6 +178,8 @@ priority will determine the main claim; both metrics will remain reported.
 The next priority is to determine whether label quality explains
 rare-class instability.
 
+% A planning table is optional; choose it when comparing actions is useful.
+% Adapt its columns and level of detail to the plans being communicated.
 \ReportTable
     {c L c}
     {

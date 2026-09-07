@@ -19,7 +19,20 @@ There is no mandatory weekly-directory naming scheme. The `W1` directory in the 
 - The source directory's basename becomes the PDF filename. It does not determine the reporting week printed in the document; the build date does.
 - Do not overwrite an existing `main.tex` merely because the directory looks like the desired week. Treat it as an existing draft and inspect it first.
 
-When the user wants a new source, create the chosen directory and copy the canonical `template.tex` to `main.tex`. Remove the illustrative report content as real material is introduced. Do not copy `weekly-report.sty`; the build command supplies it.
+When the user wants a new source, create the chosen directory and copy the canonical `template.tex` to `main.tex`.
+Read its instructional comments before adapting the illustrative report content to the user's material.
+Do not copy `weekly-report.sty`; the build command supplies it.
+
+## Preserve Instructional Comments
+
+When adapting a new report from the template, preserve retained instructional comments verbatim, including shared guidance and section prompts.
+Comments exclusively associated with an omitted optional example may be removed with that example; retain comments that also apply to remaining content.
+Keep retained comments with the material they guide if it moves, and keep any new author-only notes separate.
+Preserving a comment does not require including every content element it suggests.
+Before handing off a newly scaffolded source, compare its retained instructional comments with the canonical template and check that any removed comments belonged exclusively to omitted examples.
+
+For an existing report, preserve its comments and customizations without automatically replacing or inserting comments from the current template.
+An explicit user request to edit or remove comments governs that work; ordinary content adaptation does not imply such a request.
 
 ## Set Report Identity
 

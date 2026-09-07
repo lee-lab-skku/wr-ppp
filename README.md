@@ -2,10 +2,8 @@
 
 Latest version: [![Latest repository version](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=release)](https://github.com/lee-lab-skku/wr-ppp/tags)
 
-A LaTeX template for concise weekly research reports organized around
-**Progress, Problems, and Plans (PPP)**. It keeps the report structure and
-layout consistent while leaving the weekly content, evidence, and level of
-detail to the author within a strict limit of **two A4 pages per person per week**.
+A LaTeX template for concise weekly research reports using **Progress, Problems, and Plans (PPP)** as a communication framework.
+It provides consistent formatting while leaving the organization, form, and level of detail to the author within a strict limit of **two A4 pages per person per week**.
 Exceed that limit only when essential research content cannot fit after all reasonable cuts without compromising its meaning or evidence.
 
 ## What It Provides
@@ -178,29 +176,29 @@ Begin by replacing the three values in `\ReportHeader`:
     {Project / Team}
 ```
 
-Then replace the illustrative abstract and PPP content with the week's work.
-Keep, rename, duplicate, or remove subsections and optional elements according
-to what best communicates the report. The comments and examples in
-`template.tex` provide the detailed writing guidance.
+Then replace the illustrative abstract and PPP content with the week's research.
+Adapt sections, subsections, grouping, and presentation to what best communicates that work, including weeks with several research threads.
+The comments in `template.tex` provide section-level prompts alongside a worked example.
+This README defines shared report policy; the comments help apply it while writing, and the skills describe how an agent assists and validates.
+
+Use the prompts with judgment: suggested content and example layouts are optional, and a useful report need not contain every element mentioned in a comment.
+Choose prose, lists, equations, tables, or figures to suit the material.
 
 Keep the report focused on research progress, problems, and plans.
 Share software, tooling, administrative, and workflow updates briefly in project meetings instead.
 Include a technical detail only when it is necessary to explain a research result, its validity, or a research blocker; describe that research consequence rather than the implementation activity.
 
-Lead each substantive point with the claim, follow with the evidence, and state the implication.
-Put the most important result first within each section, and place supporting details beneath it.
-Use concise headings and remove chronological progress logs, repeated background, and low-priority detail.
+Lead with important takeaways and make the relationships among claims, supporting evidence or reasoning, and research implications clear.
+These relationships do not require three labeled parts, a fixed sentence sequence in every item, or a single finding encompassing the week.
+Give significant developments prominence and keep supporting details subordinate to them.
+Use concise headings where helpful and remove repeated background and activity-log detail that does not help the reader assess the research.
 
-The main content areas are:
+PPP and the abstract provide useful perspectives on the week:
 
-- **Abstract:** the week's main change, evidence, unresolved issue, and next
-  direction in brief
-- **Progress:** changes in research results or understanding and the
-  evidence supporting them
-- **Problems:** research uncertainties, attempted responses, constraints, or decisions
-  that require feedback
-- **Plans:** prioritized next research actions and their expected outputs or success
-  criteria
+- **Abstract:** an overview of the scope and significant developments
+- **Progress:** changes in research results or understanding and their support and significance
+- **Problems:** relevant unresolved research issues and their consequences
+- **Plans:** next research directions and intended learning or outcomes
 
 ### Length and Exceptions
 
@@ -223,8 +221,15 @@ template-specific LaTeX or build problems, and review the resulting artifact.
 These are examples rather than a fixed sequence: the agent should start from
 the user's current files and intended outcome.
 
-For report drafting and final review, the skill applies the research focus, claim-first structure, and two-page limit above.
+For drafting, substantive revision, and content review, the skill reads the canonical template's instructional comments and the shared report policy above.
+It applies relevant prompts with judgment and preserves useful author choices; matching the example's organization is not a review requirement.
+Its references provide task-specific procedures for source conventions, editorial judgment and evidence, and LaTeX and build validation.
 It checks the rendered page count and revises overlength drafts within the authorized scope; any unavoidable exception must be explained in the handoff.
+
+When creating a report from the template, the agent preserves retained instructional comments verbatim.
+Comments exclusively associated with an omitted optional example may be removed with that example; shared guidance remains.
+Existing reports retain their comments and customizations without automatic synchronization to the current template.
+New author-only notes stay separate, and explicit requests to edit comments are respected.
 
 AI assistance does not replace the author's responsibility for the report's
 accuracy. When supporting material is unavailable, the skill permits editorial

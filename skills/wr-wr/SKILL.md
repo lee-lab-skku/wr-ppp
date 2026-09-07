@@ -24,25 +24,29 @@ Infer these from the request and accessible files when practical. Do not turn th
 
 ## Choose and Combine Relevant Guidance
 
+Before drafting, substantively revising, or reviewing report content, read the instructional comments in the resolved repository's canonical `template.tex` and the `README.md` sections "Write the Report" and "Length and Exceptions".
+The README defines shared report policy; template comments explain how to apply it while writing.
+Use the comments with judgment: distinguish report requirements, adaptable suggestions, and illustrative content.
+Suggested elements and example layouts are optional; do not turn them into compulsory fields or treat example data as evidence for the user's report.
+
 Read only the references needed for the current request. Combine them when a problem crosses boundaries.
 
-- Read [references/report-conventions.md](references/report-conventions.md) when locating, naming, scaffolding, configuring, or building report sources and outputs.
-- Read [references/content-quality.md](references/content-quality.md) when selecting evidence, drafting content, revising claims, preserving authorial intent, or working without supporting material.
+- Read [references/report-conventions.md](references/report-conventions.md) when locating, naming, scaffolding, preserving template comments, configuring, or building report sources and outputs.
+- Read [references/content-quality.md](references/content-quality.md) when assessing evidence, drafting from source material, making editorial decisions, revising claims, preserving authorial intent, or working without supporting material.
 - Read [references/latex-and-build.md](references/latex-and-build.md) when formatting content, using template helpers, diagnosing LaTeX, or validating a PDF.
 
-Consult the resolved repository's `README.md`, `template.tex`, `weekly-report.sty`, or scripts when their current behavior matters. Those files are canonical; do not copy their full interface into the skill.
+Consult the resolved repository's `weekly-report.sty` and scripts for exact LaTeX and build behavior, and the README for workflow details as needed.
 
 ## Work Adaptively
 
 - Start from the user's actual artifact instead of recreating work that already exists.
 - Take the smallest set of actions that fully addresses the request. A conceptual question may need no file changes; a syntax problem may need no prose rewrite; a content revision may also reveal a build problem worth fixing.
-- Keep weekly reports focused on research and organize substantive points as claim, evidence, and implication, with the most important result first.
-- Treat two A4 pages per person per week as the maximum for the complete report, not a soft target. Read the length and exception criteria in [references/content-quality.md](references/content-quality.md) when drafting, shortening, reviewing, or finalizing a report; permit only the minimum unavoidable excess after all reasonable cuts are exhausted.
+- Preserve a useful existing organization. Reorganize when requested or when it addresses a concrete communication problem within the authorized task; a difference from the example is not itself a defect.
 - Explain unfamiliar conventions at the point they become relevant, using language appropriate to the user's apparent experience. Do not require the user to know LaTeX or repository terminology before helping them.
 - Preserve the shared template and style during ordinary report work. Change them only when the user requests a reusable template or build-system change.
 - Never invent evidence, measurements, completed work, citations, decisions, or figure contents. Separate verified facts, author-supplied claims, interpretations, and unresolved questions.
 - When source material is unavailable, continue with work that does not require it. Improve clarity, organization, grammar, and LaTeX while preserving factual meaning; identify claims that cannot be strengthened or verified to the author or in author-only source comments instead of converting them into reader-facing uncertainty language.
-- Protect existing work. Inspect before overwriting, keep changes scoped to the requested report, and disclose placeholders or unresolved problems to the author without automatically rendering them in the report.
+- Protect existing work, including source comments and customizations. Inspect before overwriting, keep changes scoped to the requested report, and disclose placeholders or unresolved problems to the author without automatically rendering them in the report. Do not automatically synchronize existing reports' comments to the current template.
 
 ## Finish at the Right Level
 

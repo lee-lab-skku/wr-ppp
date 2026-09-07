@@ -13,11 +13,11 @@ guidance when users must take action.
 
 Use the repository sources according to their roles:
 
-- `README.md` describes the user workflow.
+- `README.md` defines shared report policy and describes the user workflow.
 - The files under `scripts/` implement setup and build behavior.
-- The files under `skills/` define the report-writing and administrator agent workflows.
+- The files under `skills/` define agent workflows and safeguards, with task-specific procedures in selectively loaded references.
 - `weekly-report.sty` defines the shared LaTeX interfaces and presentation.
-- `template.tex` demonstrates the intended report structure and usage.
+- `template.tex` provides contextual writing prompts and an adaptable worked example.
 
 The `report-build` implementation lives in `scripts/report-build`;
 `scripts/setup.sh` installs a link to that canonical script rather than
@@ -157,16 +157,21 @@ The administrator skill exposes relative links to the root helper implementation
 Use this order of reference when updating `skills/wr-wr` or `skills/admin-wr`:
 
 1. Read the selected skill's `SKILL.md` and the reference file governing the behavior being changed.
-1. Consult `README.md` and the scripts for workflow behavior, `template.tex`
-   for intended report usage, and `weekly-report.sty` for exact LaTeX
-   interfaces. These repository sources are authoritative.
+1. Consult `README.md` for shared report policy, `template.tex` for contextual writing guidance, and the scripts and `weekly-report.sty` for exact build and LaTeX behavior.
+   Preserve these ownership boundaries when updating skills.
 1. Follow current Codex and Claude skill conventions for platform mechanics
    without overriding repository behavior.
 
-Keep `SKILL.md` focused on activation scope, task routing, cross-cutting
-safeguards, and completion behavior. Put detailed domain guidance in the
-relevant file under `references/`, and keep deterministic repository-location logic in the shared `scripts/resolve-repo-root`.
+Keep `SKILL.md` focused on activation scope, task routing, cross-cutting safeguards, and completion behavior.
+Put task-specific procedures and safeguards in the relevant file under `references/`, and keep deterministic repository-location logic in the shared `scripts/resolve-repo-root`.
 Prefer extending an existing reference over adding a new one unless the change introduces a distinct concern.
+
+For report content work, the writing skill must explicitly direct agents to read the canonical template comments and shared report policy.
+Keep the comments focused on writing decisions at each location, and distinguish requirements, adaptable suggestions, and illustrative content.
+Avoid duplicating section-writing prescriptions in skill references or treating the example's organization as a requirement.
+Retain references for source conventions and comment preservation, editorial judgment and evidence, and LaTeX and build validation.
+For new reports, agents preserve retained instructional comments verbatim; only comments exclusive to omitted optional examples may be removed with those examples.
+Existing reports are not automatically synchronized to new template comments, and new author-only notes remain separate.
 
 When editing `admin-wr`, preserve the responsibility boundary defined in [Administrator Weekly Bundles](#administrator-weekly-bundles) rather than moving judgment into deterministic scripts.
 Changes to the plan or execution-manifest formats must update the workflow reference, tests, and user documentation together.
@@ -182,7 +187,7 @@ workflow documentation together as applicable.
 
 ## Validation
 
-When changing report guidance, skills, or the illustrative template, preserve the README's research focus, progression from claim to evidence to implication, and strict two-page policy.
+When changing report guidance, skills, or the illustrative template, preserve the README's research focus, clear relationships among claims, support, and implications, author choice in presentation, and strict two-page policy.
 Page-limit exceptions belong in the authoring and review judgment, with a specific necessity rationale; deterministic builders must preserve complete content rather than truncate reports.
 
 Validate in proportion to the change and its risks.

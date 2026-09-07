@@ -38,11 +38,12 @@ For work intended as a final report, check as relevant:
 - absence of illustrative template content and unintended placeholders;
 - valid table layouts, labels, cross-references, and figure paths;
 - readable page flow and any meaningful warnings;
-- the actual rendered page count against the two-page maximum for the complete weekly report;
+- the actual rendered page count against the README's length policy for the complete weekly report;
 - consistency between rendered content and the available evidence.
 
-Read [content-quality.md](content-quality.md) for research focus, hierarchy, and the length-exception criteria when validating a final report or addressing overflow.
+Use the resolved repository's `README.md`, "Length and Exceptions", for the page limit and necessity criteria.
+Read [content-quality.md](content-quality.md) when overflow requires content revision or final review raises questions about evidence or meaning.
 A successful build alone does not establish that a report meets the length requirement.
-If the PDF exceeds two pages, cut and reorganize content within the authorized scope, rebuild, and inspect again while preserving readable typography and layout.
+If the PDF exceeds the limit, revise content within the authorized scope, rebuild, and inspect again while preserving readable typography and layout.
 Do not declare an overlength report ready unless the narrow necessity exception is established and explained with the verified page count in the handoff.
 If PDF generation or page inspection is unavailable, report that length compliance remains unverified.
