@@ -118,6 +118,8 @@ Probe each proposed source with `skills/admin-wr/scripts/probe-report` before wr
 The probe copies the PDF to temporary storage, runs without container networking, and reports its page count, encryption and creation metadata, extracted text, mtime, and SHA-256 without modifying the source.
 
 The agent writes its proposed selections and issues to a temporary TSV plan.
+For each selected report exceeding the two-page maximum per person per week, record an `overlength-report` warning with the page count and any specific necessity justification under the README's length policy.
+An otherwise clear selection remains `included`, but the warning requires the existing draft review and approval; preserve all source pages and identify an unjustified excess as needing revision.
 `skills/admin-wr/scripts/build-bundle` consumes only that plan and its explicit PDFs; it does not parse TOML or search storage.
 It stages normalized PDF names, builds without container networking, verifies source hashes and page counts, and creates an A4 bundle whose first page is a fixed one-page index rather than an AI-written narrative.
 The remaining pages contain the selected reports in manifest order with their aspect ratios preserved.
@@ -179,6 +181,9 @@ change, update the entry point, affected references, and the user-facing AI
 workflow documentation together as applicable.
 
 ## Validation
+
+When changing report guidance, skills, or the illustrative template, preserve the README's research focus, progression from claim to evidence to implication, and strict two-page policy.
+Page-limit exceptions belong in the authoring and review judgment, with a specific necessity rationale; deterministic builders must preserve complete content rather than truncate reports.
 
 Validate in proportion to the change and its risks.
 Exercise the affected workflow and relevant error behavior, confirm documentation against the canonical sources, and compile the example when build or LaTeX behavior changes.

@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [skill] report guidance now requires research-focused content, claims followed by evidence and implications, and a two-page maximum per person per week, with only a justified minimum exception when essential research content cannot be shortened further; administrator review flags overlength submissions.
+- [template] the illustrative report now leads with its research result and omits standalone software and tooling progress.
 - [build] final administrator execution TSVs are stored in the repository's Git-ignored `.admin-wr/manifests/`, while draft TSVs stay in a temporary `.manifests/` subdirectory; legacy manifests beside final PDFs remain usable as history.
 
 ### Fixed

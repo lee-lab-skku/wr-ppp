@@ -6,7 +6,17 @@
 
 % This file is a complete illustrative report rather than a checklist.
 % Replace the example content and remove any subsection, table, figure,
-% or other structure that does not help explain the week's work.
+% or other structure that does not help explain the week's research.
+% Keep the complete report within two A4 pages per person per week.
+% Exhaust reasonable cuts and reorganization before considering extra pages;
+% allow only the minimum excess needed to preserve essential research meaning
+% or evidence when no reasonable shorter presentation remains.
+% Explain any unavoidable excess in the submission note (see README.md).
+% Preserve readable typography and hierarchy instead of squeezing the layout.
+% Share standalone software, tooling, administrative, and workflow updates
+% briefly in project meetings. Include technical details only when needed
+% to explain a research result, its validity, or a research blocker.
+% Lead with the claim, support it with evidence, then state the implication.
 % Prose, lists, equations, tables, and figures may be mixed as needed ---
 % CHOOSE according to what communicates each point most directly.
 
@@ -42,35 +52,16 @@ week's work will therefore focus on label quality and seed sensitivity.
 % =========================================================
 % P1. Progress
 %
-% Rename, duplicate, or remove subsections to match the week's work.
+% Order subsections by research importance, not the sequence of activities.
+% Keep supporting details subordinate to the main result.
 % =========================================================
 \begin{pppbox}{Progress}
 
-\ReportSubsection{Loss Formulation and Working Interpretation}
+\ReportSubsection{Moderate Penalty Improves F1 and Calibration}
 
-The baseline was extended with a Brier-style calibration term,
-
-\[
-    \mathcal{L}
-    = \mathcal{L}_{\mathrm{CE}}
-    + \frac{\lambda}{N}
-      \sum_{i=1}^{N}\left\lVert\mathbf{p}_i-\mathbf{y}_i\right\rVert_2^2,
-\]
-
-where $\lambda$ controls the trade-off between discrimination and
-calibration. A short sweep suggested the following interpretation:
-
-\begin{itemize}
-    \item $\lambda=0.05$ improved calibration without reducing accuracy.
-        \begin{itemize}
-            \item Larger values produced under-confident predictions.
-            \item The effect was strongest for examples near class boundaries.
-        \end{itemize}
-    \item Data splits and preprocessing were held fixed across methods.
-\end{itemize}
-
-
-\ReportSubsection{Quantitative Comparison}
+A moderate calibration penalty improved macro F1 by 2.3 percentage points
+and reduced ECE from 8.7 to 5.1 across five seeds
+(\cref{tab:main-results}). Data splits and preprocessing were held fixed.
 
 \ReportTable
     {L C C C}
@@ -86,25 +77,33 @@ calibration. A short sweep suggested the following interpretation:
     {Illustrative validation results averaged over five random seeds.}
     {tab:main-results}
 
-As shown in \cref{tab:main-results}, the moderate penalty gave the best
-overall balance. The stronger penalty minimized ECE but lost part of the
-rare-class gain, suggesting that calibration alone is not the objective.
+The moderate penalty therefore offers the best observed balance for
+follow-up validation. The stronger penalty minimized ECE but lost part
+of the rare-class gain, so lower ECE alone does not establish a better model.
 
 
-\ReportSubsection{Implementation and Supporting Work}
+\ReportSubsection{Penalty Strength Limits the Gain}
 
-\begin{itemize}
-    \item Added deterministic seed handling and a regression test for splits.
-    \item Built an error-analysis notebook grouped by class and confidence.
-    \item Reviewed two calibration studies and recorded why temperature
-          scaling was deferred until after the label audit.
-\end{itemize}
+The sweep suggests that calibration strength must remain modest:
+$\lambda=0.05$ improved calibration without reducing accuracy, whereas
+larger values produced under-confident predictions. The tested loss was
+
+\[
+    \mathcal{L}
+    = \mathcal{L}_{\mathrm{CE}}
+    + \frac{\lambda}{N}
+      \sum_{i=1}^{N}\left\lVert\mathbf{p}_i-\mathbf{y}_i\right\rVert_2^2.
+\]
+
+The effect was strongest near class boundaries, motivating a label audit
+before attributing the rare-class gain to the loss formulation.
 
 \end{pppbox}
 
 
 % Missing image files intentionally render as fixed-size placeholders.
-% Replace each path to show real plots, screenshots, or other evidence.
+% Replace each path with research evidence that supports the stated claim.
+% Remove any display that does not add necessary evidence within two pages.
 \ReportFigurePair
     {figures/calibration-curve.pdf}
     {Calibration curves for the baseline and revised loss.}
@@ -143,10 +142,9 @@ gain is not yet strong enough to support a general conclusion.
 
 \ReportSubsection{Primary Metric Requires a Decision}
 
-This is a decision problem rather than one with a causal hypothesis.
-Macro F1 communicates class balance, whereas ECE better reflects the
-deployment risk. Advisor feedback is needed on which should be the primary
-claim; both metrics will remain reported regardless of that decision.
+The primary metric remains undecided: macro F1 measures class balance,
+whereas ECE measures calibration. Advisor feedback on the deployment
+priority will determine the main claim; both metrics will remain reported.
 
 \end{pppbox}
 
@@ -164,13 +162,16 @@ claim; both metrics will remain reported regardless of that decision.
 % =========================================================
 % P3. Plans
 %
-% State prioritized next actions and their expected outputs or success
+% State prioritized next research actions and their expected outputs or success
 % criteria. Include dependencies or fallback actions when they affect
 % what can realistically be completed.
 % =========================================================
 \begin{pppbox}{Plans}
 
 \ReportSubsection{Validation and Decision Sequence}
+
+The next priority is to determine whether label quality explains
+rare-class instability.
 
 \ReportTable
     {c L c}

@@ -5,7 +5,8 @@ Latest version: [![Latest repository version](https://img.shields.io/github/v/ta
 A LaTeX template for concise weekly research reports organized around
 **Progress, Problems, and Plans (PPP)**. It keeps the report structure and
 layout consistent while leaving the weekly content, evidence, and level of
-detail to the author. Two A4 pages are a target, not a hard limit.
+detail to the author within a strict limit of **two A4 pages per person per week**.
+Exceed that limit only when essential research content cannot fit after all reasonable cuts without compromising its meaning or evidence.
 
 ## What It Provides
 
@@ -182,16 +183,36 @@ Keep, rename, duplicate, or remove subsections and optional elements according
 to what best communicates the report. The comments and examples in
 `template.tex` provide the detailed writing guidance.
 
+Keep the report focused on research progress, problems, and plans.
+Share software, tooling, administrative, and workflow updates briefly in project meetings instead.
+Include a technical detail only when it is necessary to explain a research result, its validity, or a research blocker; describe that research consequence rather than the implementation activity.
+
+Lead each substantive point with the claim, follow with the evidence, and state the implication.
+Put the most important result first within each section, and place supporting details beneath it.
+Use concise headings and remove chronological progress logs, repeated background, and low-priority detail.
+
 The main content areas are:
 
 - **Abstract:** the week's main change, evidence, unresolved issue, and next
   direction in brief
-- **Progress:** changes in results, implementation, or understanding and the
+- **Progress:** changes in research results or understanding and the
   evidence supporting them
-- **Problems:** uncertainties, attempted responses, constraints, or decisions
+- **Problems:** research uncertainties, attempted responses, constraints, or decisions
   that require feedback
-- **Plans:** prioritized next actions and their expected outputs or success
+- **Plans:** prioritized next research actions and their expected outputs or success
   criteria
+
+### Length and Exceptions
+
+The complete weekly report must fit within two A4 pages per person, including the abstract, figures, tables, and references.
+Shorter reports are welcome; two pages are a maximum, not a quota.
+Check the compiled PDF, cut non-research material and repetition, consolidate supporting evidence, and keep only what the reader needs to assess the research claims, problems, and next steps.
+Preserve readable typography and hierarchy; do not shrink fonts or margins, crowd the layout, or add an appendix to evade the limit.
+
+An exception is justified only when every reasonable cut or reorganization has been exhausted and further reduction would remove essential evidence or qualifications, or make a research result, problem, or plan misleading or impossible to assess.
+Keep any excess to the minimum necessary and explain the specific indispensable content and why it cannot be shortened in the submission note or author handoff.
+A busy week, many projects, or a preference for more detail does not justify extra pages.
+An overlength report without that justification still needs revision.
 
 ## AI-Assisted Workflow
 
@@ -201,6 +222,9 @@ turn available material into a draft, improve an existing report, address
 template-specific LaTeX or build problems, and review the resulting artifact.
 These are examples rather than a fixed sequence: the agent should start from
 the user's current files and intended outcome.
+
+For report drafting and final review, the skill applies the research focus, claim-first structure, and two-page limit above.
+It checks the rendered page count and revises overlength drafts within the authorized scope; any unavoidable exception must be explained in the handoff.
 
 AI assistance does not replace the author's responsibility for the report's
 accuracy. When supporting material is unavailable, the skill permits editorial

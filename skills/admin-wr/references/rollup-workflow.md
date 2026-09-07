@@ -61,11 +61,19 @@ scripts/probe-report \
 
 The probe prints `admin-wr-probe/v1` records for the canonical file path, mtime, SHA-256, readability, page count, encryption, creation date, and text status, followed by `text-begin` and `text-end` delimiters around extracted text. If it reports a damaged, encrypted, unreadable, or uninspectable PDF, record that candidate as rejected with an `unreadable-pdf` issue. Select a readable alternative as an `exception` when one exists; otherwise use `missing` or `optional-missing` so the draft can still be built with a status row and no invalid PDF. Do not bypass a probe failure.
 
+The complete weekly report has a two-page maximum per person, as described in the repository README's writing guidance.
+For a selected report longer than two pages, add an `overlength-report` warning with its page count and any available explanation of necessity; do not invent a justification from length alone.
+Keep an otherwise clear selection `included`, preserve every source page in the draft, and use the existing issue-review process before promotion.
+An exception is justified only when all reasonable cuts and reorganization have been exhausted and further reduction would compromise essential research meaning or evidence; record that specific rationale in the issue message if established.
+Without it, report that the submission needs shortening rather than describing it as compliant.
+The bundle's index page and total combined length do not count against an individual's limit.
+
 Approval is required for:
 
 - a missing required report;
 - an ambiguous or weakly supported selection;
 - an unreadable, damaged, or encrypted selected PDF;
+- an overlength report, with the necessity justification or unresolved need for revision shown in the review;
 - a prior manifest whose recorded PDF hash no longer matches;
 - the first run, when no valid prior bundle exists.
 

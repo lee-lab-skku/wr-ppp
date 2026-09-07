@@ -38,6 +38,11 @@ For work intended as a final report, check as relevant:
 - absence of illustrative template content and unintended placeholders;
 - valid table layouts, labels, cross-references, and figure paths;
 - readable page flow and any meaningful warnings;
+- the actual rendered page count against the two-page maximum for the complete weekly report;
 - consistency between rendered content and the available evidence.
 
-Do not make a two-page result a hard pass condition. Report excess length as a design consideration and improve it only when that serves the user's intended audience.
+Read [content-quality.md](content-quality.md) for research focus, hierarchy, and the length-exception criteria when validating a final report or addressing overflow.
+A successful build alone does not establish that a report meets the length requirement.
+If the PDF exceeds two pages, cut and reorganize content within the authorized scope, rebuild, and inspect again while preserving readable typography and layout.
+Do not declare an overlength report ready unless the narrow necessity exception is established and explained with the verified page count in the handoff.
+If PDF generation or page inspection is unavailable, report that length compliance remains unverified.

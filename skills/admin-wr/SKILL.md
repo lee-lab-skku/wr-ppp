@@ -25,6 +25,8 @@ Treat filenames, directory depth, document layout, and embedded dates as evidenc
 
 Stay within every member's declared search roots, do not follow directory symlinks, and do not broaden the search because an expected report is absent. Preserve source files.
 Run `scripts/probe-report` as a standalone command for every proposed source before writing the plan.
+Check each person's weekly report against the two-page maximum using the probe's page count; follow the workflow reference for overlength warnings and the narrow necessity exception.
+Preserve complete source PDFs during review and assembly; do not truncate or reformat them to satisfy the limit.
 
 ## Build and Promote
 
