@@ -117,10 +117,11 @@ Older plans without history remain buildable, but show only the current week; th
 
 The first page replaces the current-only status list with the cumulative table, omitting report page counts and page ranges.
 Its cumulative table uses weeks as rows in descending order (this week first), and members as columns in manifest order.
-Highlight the target bundle week's entire row with a pale blue background in every member block, including when rebuilding an earlier week.
+Highlight the target bundle week's entire row with a pale blue background, including when rebuilding an earlier week.
 The legend distinguishes `O` (included), `O*` (exception), `X` (missing required report), `--` (optional not included), and `?` (unknown).
 Draft current-week cells describe proposed inclusion, while historical cells describe verified final records.
-Wide rosters are split into blocks of at most six member columns, each repeating every week.
+Keep all members in one table with a single row per week.
+Use compact column spacing and angled member names so larger rosters remain readable without repeating the history.
 Never discard older weeks to fit the cover; the one-page overflow check fails safely if the full table does not fit, requiring a layout adjustment before rebuilding.
 Page counts and ranges remain in the execution manifest for source validation and traceability.
 

@@ -784,7 +784,7 @@ do
 
 done < "$SORTED_ENTRIES"
 
-# Render weeks as rows, splitting wide rosters into complete member blocks.
+# Render every member in one table, with weeks as rows.
 HISTORY_WEEKS="$TMP_ROOT/history-weeks.txt"
 { cut -f1 "$HISTORY"; printf '%s\n' "$REPORT_WEEK_LABEL"; } |
     LC_ALL=C sort -ru > "$HISTORY_WEEKS"
@@ -813,24 +813,23 @@ awk -F '\t' -v weeks="$HISTORY_WEEKS" -v names="$HISTORY_NAMES" \
             states[current SUBSEP fields[1]] = fields[3]
         }
         close(names)
-        for (first = 1; first <= member_count; first += 6) {
-            last = first + 5
-            if (last > member_count) last = member_count
-            printf "\\begin{tabularx}{\\textwidth}{@{}l*{%d}{>{\\centering\\arraybackslash}X}@{}}\n", last-first+1
-            print "\\toprule"
-            printf "Week"
-            for (m = first; m <= last; m++) printf " & %s", labels[m]
+        print "\\begingroup\\setlength{\\tabcolsep}{2pt}"
+        printf "\\begin{tabularx}{\\textwidth}{l*{%d}{>{\\centering\\arraybackslash}X}}\n", member_count
+        print "\\toprule"
+        printf "Week"
+        for (m = 1; m <= member_count; m++)
+            printf " & \\rotatebox{60}{\\scriptsize %s}", labels[m]
+        print " \\\\"
+        print "\\midrule"
+        for (w = 1; w <= week_count; w++) {
+            if (week_list[w] == current) print "\\rowcolor{currentweekblue}"
+            printf "%s", week_list[w]
+            for (m = 1; m <= member_count; m++)
+                printf " & %s", mark(states[week_list[w] SUBSEP ids[m]])
             print " \\\\"
-            print "\\midrule"
-            for (w = 1; w <= week_count; w++) {
-                if (week_list[w] == current) print "\\rowcolor{currentweekblue}"
-                printf "%s", week_list[w]
-                for (m = first; m <= last; m++)
-                    printf " & %s", mark(states[week_list[w] SUBSEP ids[m]])
-                print " \\\\"
-            }
-            print "\\bottomrule\n\\end{tabularx}\\par\\medskip"
         }
+        print "\\bottomrule\n\\end{tabularx}\\par\\endgroup"
+
     }
 ' "$HISTORY" > "$SOURCE_DIR/bundle-history.tex"
 

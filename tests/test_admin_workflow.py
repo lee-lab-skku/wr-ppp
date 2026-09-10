@@ -119,7 +119,7 @@ else:
         result = self.build()
         pdf, manifest = map(Path, result.stdout.splitlines())
         rendered = pdf.read_text()
-        self.assertIn("Week & 구성원 가", rendered)
+        self.assertIn("구성원 가", rendered)
         self.assertIn("2025-12-W4 & O*", rendered)
         self.assertIn("2026-08-W4 & X", rendered)
         self.assertIn("2026-09-W1 & O", rendered)
@@ -137,18 +137,18 @@ else:
         self.assertIn("2026-08-W4 & ?", pdf.read_text())
         self.assertIn("history-unavailable", manifest.read_text())
 
-    def test_wide_roster_preserves_all_members_and_weeks(self):
+    def test_twelve_members_share_one_table_with_all_weeks(self):
         plan = self.clean_plan
-        for number in range(1, 8):
+        for number in range(1, 12):
             plan += (f"entry\t{10 + number}\tmember-{number}\tName & {number}\toptional"
                      "\toptional-missing\t-\tno-report\n")
             plan += f"history\t2026-08-W4\tmember-{number}\toptional-missing\tverified\n"
         plan += "history\t2026-08-W4\tmember-a\tincluded\tverified\n"
         self.plan.write_text(plan)
         pdf = Path(self.build().stdout.splitlines()[0]).read_text()
-        self.assertEqual(pdf.count("2026-09-W1 &"), 2)
-        self.assertEqual(pdf.count("2026-08-W4 &"), 2)
-        for number in range(1, 8):
+        self.assertEqual(pdf.count("2026-09-W1 &"), 1)
+        self.assertEqual(pdf.count("2026-08-W4 &"), 1)
+        for number in range(1, 12):
             self.assertIn(f"Name \\& {number}", pdf)
         self.assertNotIn(" & ?", pdf)
 

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [skill] administrator bundle covers omit page ranges and add cumulative inclusion tables with newest weeks first and members as columns, using verified historical records and distinct markers for exceptions, optional omissions, and unknown history.
-  The target week's row has a pale blue background in every member block.
+  All members share one table with angled name headings, and the target week's row has a pale blue background.
 
 ## [1.2.0] &mdash; 2026-09-08
 

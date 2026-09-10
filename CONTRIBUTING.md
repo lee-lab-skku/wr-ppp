@@ -125,7 +125,7 @@ It stages normalized PDF names, builds without container networking, verifies so
 The cover omits source page counts and ranges and adds a cumulative O/X inclusion table: weeks are rows in descending order, with this week first, and current members are columns in manifest order.
 The agent supplies all earlier weeks from verified final records as optional `history` records in the existing plan schema; the builder renders those records without discovering or judging evidence.
 Exceptions, optional omissions, and unknown history have distinct markers, and unknown cells require review.
-Wide rosters split into member blocks; all weeks are retained, and the existing one-page cover check rejects overflow instead of dropping history.
+All members share one table, with compact spacing and angled name headings; all weeks are retained, and the existing one-page cover check rejects overflow instead of dropping history.
 See the [rollup workflow](skills/admin-wr/references/rollup-workflow.md#write-the-temporary-plan) for the additive plan and execution-history fields and legacy compatibility.
 The remaining pages contain the selected reports in manifest order with their aspect ratios preserved.
 
