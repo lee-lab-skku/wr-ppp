@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [setup] `--skills=agents` is the canonical name for installing to `~/.agents/skills`; `codex` remains a backward-compatible alias.
 - [skill] administrator bundle covers omit page ranges and add cumulative inclusion tables with newest weeks first and members as columns, using verified historical records and distinct markers for exceptions, optional omissions, and unknown history.
   All members share one table with angled name headings, and the target week's row has a pale blue background.
 

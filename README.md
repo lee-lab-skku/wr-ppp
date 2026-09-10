@@ -45,12 +45,13 @@ To also make the bundled report-writing skill available from any working
 directory, pass the supported services as a comma-separated `--skills` option:
 
 ```bash
-./scripts/setup.sh ~/report-output danteev/texlive:latest --skills=codex,claude
+./scripts/setup.sh ~/report-output danteev/texlive:latest --skills=agents,claude
 ```
 
-This links the repository's canonical skill into `~/.agents/skills` for Codex
-and `~/.claude/skills` for Claude. Omitting `--skills` leaves user-level skill
-directories unchanged.
+The `agents` value links the repository's canonical skill into `~/.agents/skills`; `claude` uses `~/.claude/skills`.
+The previous `codex` value remains an alias for `agents`, so existing commands continue to work.
+Specifying both `agents` and `codex` in one list is rejected as a duplicate destination.
+Omitting `--skills` leaves user-level skill directories unchanged.
 
 Setup applies the same destination policy to `/usr/local/bin/report-build` and
 each requested skill link. A missing destination is linked, and a link that
@@ -63,7 +64,7 @@ Use `--replace-existing` to replace conflicting files or links explicitly:
 
 ```bash
 ./scripts/setup.sh ~/report-output danteev/texlive:latest \
-    --skills=codex,claude --replace-existing
+    --skills=agents,claude --replace-existing
 ```
 
 Each replaced entry is moved to an adjacent backup such as `report-build.backup`
@@ -82,7 +83,7 @@ Install it with `--admin`; use optional `--admin-output` for final PDFs and `--a
 
 ```bash
 ./scripts/setup.sh ~/report-output danteev/texlive:latest \
-    --skills=codex,claude \
+    --skills=agents,claude \
     --admin \
     --admin-output=/absolute/path/to/admin-bundles \
     --admin-data=/absolute/path/to/admin-data

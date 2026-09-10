@@ -65,12 +65,14 @@ Administrator mode is a maintainer workflow that installs the separate `admin-wr
 
 ```bash
 ./scripts/setup.sh ~/report-output danteev/texlive:latest \
-    --skills=codex,claude \
+    --skills=agents,claude \
     --admin \
     --admin-output=/absolute/path/to/admin-bundles
 ```
 
 `--admin` requires `--skills` because it changes which skills are installed.
+The canonical shared skill destination is `agents` (`~/.agents/skills`); normalize the backward-compatible `codex` alias to `agents` before duplicate checks and installation.
+Reject lists containing both names as duplicate destinations, while preserving the separate `claude` destination.
 `--admin-output` is optional and accepts only an absolute path or a path beginning with `~/`.
 If it is omitted, setup preserves any saved administrator output; a first installation without one succeeds and reports `Admin output: not configured`.
 The administrator output directory is required only for final promotion and is not created merely by setup.

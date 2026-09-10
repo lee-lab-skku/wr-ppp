@@ -302,8 +302,30 @@ class AdminPathTests(unittest.TestCase):
         self.assertEqual(result.returncode, status, result.stderr)
         return result
 
+    def test_agents_and_codex_alias_install_identical_skill_links(self):
+        self.setup("--skills=agents,claude", "--admin")
+        links = [self.root / "skill-links" / service / "skills" / skill
+                 for service in (".agents", ".claude") for skill in ("wr-wr", "admin-wr")]
+        targets = [link.readlink() for link in links]
+        for link in links:
+            self.assertTrue(link.samefile(self.repo / "skills" / link.name))
+        result = self.setup("--skills=codex,claude", "--admin")
+        self.assertEqual([link.readlink() for link in links], targets)
+        self.assertIn("Already linked: agents admin-wr skill", result.stdout)
+        self.assertFalse((self.root / "skill-links/.codex").exists())
+        self.assertFalse(list((self.root / "skill-links").rglob("*.backup*")))
+
+    def test_alias_and_canonical_duplicates_fail_before_mutation(self):
+        before = self.config.read_bytes()
+        for services in ("agents,codex", "codex,agents", "codex,codex", "agents,agents"):
+            with self.subTest(services=services):
+                result = self.setup(f"--skills={services}", "--admin", status=2)
+                self.assertIn("specified more than once: agents", result.stderr)
+                self.assertEqual(self.config.read_bytes(), before)
+                self.assertFalse((self.root / "skill-links").exists())
+
     def test_setup_custom_data_then_omitted_option_selects_local(self):
-        self.setup("--skills=codex,claude", "--admin", f"--admin-data={self.data}")
+        self.setup("--skills=agents,claude", "--admin", f"--admin-data={self.data}")
         manifest = self.data / "manager-manifest.toml"
         self.assertIn("schema = 1", manifest.read_text())
         self.assertEqual(manifest.stat().st_mode & 0o777, 0o600)
@@ -311,11 +333,11 @@ class AdminPathTests(unittest.TestCase):
         self.assertEqual(self.local.read_text(), "local roster")
         self.assertIn(str(manifest), self.paths(skill=True))
         manifest.write_text("external roster")
-        self.setup("--skills=codex", "--admin", f"--admin-data={self.data}", "--replace-existing")
+        self.setup("--skills=agents", "--admin", f"--admin-data={self.data}", "--replace-existing")
         self.assertEqual(manifest.read_text(), "external roster")
         self.setup()  # Non-admin setup retains saved administrator settings.
         self.assertIn(str(manifest), self.paths())
-        self.setup("--skills=codex", "--admin")
+        self.setup("--skills=agents", "--admin")
         self.assertIn(f"manager-manifest\t{self.local}\n", self.paths())
         self.assertEqual(self.paths("--history-output").strip(), str(self.history))
         self.assertEqual(manifest.read_text(), "external roster")
@@ -362,7 +384,7 @@ class AdminPathTests(unittest.TestCase):
         self.data.mkdir()
         manifest = self.data / "manager-manifest.toml"
         manifest.symlink_to(self.local)
-        self.setup("--admin", "--skills=codex", f"--admin-data={self.data}", "--replace-existing")
+        self.setup("--admin", "--skills=agents", f"--admin-data={self.data}", "--replace-existing")
         self.assertTrue(manifest.is_symlink())
         self.assertEqual(self.local.read_text(), "local roster")
         self.assertIn(f"manager-manifest\t{manifest}\n", self.paths())
@@ -371,9 +393,9 @@ class AdminPathTests(unittest.TestCase):
         before = self.config.read_bytes()
         for args in (
             (f"--admin-data={self.data}",),
-            ("--admin", "--skills=codex", "--admin-data="),
-            ("--admin", "--skills=codex", "--admin-data=relative"),
-            ("--admin", "--skills=codex", f"--admin-data={self.data}", f"--admin-data={self.data}"),
+            ("--admin", "--skills=agents", "--admin-data="),
+            ("--admin", "--skills=agents", "--admin-data=relative"),
+            ("--admin", "--skills=agents", f"--admin-data={self.data}", f"--admin-data={self.data}"),
         ):
             with self.subTest(args=args):
                 result = subprocess.run([str(self.repo / "scripts/setup.sh"), *args],
@@ -382,7 +404,7 @@ class AdminPathTests(unittest.TestCase):
                 self.assertEqual(self.config.read_bytes(), before)
         self.data.mkdir()
         (self.data / "manifests").write_text("conflicting file")
-        self.setup("--admin", "--skills=codex", f"--admin-data={self.data}", status=1)
+        self.setup("--admin", "--skills=agents", f"--admin-data={self.data}", status=1)
         self.assertEqual(self.config.read_bytes(), before)
         self.assertFalse((self.data / "manager-manifest.toml").exists())
 
