@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [skill] optional Slack Incoming Webhook notices for administrator-decided holds caused by missing required reports, with message preview, hidden credential setup, and duplicate-send protection.
 
+### Changed
+
+- [docs] contributor guidance focuses on durable contracts and design constraints, links to canonical operating procedures instead of duplicating them, and uses sentence-based line breaks.
+
 ### Fixed
 
 - [setup] administrator manifest creation no longer fails on NAS filesystems that reject `chmod`; restrictive permissions are requested at file creation with `umask 077`.
