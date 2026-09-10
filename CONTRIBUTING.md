@@ -91,7 +91,8 @@ Empty or absent `ADMIN_DATA_DIR` also means local storage, so existing configura
 Setup creates the chosen manifest's parent directories as needed but leaves the execution-history directory uncreated until a final build.
 It does not copy or move prior metadata when changing the configuration.
 
-The first administrator-mode setup creates a private manifest skeleton with mode `0600`; the default local manifest is Git-ignored.
+The first administrator-mode setup creates a manifest skeleton under `umask 077`, requesting mode `0600`; the default local manifest is Git-ignored.
+Do not require a subsequent `chmod` for this newly created file: NAS filesystems may allow creation while rejecting POSIX permission changes, and their effective access is governed by server permissions or ACLs.
 Setup must preserve an existing regular manifest or valid symbolic link regardless of `--replace-existing`, reject a conflicting directory, and never infer member or storage values.
 Configure the manifest before discovery:
 

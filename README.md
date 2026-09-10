@@ -92,6 +92,7 @@ Install it with `--admin`; use optional `--admin-output` for final PDFs and `--a
 `--admin` requires `--skills`; `--admin-output` may be omitted until final bundle output is needed.
 The bundle cover shows cumulative weekly inclusion with weeks as rows (newest first) and members as columns, without report page counts or ranges.
 `--admin-data` stores `manager-manifest.toml` and `manifests/<week>.manifest.tsv` beneath the chosen directory.
+The manifest can be stored on a NAS that manages permissions on the server; setup does not require changing its permissions after creation.
 Omitting it with `--admin` selects the existing repository-local `.manager-manifest.toml` and `.admin-wr/manifests/` locations.
 When reading a missing configured file, the workflow falls back to its local counterpart; writes still use the configured destination.
 The admin workflow opens temporary drafts for review and keeps their execution TSVs in the temporary review directory.

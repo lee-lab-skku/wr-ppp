@@ -380,6 +380,25 @@ class AdminPathTests(unittest.TestCase):
         self.assertEqual(self.paths("--history-output").strip(), str(self.history))
         self.assertIn(f"manager-manifest\t{self.local}\n", self.paths(skill=True))
 
+    def test_nas_manifest_creation_does_not_require_chmod(self):
+        chmod = shutil.which("chmod")
+        executable(self.bin / "chmod", f'''
+import os, sys
+from pathlib import Path
+if Path(sys.argv[-1]).name == "manager-manifest.toml":
+    print("chmod: Operation not permitted", file=sys.stderr)
+    sys.exit(1)
+os.execv({chmod!r}, [{chmod!r}, *sys.argv[1:]])
+''')
+        self.setup("--admin", "--skills=agents", f"--admin-data={self.data}")
+        manifest = self.data / "manager-manifest.toml"
+        self.assertIn("schema = 1", manifest.read_text())
+        self.assertEqual(manifest.stat().st_mode & 0o777, 0o600)
+        self.assertIn(f"manager-manifest\t{manifest}\n", self.paths())
+        manifest.write_text("existing NAS roster")
+        self.setup("--admin", "--skills=agents", f"--admin-data={self.data}")
+        self.assertEqual(manifest.read_text(), "existing NAS roster")
+
     def test_existing_external_manifest_symlink_is_preserved(self):
         self.data.mkdir()
         manifest = self.data / "manager-manifest.toml"

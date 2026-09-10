@@ -235,7 +235,7 @@ timezone = "Asia/Seoul"
 # search_roots = ["path/relative/to/storage-root"]
 EOF
     )
-    chmod 0600 "$MANAGER_MANIFEST"
+    # umask above requests 0600 at creation; NAS permissions may be server-managed.
     echo "Created: manager manifest: $MANAGER_MANIFEST"
 }
 
