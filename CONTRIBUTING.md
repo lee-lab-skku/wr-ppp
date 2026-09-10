@@ -122,6 +122,11 @@ For each selected report exceeding the two-page maximum per person per week, rec
 An otherwise clear selection remains `included`, but the warning requires the existing draft review and approval; preserve all source pages and identify an unjustified excess as needing revision.
 `skills/admin-wr/scripts/build-bundle` consumes only that plan and its explicit PDFs; it does not parse TOML or search storage.
 It stages normalized PDF names, builds without container networking, verifies source hashes and page counts, and creates an A4 bundle whose first page is a fixed one-page index rather than an AI-written narrative.
+The cover omits source page counts and ranges and adds a cumulative O/X inclusion table: weeks are rows in descending order, with this week first, and current members are columns in manifest order.
+The agent supplies all earlier weeks from verified final records as optional `history` records in the existing plan schema; the builder renders those records without discovering or judging evidence.
+Exceptions, optional omissions, and unknown history have distinct markers, and unknown cells require review.
+Wide rosters split into member blocks; all weeks are retained, and the existing one-page cover check rejects overflow instead of dropping history.
+See the [rollup workflow](skills/admin-wr/references/rollup-workflow.md#write-the-temporary-plan) for the additive plan and execution-history fields and legacy compatibility.
 The remaining pages contain the selected reports in manifest order with their aspect ratios preserved.
 
 Missing required reports, unresolved or weak candidate choices, unreadable PDFs, invalid prior bundle hashes, and first runs require approval.
@@ -129,7 +134,7 @@ The agent first writes a visibly marked draft outside the configured final direc
 The builder prints a shell-quoted review command invoking `skills/admin-wr/scripts/open-bundle`, which opens the PDF using the desktop viewer on Linux, macOS, or WSL.
 The agent runs it to show the draft and includes a clickable PDF path with the proposed choices and issues; an unavailable viewer leaves the path available for manual review.
 Draft PDFs remain available after the builder exits, with their execution TSVs in the temporary review directory's `.manifests/` subdirectory.
-After explicit approval it rechecks source hashes and rebuilds the final bundle, retaining `Included`, `Missing`, `Approved exception`, and `Optional not included` statuses while removing the draft mark.
+After explicit approval it rechecks source hashes and rebuilds the final bundle, retaining distinct inclusion, missing, approved-exception, and optional-omission markers while removing the draft mark.
 A user-selected replacement candidate requires a new draft and approval for every remaining issue.
 
 Final artifacts use the canonical week label and separate output locations:

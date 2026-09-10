@@ -331,6 +331,8 @@ ENTRIES="$TMP_ROOT/entries.tsv"
 SORTED_ENTRIES="$TMP_ROOT/entries-sorted.tsv"
 CANDIDATES="$TMP_ROOT/candidates.tsv"
 ISSUES="$TMP_ROOT/issues.tsv"
+HISTORY="$TMP_ROOT/history.tsv"
+: > "$HISTORY"
 : > "$ENTRIES"
 : > "$CANDIDATES"
 : > "$ISSUES"
@@ -400,6 +402,20 @@ do
             printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
                 "$order" "$member_id" "$display_name" "$requirement" \
                 "$state" "$source_path" "$reason" >> "$ENTRIES"
+            ;;
+        history)
+            if [[ -n $f5 || -n $f6 || -n $f7 || -n $extra ||
+                ! $f1 =~ ^[0-9]{4}-(0[1-9]|1[0-2])-W[1-5]$ ||
+                ! $f1 < $REPORT_WEEK_LABEL ||
+                ! $f2 =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ || -z $f4 ]]
+            then
+                die "Invalid history record at plan line $LINE_NUMBER." 2
+            fi
+            case $f3 in
+                included|exception|missing|optional-missing|unknown) ;;
+                *) die "Invalid history state at plan line $LINE_NUMBER." 2 ;;
+            esac
+            printf '%s\t%s\t%s\t%s\n' "$f1" "$f2" "$f3" "$f4" >> "$HISTORY"
             ;;
         candidate)
             member_id=$f1
@@ -552,6 +568,26 @@ if ! awk -F '\t' '
 ' "$SORTED_ENTRIES" "$CANDIDATES"
 then
     die "Candidate selections do not match member entries." 2
+fi
+
+if [[ -s $HISTORY ]] && ! awk -F '\t' '
+    NR == FNR { members[$2] = 1; next }
+    !($2 in members) || seen[$1 SUBSEP $2]++ { invalid = 1 }
+    END { exit invalid }
+' "$SORTED_ENTRIES" "$HISTORY"
+then
+    die "History contains an unknown member or duplicate member/week." 2
+fi
+if awk -F '\t' '
+    NR == FNR { members[$2] = 1; next }
+    { weeks[$1] = 1; cells[$1 SUBSEP $2] = $3 }
+    END {
+        for (week in weeks) for (member in members)
+            if (!(week SUBSEP member in cells) || cells[week SUBSEP member] == "unknown") found = 1
+        exit !found
+    }
+' "$SORTED_ENTRIES" "$HISTORY"; then
+    printf 'warning\thistory-unavailable\t-\tSome historical inclusion records could not be verified.\n' >> "$ISSUES"
 fi
 
 PLAN_REQUIRES_APPROVAL=0
@@ -724,45 +760,18 @@ cat >> "$SOURCE_DIR/bundle-data.tex" <<EOF
 \\def\\BundleRequiredCount{$REQUIRED_COUNT}
 EOF
 
-: > "$SOURCE_DIR/bundle-rows.tex"
 : > "$SOURCE_DIR/bundle-includes.tex"
 NEXT_PAGE=2
 EXPECTED_PAGES=1
 while IFS=$'\t' read -r order member_id display_name requirement state \
     source_path reason
 do
-    escaped_name="$(tex_escape "$display_name")"
-    pages="--"
-    case $state in
-        included)
-            status_label="Included"
-            ;;
-        exception)
-            if [[ $DRAFT -eq 1 ]]; then
-                status_label="Proposed exception"
-            else
-                status_label="Approved exception"
-            fi
-            ;;
-        missing)
-            status_label="Missing"
-            ;;
-        optional-missing)
-            status_label="Optional not included"
-            ;;
-    esac
-
     case $state in
         included|exception)
             page_count="$(awk -F '|' -v id="$member_id" '
                 $1 == id { print $2 }
             ' "$PAGE_DATA")"
             page_end="$((NEXT_PAGE + page_count - 1))"
-            if [[ $page_count -eq 1 ]]; then
-                pages="$NEXT_PAGE"
-            else
-                pages="$NEXT_PAGE--$page_end"
-            fi
             staged_name="$(awk -F '\t' -v id="$member_id" '
                 $1 == id { print $5 }
             ' "$SELECTED_META")"
@@ -773,12 +782,56 @@ do
             ;;
     esac
 
-    escaped_status="$(tex_escape "$status_label")"
-    printf '%s & %s & %s & %s \\\\\\\\\n' \
-        "$order" "$escaped_name" "$escaped_status" "$pages" \
-        >> "$SOURCE_DIR/bundle-rows.tex"
 done < "$SORTED_ENTRIES"
-echo '\bottomrule' >> "$SOURCE_DIR/bundle-rows.tex"
+
+# Render weeks as rows, splitting wide rosters into complete member blocks.
+HISTORY_WEEKS="$TMP_ROOT/history-weeks.txt"
+{ cut -f1 "$HISTORY"; printf '%s\n' "$REPORT_WEEK_LABEL"; } |
+    LC_ALL=C sort -ru > "$HISTORY_WEEKS"
+HISTORY_NAMES="$TMP_ROOT/history-names.tsv"
+: > "$HISTORY_NAMES"
+while IFS=$'\t' read -r order member_id display_name requirement state source_path reason; do
+    printf '%s\t%s\t%s\n' "$member_id" "$(tex_escape "$display_name")" "$state" >> "$HISTORY_NAMES"
+done < "$SORTED_ENTRIES"
+awk -F '\t' -v weeks="$HISTORY_WEEKS" -v names="$HISTORY_NAMES" \
+    -v current="$REPORT_WEEK_LABEL" '
+    function mark(state) {
+        if (state == "included") return "O"
+        if (state == "exception") return "O*"
+        if (state == "missing") return "X"
+        if (state == "optional-missing") return "--"
+        return "?"
+    }
+    { states[$1 SUBSEP $2] = $3 }
+    END {
+        while ((getline week < weeks) > 0) week_list[++week_count] = week
+        close(weeks)
+        while ((getline line < names) > 0) {
+            split(line, fields, "\t")
+            ids[++member_count] = fields[1]
+            labels[member_count] = fields[2]
+            states[current SUBSEP fields[1]] = fields[3]
+        }
+        close(names)
+        for (first = 1; first <= member_count; first += 6) {
+            last = first + 5
+            if (last > member_count) last = member_count
+            printf "\\begin{tabularx}{\\textwidth}{@{}l*{%d}{>{\\centering\\arraybackslash}X}@{}}\n", last-first+1
+            print "\\toprule"
+            printf "Week"
+            for (m = first; m <= last; m++) printf " & %s", labels[m]
+            print " \\\\"
+            print "\\midrule"
+            for (w = 1; w <= week_count; w++) {
+                printf "%s", week_list[w]
+                for (m = first; m <= last; m++)
+                    printf " & %s", mark(states[week_list[w] SUBSEP ids[m]])
+                print " \\\\"
+            }
+            print "\\bottomrule\n\\end{tabularx}\\par\\medskip"
+        }
+    }
+' "$HISTORY" > "$SOURCE_DIR/bundle-history.tex"
 
 cat > "$SOURCE_DIR/result-probe.tex" <<'EOF'
 \documentclass{article}
@@ -867,6 +920,10 @@ do
         "$relative_source" "$source_mtime" "$source_hash" "$page_count" \
         "$page_start" "$page_end" "$reason" >> "$MANIFEST_FILE"
 done < "$SORTED_ENTRIES"
+
+while IFS=$'\t' read -r week member_id state evidence; do
+    printf 'history\t%s\t%s\t%s\t%s\n' "$week" "$member_id" "$state" "$evidence" >> "$MANIFEST_FILE"
+done < "$HISTORY"
 
 while IFS=$'\t' read -r member_id decision source_path relative_source \
     candidate_mtime candidate_hash reason

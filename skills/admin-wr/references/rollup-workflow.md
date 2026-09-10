@@ -31,7 +31,14 @@ For each member in manifest order, recursively enumerate regular files ending in
 Read prior `*.manifest.tsv` files from the resolved repository's `.admin-wr/manifests/` when available.
 For older bundles, also read manifests beside the PDFs in the configured administrator output, but only for weeks without a manifest in the new location.
 Do not fall back to a legacy manifest to bypass an invalid newer record.
-Prefer the most recent `complete` or `approved-with-issues` bundle whose report date precedes the target date.
+For candidate comparison, prefer the most recent `complete` or `approved-with-issues` bundle whose report date precedes the target date.
+For the cover's cumulative table, collect every earlier week, not just the most recent bundle, using the same precedence and PDF-hash verification.
+Use each week's own verified entry records as authoritative, rather than blindly copying a later bundle's cumulative snapshot.
+Match members by stable ID, using the current manifest roster and display names.
+Do not infer submission from a file's existence: this table records inclusion in the approved weekly bundle.
+For any known week whose record cannot be verified, use `unknown`; never turn absent evidence into `missing`.
+Include intervening weeks with no verified bundle as `unknown`, resolving their canonical labels with the metadata helper.
+Do not invent a tracking start before the earliest available bundle; if no history exists, show only this week and retain the first-run approval issue.
 Resolve the recorded PDF filename against the configured administrator output, regardless of where the manifest lives, and verify that the PDF exists and its SHA-256 still matches before trusting it as history.
 A missing half of the PDF/manifest pair or a hash mismatch is an approval issue and makes that history untrusted.
 
@@ -87,6 +94,8 @@ Create a UTF-8, tab-separated file in temporary storage. Fields must not contain
 schema	admin-wr-plan/v1
 entry	10	member-a	구성원 가	required	exception	/absolute/path/to/report-storage/member-a/report-current.pdf	ambiguous-best
 entry	20	member-b	구성원 나	required	missing	-	missing-report
+history	2026-08-W4	member-a	included	/absolute/path/to/2026-08-W4.manifest.tsv
+history	2026-08-W4	member-b	missing	/absolute/path/to/2026-08-W4.manifest.tsv
 candidate	member-a	selected	/absolute/path/to/report-storage/member-a/report-current.pdf	ambiguous-best
 candidate	member-a	rejected	/absolute/path/to/report-storage/member-a/report-previous.pdf	older-candidate
 issue	error	ambiguous-report	member-a	Several plausible PDFs were found.
@@ -97,6 +106,22 @@ Entry fields are `order`, `id`, `display_name`, `required|optional`, `included|e
 
 Candidate fields are member ID, `selected|rejected`, absolute path, and reason code. Issue fields are `error|warning`, code, member ID or `-`, and a concise message.
 Every `exception` or `missing` entry must have at least one issue naming that member; global issues such as `first-run` may be added separately.
+
+History records are an optional additive extension of `admin-wr-plan/v1`: `history`, canonical week, member ID, state, and evidence (a verified manifest path or a concise explanation of unavailable evidence).
+For normal skill runs, include every earlier week from the start of available history through the week before the target week, with one cell per current member.
+Accepted historical states are `included`, `exception`, `missing`, `optional-missing`, and `unknown`.
+The builder rejects duplicate member/week pairs, unknown member IDs, and current or future weeks; this week's row values come from the proposed entries.
+The builder consumes explicit history without searching storage or making evidence judgments.
+Unknown states or absent member cells in a supplied week add a `history-unavailable` warning requiring draft review.
+Older plans without history remain buildable, but show only the current week; they do not establish that no earlier submissions exist.
+
+The first page replaces the current-only status list with the cumulative table, omitting report page counts and page ranges.
+Its cumulative table uses weeks as rows in descending order (this week first), and members as columns in manifest order.
+The legend distinguishes `O` (included), `O*` (exception), `X` (missing required report), `--` (optional not included), and `?` (unknown).
+Draft current-week cells describe proposed inclusion, while historical cells describe verified final records.
+Wide rosters are split into blocks of at most six member columns, each repeating every week.
+Never discard older weeks to fit the cover; the one-page overflow check fails safely if the full table does not fit, requiring a layout adjustment before rebuilding.
+Page counts and ranges remain in the execution manifest for source validation and traceability.
 
 ## Build, Confirm, and Promote
 
@@ -162,9 +187,13 @@ The final `<week>.manifest.tsv` retains schema `admin-wr-bundle/v1`. Its tab-sep
 schema	admin-wr-bundle/v1
 bundle	<date>	<week>	<start>	<end>	<state>	<approval>	<pdf-name>	<pdf-sha256>
 created-at	<unix-epoch>
+history	<week>	<id>	<state>	<evidence>
 entry	<order>	<id>	<display-name>	<requirement>	<state>	<relative-source-or-dash>	<mtime-or-dash>	<sha256-or-dash>	<page-count>	<page-start-or-dash>	<page-end-or-dash>	<reason>
 candidate	<id>	<selected-or-rejected>	<relative-source>	<mtime>	<sha256>	<reason>
 issue	<severity>	<code>	<id-or-dash>	<message>
 ```
+
+Optional `history` records preserve the supplied cumulative snapshot, with the same fields as the plan extension.
+Legacy execution manifests without these records remain valid; their own `entry` records still establish that week's inclusion.
 
 Valid final states are `complete` with `not-required` approval and `approved-with-issues` with `user-confirmed` approval. Draft manifests use `draft` and `required` and must never be treated as prior successful history. Recompute the PDF hash, and compare selected source path, mtime, and hash with current candidates before relying on any entry.

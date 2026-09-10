@@ -72,7 +72,7 @@ if "page-probe.tex" in args[-1]:
 else:
     if os.environ.get("ADMIN_TEST_BUILD_FAIL"):
         sys.exit(17)
-    data = b"%PDF-1.4\\n" + files["bundle-data.tex"]
+    data = b"%PDF-1.4\\n" + files["bundle-data.tex"] + files["bundle-history.tex"]
     with tarfile.open(fileobj=sys.stdout.buffer, mode="w|") as archive:
         item = tarfile.TarInfo("bundle.pdf")
         item.size = len(data)
@@ -111,6 +111,70 @@ else:
         self.assertEqual(entry[8:13], [source_hash, "2", "2", "3", "current"])
         self.assertEqual(hashlib.sha256(self.source.read_bytes()).hexdigest(), source_hash)
         self.assertNotIn("review command:", result.stderr)
+
+    def test_history_is_transposed_sorted_and_preserved(self):
+        self.plan.write_text(self.clean_plan +
+            "history\t2026-08-W4\tmember-a\tmissing\tverified-august\n"
+            "history\t2025-12-W4\tmember-a\texception\tverified-december\n")
+        result = self.build()
+        pdf, manifest = map(Path, result.stdout.splitlines())
+        rendered = pdf.read_text()
+        self.assertIn("Week & 구성원 가", rendered)
+        self.assertIn("2025-12-W4 & O*", rendered)
+        self.assertIn("2026-08-W4 & X", rendered)
+        self.assertIn("2026-09-W1 & O", rendered)
+        self.assertLess(rendered.index("2026-09-W1 &"), rendered.index("2026-08-W4 &"))
+        self.assertLess(rendered.index("2026-08-W4 &"), rendered.index("2025-12-W4 &"))
+        self.assertIn("history\t2026-08-W4\tmember-a\tmissing\tverified-august", manifest.read_text())
+        self.assertNotIn("2--3", rendered)
+
+    def test_unknown_history_requires_review_and_is_not_missing(self):
+        self.plan.write_text(self.clean_plan +
+            "history\t2026-08-W4\tmember-a\tunknown\tinvalid-prior-hash\n")
+        self.build(status=2)
+        result = self.build("--draft", "--output-dir", str(self.review))
+        pdf, manifest = map(Path, result.stdout.splitlines())
+        self.assertIn("2026-08-W4 & ?", pdf.read_text())
+        self.assertIn("history-unavailable", manifest.read_text())
+
+    def test_wide_roster_preserves_all_members_and_weeks(self):
+        plan = self.clean_plan
+        for number in range(1, 8):
+            plan += (f"entry\t{10 + number}\tmember-{number}\tName & {number}\toptional"
+                     "\toptional-missing\t-\tno-report\n")
+            plan += f"history\t2026-08-W4\tmember-{number}\toptional-missing\tverified\n"
+        plan += "history\t2026-08-W4\tmember-a\tincluded\tverified\n"
+        self.plan.write_text(plan)
+        pdf = Path(self.build().stdout.splitlines()[0]).read_text()
+        self.assertEqual(pdf.count("2026-09-W1 &"), 2)
+        self.assertEqual(pdf.count("2026-08-W4 &"), 2)
+        for number in range(1, 8):
+            self.assertIn(f"Name \\& {number}", pdf)
+        self.assertNotIn(" & ?", pdf)
+
+    def test_absent_history_cell_requires_review(self):
+        self.plan.write_text(self.clean_plan +
+            "entry\t20\tmember-b\tNew member\toptional\toptional-missing\t-\tnone\n"
+            "history\t2026-08-W4\tmember-a\tincluded\tverified\n")
+        self.build(status=2)
+        result = self.build("--draft", "--output-dir", str(self.review))
+        pdf = Path(result.stdout.splitlines()[0]).read_text()
+        self.assertIn("2026-08-W4 & O & ?", pdf)
+        self.assertIn("2026-09-W1 & O & --", pdf)
+
+    def test_invalid_history_rejected_before_output(self):
+        rows = (
+            "2026-09-W1\tmember-a\tincluded\tcurrent-week",
+            "2027-01-W1\tmember-a\tincluded\tfuture",
+            "2026-08-W4\tstranger\tincluded\tunknown-member",
+            "2026-08-W4\tmember-a\tbogus\tinvalid-state",
+            "2026-08-W4\tmember-a\tincluded\tduplicate\nhistory\t2026-08-W4\tmember-a\tmissing\tduplicate",
+        )
+        for row in rows:
+            with self.subTest(row=row):
+                self.plan.write_text(self.clean_plan + "history\t" + row + "\n")
+                self.build(status=2)
+                self.assertFalse(self.output.exists())
 
     def test_draft_survives_and_prints_executable_review_command(self):
         self.issues()

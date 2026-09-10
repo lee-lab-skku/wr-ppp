@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- [skill] administrator bundle covers omit page ranges and add cumulative inclusion tables with newest weeks first and members as columns, using verified historical records and distinct markers for exceptions, optional omissions, and unknown history.
+
 ## [1.2.0] &mdash; 2026-09-08
 
 ### Added

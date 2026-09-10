@@ -57,20 +57,18 @@
 
         \vspace{5mm}
 
-        \small
         \renewcommand{\arraystretch}{1.22}
-        \begin{tabularx}{\textwidth}{@{}r L l r@{}}
-            \toprule
-            \# & Member & Status & Bundle pages \\
-            \midrule
-            \input{bundle-rows.tex}
-        \end{tabularx}
+        {\bfseries Cumulative inclusion record}\par
+        \footnotesize
+        O: included; O*: exception; X: missing; --: optional not included; ?: unknown.\par
+        This week reflects the proposed selections when marked DRAFT.\par
+        \input{bundle-history.tex}
     \end{minipage}%
 }
 
 \ifdim\dimexpr\ht\BundleCoverBox+\dp\BundleCoverBox\relax>\textheight
     \PackageError{admin-wr}{Bundle cover exceeds one page}
-        {Reduce the member count or shorten display names before rebuilding.}
+        {The complete roster and history must fit; adjust the cover layout without dropping records.}
 \fi
 
 \noindent\usebox{\BundleCoverBox}

@@ -30,7 +30,7 @@ Preserve complete source PDFs during review and assembly; do not truncate or ref
 
 ## Build and Promote
 
-Use `scripts/build-bundle` from this skill directory after selecting the best candidate for each member and writing the required temporary plan TSV.
+Use `scripts/build-bundle` from this skill directory after selecting the best candidate for each member and writing the required temporary plan TSV, including cumulative weekly inclusion history as described in the workflow reference.
 Invoke it directly rather than wrapping it in another shell command or pipeline so execution authorization and Docker errors remain visible.
 
 - With no issues, build and promote a complete bundle.
