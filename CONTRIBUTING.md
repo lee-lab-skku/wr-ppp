@@ -181,6 +181,31 @@ Source PDFs must never be modified or deleted.
 The implementation is split across `skills/admin-wr` for agent behavior and deterministic assembly, root `scripts/` for administrator preflight and PDF probing, and `scripts/resolve-repo-root` for repository resolution shared with both skills.
 The administrator skill exposes relative links to the root helper implementations so diagnostics and probing have one canonical source.
 
+## Slack Hold Notifications
+
+The optional `scripts/notify-held` command requires Python 3 (standard library only).
+It uses a draft execution manifest as evidence and includes only the target week, reporting period, and missing required members in its message.
+Keep hold decisions and notification authorization in the agent workflow, separate from deterministic PDF building.
+Never equate a draft or approval request with a decision to hold.
+The command previews by default; transmission requires both `--held` and `--send`.
+Only activate this path after the administrator authorizes Slack notices for the configured destination and holds the bundle for missing required reports.
+Do not emit notices for optional omissions, clean bundles, or already promoted bundles.
+
+`--configure` accepts the secret webhook URL through hidden terminal input and stores it as `slack-webhook.url` alongside the configured `manifests/` directory, or under `.admin-wr/` with local defaults.
+It saves configuration without posting a message.
+Keep webhook URLs out of command arguments, tracked files, logs, PDF content, and execution TSVs.
+NAS access controls must protect the secret file; as with manager manifests, do not require post-creation `chmod`.
+Notification secrets use the configured location only, with no automatic fallback to a different channel's local credential.
+
+Successful notices are deduplicated by target week, missing-member IDs, and webhook destination using records in the adjacent `notifications/` directory.
+Serialize identical sends with a directory lock and recheck the receipt after acquiring it.
+A failed or interrupted send retains the lock because delivery might have occurred; never retry automatically.
+Check the destination channel before manually resolving the lock, recording success if delivered or removing the lock if confirmed undelivered.
+Slack failure must not publish a held bundle, modify the execution history, or claim successful notification.
+Use plain-text message blocks so member names cannot introduce mentions or formatting, HTTPS Slack endpoints without redirects, bounded response reads, and a network timeout.
+Tests substitute transport and must not send to Slack.
+See the administrator skill's [Slack setup and operation guide](skills/admin-wr/references/slack-notifications.md) for operator instructions.
+
 ## Editing AI Skills
 
 Use this order of reference when updating `skills/wr-wr` or `skills/admin-wr`:

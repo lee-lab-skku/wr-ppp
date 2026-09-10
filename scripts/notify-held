@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Preview or explicitly send a missing-report hold notice through Slack."""
+
+import argparse
+import csv
+import getpass
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+from urllib.error import HTTPError, URLError
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+
+def data_directory():
+    script = Path(__file__).resolve().parent / "admin-paths"
+    result = subprocess.run([str(script), "--history-output"], check=True,
+                            capture_output=True, text=True)
+    return Path(result.stdout.strip()).parent
+
+
+def validate_webhook(url):
+    if not re.fullmatch(r"https://hooks\.slack(?:-gov)?\.com/services/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+", url):
+        raise ValueError("Expected an HTTPS Slack Incoming Webhook URL; value omitted.")
+    return url
+
+
+def configure(directory):
+    if not sys.stdin.isatty():
+        raise ValueError("Run --configure in an interactive terminal for hidden input.")
+    url = validate_webhook(getpass.getpass("Slack Incoming Webhook URL (hidden): ").strip())
+    directory.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=".slack-webhook-", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            output.write(url + "\n")
+        os.replace(temporary, directory / "slack-webhook.url")
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    print("Webhook saved. No message was sent.")
+
+
+def notice(manifest):
+    with manifest.open(encoding="utf-8", newline="") as source:
+        rows = list(csv.reader(source, delimiter="\t"))
+    schemas = [r for r in rows if r and r[0] == "schema"]
+    bundles = [r for r in rows if r and r[0] == "bundle"]
+    if schemas != [["schema", "admin-wr-bundle/v1"]] or len(bundles) != 1:
+        raise ValueError("Expected one admin-wr-bundle/v1 execution manifest.")
+    bundle = bundles[0]
+    if len(bundle) != 9 or bundle[5:7] != ["draft", "required"]:
+        raise ValueError("Only a draft awaiting review can have a hold notice.")
+    if not re.fullmatch(r"\d{4}-\d{2}-W[1-5]", bundle[2]):
+        raise ValueError("Invalid reporting week.")
+    for date in (bundle[1], bundle[3], bundle[4]):
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+            raise ValueError("Invalid reporting date.")
+    entries = [r for r in rows if r and r[0] == "entry"]
+    seen = set()
+    for entry in entries:
+        if (len(entry) != 13 or not entry[1].isdigit() or entry[2] in seen
+                or not entry[3] or entry[4] not in ("required", "optional")
+                or entry[5] not in ("included", "exception", "missing", "optional-missing")):
+            raise ValueError("Invalid or duplicate member entry.")
+        seen.add(entry[2])
+        if entry[5] == "missing" and (entry[4] != "required" or entry[6] != "-"):
+            raise ValueError("Invalid missing member entry.")
+    missing = sorted((r for r in entries if r[4:6] == ["required", "missing"]),
+                     key=lambda r: (int(r[1]), r[2]))
+    if not missing:
+        raise ValueError("No required reports are missing; no hold notice is applicable.")
+    text = (f"주간보고 취합 보류 · {bundle[2]}\n"
+            f"보고 기간: {bundle[3]} ~ {bundle[4]}\n"
+            f"필수 제출 누락: {len(missing)}명\n"
+            + "\n".join(f"• {r[3]}" for r in missing)
+            + "\n누락 보고서가 있어 관리자가 취합을 보류했습니다. 제출 후 관리자에게 알려 주세요.")
+    if len(text) > 2900:
+        raise ValueError("Notice is too long for one Slack section.")
+    # Plain text avoids interpreting names as mentions or Slack markup.
+    fallback = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    payload = {"text": fallback, "mrkdwn": False,
+               "blocks": [{"type": "section", "text": {"type": "plain_text", "text": text}}],
+               "unfurl_links": False, "unfurl_media": False}
+    fingerprint = hashlib.sha256(json.dumps([bundle[2], sorted(r[2] for r in missing)],
+                                           ensure_ascii=False).encode()).hexdigest()
+    return payload, fingerprint
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def post(url, payload):
+    request = Request(url, data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                      headers={"Content-Type": "application/json; charset=utf-8"}, method="POST")
+    try:
+        with build_opener(NoRedirect()).open(request, timeout=15) as response:
+            if response.status != 200 or response.read(128).strip() != b"ok":
+                raise ValueError("Slack did not confirm delivery; check the channel before retrying.")
+    except HTTPError as error:
+        raise ValueError(f"Slack HTTP {error.code}; no automatic retry was attempted.") from None
+    except (URLError, TimeoutError, OSError):
+        raise ValueError("Delivery could not be confirmed; check Slack before retrying. URL omitted.") from None
+
+
+def send(directory, payload, fingerprint):
+    url_file = directory / "slack-webhook.url"
+    if not url_file.is_file():
+        raise ValueError("Webhook is not configured. Run scripts/notify-held --configure first.")
+    url = validate_webhook(url_file.read_text(encoding="utf-8").strip())
+    # Bind receipts to the destination without storing its secret URL.
+    key = fingerprint + "-" + hashlib.sha256(url.encode()).hexdigest()[:16]
+    receipts = directory / "notifications"
+    receipts.mkdir(parents=True, exist_ok=True)
+    receipt = receipts / (key + ".sent")
+    lock = receipts / (key + ".lock")
+    if receipt.exists():
+        print("Already notified for this week, missing-member set, and webhook.")
+        return
+    try:
+        lock.mkdir()
+    except FileExistsError:
+        raise ValueError(f"Notice is already sending or awaiting delivery review; check Slack before removing {lock}.") from None
+    if receipt.exists():
+        lock.rmdir()
+        print("Already notified for this week, missing-member set, and webhook.")
+        return
+    # Keep the lock on an uncertain delivery, avoiding an accidental duplicate.
+    post(url, payload)
+    receipt.write_text("sent\n", encoding="utf-8")
+    lock.rmdir()
+    print("Slack hold notice sent.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--configure", action="store_true", help="save a webhook using hidden terminal input")
+    parser.add_argument("--manifest", type=Path, help="draft execution TSV")
+    parser.add_argument("--held", action="store_true", help="administrator has decided to hold for missing reports")
+    parser.add_argument("--send", action="store_true", help="send to Slack; otherwise preview only")
+    args = parser.parse_args()
+    try:
+        if args.configure:
+            if args.manifest or args.held or args.send:
+                parser.error("--configure cannot be combined with notice options")
+            configure(data_directory())
+            return 0
+        if not args.manifest:
+            parser.error("--manifest is required")
+        if args.send and not args.held:
+            parser.error("--send requires --held and an actual administrator hold decision")
+        payload, fingerprint = notice(args.manifest)
+        if not args.send:
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return 0
+        send(data_directory(), payload, fingerprint)
+    except (ValueError, OSError, subprocess.CalledProcessError) as error:
+        print(str(error) if isinstance(error, ValueError) else "Unable to access notification configuration or records.", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
