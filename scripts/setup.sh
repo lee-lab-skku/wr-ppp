@@ -24,6 +24,7 @@ usage() {
     echo "       $0 <absolute-pdf-output-directory> <docker-image>" >&2
     echo "       $0 [setup-arguments] [--skills=<codex|claude>[,...]] [--admin]" >&2
     echo "          [--admin-output=<absolute-directory>] [--replace-existing]" >&2
+    echo "          [--admin-data=<absolute-directory>]" >&2
     echo "Output directories must start with '/' or '~/'." >&2
 }
 
@@ -84,7 +85,30 @@ preflight_link() {
     fi
 }
 
+preflight_directory_path() {
+    local target=$1
+    while [[ ! -d $target ]]; do
+        if [[ -e $target || -L $target ]]; then
+            echo "Directory path crosses a non-directory: $target" >&2
+            return 1
+        fi
+        target="$(dirname -- "$target")"
+    done
+}
+
+normalize_admin_path() {
+    local value
+    value="$(normalize_output_directory "$1")" || return
+    if [[ $value == *$'\t'* || $value == *$'\n'* || $value == *$'\r'* ||
+        $value == */../* || $value == */.. || $value == */./* || $value == */. ]]; then
+        echo "Administrator paths cannot contain control characters or dot components." >&2
+        return 1
+    fi
+    printf '%s\n' "$value"
+}
+
 preflight_manager_manifest() {
+    preflight_directory_path "$(dirname -- "$MANAGER_MANIFEST")" || return
     if [[ -L "$MANAGER_MANIFEST" ]]; then
         if [[ -f "$MANAGER_MANIFEST" ]]; then
             return
@@ -192,6 +216,8 @@ create_manager_manifest() {
 
     (
         umask 077
+        mkdir -p -- "$(dirname -- "$MANAGER_MANIFEST")"
+        set -C
         cat > "$MANAGER_MANIFEST" <<'EOF'
 # Administrator report discovery manifest.
 # Set storage_root and add one [[members]] table per report author before use.
@@ -218,6 +244,8 @@ SKILLS_SET=0
 ADMIN=0
 ADMIN_OUTPUT_SET=0
 ADMIN_OUTPUT_VALUE=""
+ADMIN_DATA_SET=0
+ADMIN_DATA_VALUE=""
 REPLACE_EXISTING=0
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -277,6 +305,18 @@ while [[ $# -gt 0 ]]; do
             usage
             exit 2
             ;;
+        --admin-data=*)
+            [[ $ADMIN_DATA_SET -eq 0 && -n ${1#*=} ]] || {
+                echo "Administrator data directory must be nonempty and specified once." >&2
+                exit 2
+            }
+            ADMIN_DATA_SET=1
+            ADMIN_DATA_VALUE=${1#*=}
+            ;;
+        --admin-data)
+            echo "Use --admin-data=<absolute-directory>." >&2
+            exit 2
+            ;;
         --replace-existing)
             if [[ $REPLACE_EXISTING -eq 1 ]]; then
                 echo "--replace-existing specified more than once." >&2
@@ -310,8 +350,8 @@ if [[ $ADMIN -eq 1 && $SKILLS_SET -eq 0 ]]; then
     exit 2
 fi
 
-if [[ $ADMIN_OUTPUT_SET -eq 1 && $ADMIN -eq 0 ]]; then
-    echo "--admin-output requires --admin." >&2
+if [[ $ADMIN -eq 0 && ( $ADMIN_OUTPUT_SET -eq 1 || $ADMIN_DATA_SET -eq 1 ) ]]; then
+    echo "Administrator path options require --admin." >&2
     usage
     exit 2
 fi
@@ -343,6 +383,7 @@ echo "Repository version: $REPOSITORY_VERSION"
 PDF_OUTPUT_DIR=""
 DOCKER_IMAGE=""
 ADMIN_OUTPUT_DIR=""
+ADMIN_DATA_DIR=""
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
 fi
@@ -375,6 +416,19 @@ fi
 OUTPUT_DIR="$(normalize_output_directory "$OUTPUT_DIR")"
 if [[ $ADMIN_OUTPUT_SET -eq 1 ]]; then
     ADMIN_OUTPUT_DIR="$(normalize_output_directory "$ADMIN_OUTPUT_VALUE")"
+fi
+
+if [[ $ADMIN -eq 1 ]]; then
+    # Omission selects the existing repository-local layout, including on reruns.
+    ADMIN_DATA_DIR=""
+    if [[ $ADMIN_DATA_SET -eq 1 ]]; then
+        ADMIN_DATA_DIR="$(normalize_admin_path "$ADMIN_DATA_VALUE")"
+        MANAGER_MANIFEST="${ADMIN_DATA_DIR%/}/manager-manifest.toml"
+    fi
+    ADMIN_HISTORY_TARGET="$REPO_DIR/.admin-wr/manifests"
+    if [[ -n $ADMIN_DATA_DIR ]]; then
+        ADMIN_HISTORY_TARGET="${ADMIN_DATA_DIR%/}/manifests"
+    fi
 fi
 
 if [[ ! -x "$REPORT_BUILD_SOURCE" ]]; then
@@ -423,6 +477,10 @@ if [[ $ADMIN -eq 1 ]] && ! preflight_manager_manifest; then
     PREFLIGHT_FAILED=1
 fi
 
+if [[ $ADMIN -eq 1 ]] && ! preflight_directory_path "$ADMIN_HISTORY_TARGET"; then
+    PREFLIGHT_FAILED=1
+fi
+
 if [[ $PREFLIGHT_FAILED -eq 1 ]]; then
     exit 1
 fi
@@ -434,10 +492,15 @@ OUTPUT_DIR="$(
     pwd -P
 )"
 
+if [[ $ADMIN -eq 1 ]]; then
+    create_manager_manifest
+fi
+
 cat > "$CONFIG_FILE" <<EOF
 PDF_OUTPUT_DIR=$(printf '%q' "$OUTPUT_DIR")
 DOCKER_IMAGE=$(printf '%q' "$DOCKER_IMAGE")
 ADMIN_OUTPUT_DIR=$(printf '%q' "$ADMIN_OUTPUT_DIR")
+ADMIN_DATA_DIR=$(printf '%q' "$ADMIN_DATA_DIR")
 EOF
 
 chmod 0600 "$CONFIG_FILE"
@@ -457,10 +520,6 @@ for service in "${SKILL_SERVICES[@]}"; do
     done
 done
 
-if [[ $ADMIN -eq 1 ]]; then
-    create_manager_manifest
-fi
-
 echo
 echo "Installed:    $REPORT_BUILD_TARGET"
 echo "Style:        $REPO_DIR"
@@ -473,4 +532,5 @@ if [[ $ADMIN -eq 1 ]]; then
         echo "Admin output: not configured"
     fi
     echo "Admin config: $MANAGER_MANIFEST"
+    echo "Admin history: $ADMIN_HISTORY_TARGET"
 fi

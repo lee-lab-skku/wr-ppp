@@ -28,9 +28,15 @@ The helper prints `report-metadata/v1` TSV containing the report date, canonical
 
 For each member in manifest order, recursively enumerate regular files ending in `.pdf`, case-insensitively, below only that member's search roots. Use NUL-delimited filesystem operations so spaces and Unicode names are preserved. Exclude AppleDouble files named `._*.pdf`; do not follow directory symlinks.
 
-Read prior `*.manifest.tsv` files from the resolved repository's `.admin-wr/manifests/` when available.
-For older bundles, also read manifests beside the PDFs in the configured administrator output, but only for weeks without a manifest in the new location.
-Do not fall back to a legacy manifest to bypass an invalid newer record.
+Run `scripts/admin-paths` from this skill directory to resolve metadata locations from `.local-config`.
+Its successful TSV output contains `manager-manifest<TAB>path`, `history-output<TAB>directory`, and zero or more `history<TAB>week<TAB>path` records.
+Read the returned manifest and history paths; the helper resolves locations only, so validate contents and PDF hashes as below.
+With `ADMIN_DATA_DIR` configured, reads prefer `<directory>/manager-manifest.toml` and `<directory>/manifests/<week>.manifest.tsv`.
+If a configured file is absent, look in the repository's `.manager-manifest.toml` or `.admin-wr/manifests/<week>.manifest.tsv` respectively.
+History lookup then considers legacy TSVs beside PDFs in the configured administrator output, only for weeks absent from both preferred locations.
+Fallback is per file, so an existing external history directory may still use local records for missing weeks.
+Do not bypass an existing invalid record by falling back to another copy.
+The helper does not move or modify files.
 For candidate comparison, prefer the most recent `complete` or `approved-with-issues` bundle whose report date precedes the target date.
 For the cover's cumulative table, collect every earlier week, not just the most recent bundle, using the same precedence and PDF-hash verification.
 Use each week's own verified entry records as authoritative, rather than blindly copying a later bundle's cumulative snapshot.
@@ -177,9 +183,14 @@ If the temporary directory or plan is no longer available, reconstruct it from c
 
 ## Read Execution History
 
-Final PDFs are written to the configured administrator output; final execution TSVs are written to `<repository>/.admin-wr/manifests/<week>.manifest.tsv`.
-New builds do not write TSVs beside final PDFs or move/delete legacy manifests.
-Existing history needs no migration to remain readable; administrators may move legacy TSVs into the new directory, preserving an existing new-location record for the same week.
+Final PDFs are written to the configured administrator output.
+Final execution TSVs are written to `<ADMIN_DATA_DIR>/manifests/<week>.manifest.tsv` when configured, otherwise `<repository>/.admin-wr/manifests/<week>.manifest.tsv`.
+The builder uses `scripts/admin-paths --history-output` for this destination; read fallback never redirects writes to local storage.
+A write failure at the configured destination is an error, not permission to write elsewhere.
+New builds do not move/delete prior manifests.
+A caller may explicitly choose the PDF output as the history destination; otherwise the default layout keeps them separate.
+Existing local and legacy history needs no migration to remain readable.
+Administrators may move prior TSVs to the configured history directory without overwriting existing records for the same week.
 The PDF filename in a final manifest remains relative to the configured administrator output, including after a configuration change; a missing PDF or hash mismatch still requires reassessment.
 Each artifact is staged in its own destination directory and replaced atomically, but the PDF/TSV pair is not a single atomic transaction.
 

@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO_DIR="$("$SCRIPT_DIR/resolve-repo-root")"
+
+die() {
+    echo "$1" >&2
+    exit 2
+}
+
+normalize_path() {
+    local value=$1
+    if [[ $value == '~/'* ]]; then
+        value="${HOME:?HOME is not set}/${value#\~/}"
+    fi
+    if [[ $value != /* || $value == *$'\t'* || $value == *$'\n'* ||
+        $value == *$'\r'* || $value == */../* || $value == */.. ||
+        $value == */./* || $value == */. ]]; then
+        die "Invalid administrator path: $value"
+    fi
+    printf '%s\n' "$value"
+}
+
+[[ $# -eq 0 || ( $# -eq 1 && $1 == --history-output ) ]] ||
+    die "Usage: $0 [--history-output]"
+ADMIN_DATA_DIR=""
+ADMIN_OUTPUT_DIR=""
+if [[ -f "$REPO_DIR/.local-config" ]]; then
+    source "$REPO_DIR/.local-config"
+fi
+
+LOCAL_MANIFEST="$REPO_DIR/.manager-manifest.toml"
+LOCAL_HISTORY="$REPO_DIR/.admin-wr/manifests"
+MANIFEST_PATH=$LOCAL_MANIFEST
+HISTORY_OUTPUT=$LOCAL_HISTORY
+if [[ -n $ADMIN_DATA_DIR ]]; then
+    ADMIN_DATA_DIR="$(normalize_path "$ADMIN_DATA_DIR")"
+    MANIFEST_PATH="${ADMIN_DATA_DIR%/}/manager-manifest.toml"
+    HISTORY_OUTPUT="${ADMIN_DATA_DIR%/}/manifests"
+fi
+if [[ $# -eq 1 ]]; then
+    # Writes always target configuration, even when reads fall back locally.
+    printf '%s\n' "$HISTORY_OUTPUT"
+    exit 0
+fi
+
+if [[ ! -e $MANIFEST_PATH ]]; then
+    MANIFEST_PATH=$LOCAL_MANIFEST
+fi
+if [[ -e $MANIFEST_PATH && ! -f $MANIFEST_PATH ]]; then
+    die "Manager manifest is not a regular file: $MANIFEST_PATH"
+fi
+printf 'manager-manifest\t%s\nhistory-output\t%s\n' "$MANIFEST_PATH" "$HISTORY_OUTPUT"
+
+# Deduplicate by filename in precedence order, independently for every week.
+# Existing invalid records retain precedence for subsequent validation by the agent.
+LEGACY_HISTORY=""
+if [[ -n $ADMIN_OUTPUT_DIR ]]; then
+    LEGACY_HISTORY="$(normalize_path "$ADMIN_OUTPUT_DIR")"
+fi
+{
+    for directory in "$HISTORY_OUTPUT" "$LOCAL_HISTORY" "$LEGACY_HISTORY"; do
+        [[ -n $directory ]] || continue
+        if [[ -e $directory && ! -d $directory ]]; then
+            die "History location is not a directory: $directory"
+        fi
+        [[ -d $directory ]] || continue
+        for file in "$directory"/*.manifest.tsv; do
+            [[ -e $file ]] || continue
+            if [[ $file == *$'\t'* || $file == *$'\n'* || $file == *$'\r'* ]]; then
+                die "History filenames cannot contain tabs or newlines."
+            fi
+            name=${file##*/}
+            [[ $name != ._* ]] || continue
+            printf '%s\t%s\n' "$name" "$file"
+        done
+    done
+} | awk -F '\t' '!seen[$1]++ { sub(/\.manifest\.tsv$/, "", $1); print "history\t" $1 "\t" $2 }'

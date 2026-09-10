@@ -1,6 +1,10 @@
 # Administrator Manifest
 
-The repository-local `.manager-manifest.toml` is human-managed configuration. Setup creates a commented skeleton but never guesses members or replaces an existing manifest.
+The manager manifest is human-managed configuration.
+With setup option `--admin-data=<directory>`, its write location is `<directory>/manager-manifest.toml`; otherwise it is the repository-local `.manager-manifest.toml`.
+Setup saves the optional base directory as `ADMIN_DATA_DIR` in `.local-config`, creates a commented skeleton when absent, and never guesses members or replaces an existing manifest.
+For reads, use the `manager-manifest` path returned by `scripts/admin-paths`: a missing configured file falls back to the repository-local file.
+An existing but invalid or incomplete configured manifest must be diagnosed rather than bypassed.
 
 ## Schema
 

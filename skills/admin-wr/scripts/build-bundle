@@ -308,7 +308,7 @@ fi
 if [[ $DRAFT -eq 1 ]]; then
     MANIFEST_DIR="$OUTPUT_DIR/.manifests"
 else
-    MANIFEST_DIR="$REPO_DIR/.admin-wr/manifests"
+    MANIFEST_DIR="$("$REPO_DIR/scripts/admin-paths" --history-output)"
 fi
 canonical_directory_target "$MANIFEST_DIR"
 MANIFEST_DIR=$CANONICAL_DIRECTORY_TARGET

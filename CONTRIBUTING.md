@@ -75,7 +75,21 @@ Administrator mode is a maintainer workflow that installs the separate `admin-wr
 If it is omitted, setup preserves any saved administrator output; a first installation without one succeeds and reports `Admin output: not configured`.
 The administrator output directory is required only for final promotion and is not created merely by setup.
 
-The first administrator-mode setup creates a private, Git-ignored `.manager-manifest.toml` skeleton with mode `0600`.
+Use optional `--admin-data=<absolute-directory>` to store administrator metadata under one directory:
+
+```text
+<admin-data>/manager-manifest.toml
+<admin-data>/manifests/<week>.manifest.tsv
+```
+
+This option requires `--admin` and accepts an absolute path or `~/` path, saved as `ADMIN_DATA_DIR` in `.local-config`.
+If `--admin-data` is omitted on an administrator setup, use the existing local layout: `<repository>/.manager-manifest.toml` and `<repository>/.admin-wr/manifests/`, even if a previous setup saved an external directory.
+Setup without `--admin` preserves the saved metadata directory.
+Empty or absent `ADMIN_DATA_DIR` also means local storage, so existing configurations need no migration.
+Setup creates the chosen manifest's parent directories as needed but leaves the execution-history directory uncreated until a final build.
+It does not copy or move prior metadata when changing the configuration.
+
+The first administrator-mode setup creates a private manifest skeleton with mode `0600`; the default local manifest is Git-ignored.
 Setup must preserve an existing regular manifest or valid symbolic link regardless of `--replace-existing`, reject a conflicting directory, and never infer member or storage values.
 Configure the manifest before discovery:
 
@@ -141,13 +155,20 @@ Final artifacts use the canonical week label and separate output locations:
 
 ```text
 <admin-output>/2026-09-W1.pdf
-<repository>/.admin-wr/manifests/2026-09-W1.manifest.tsv
+<admin-data>/manifests/2026-09-W1.manifest.tsv
 ```
 
-The repository's `.admin-wr/` directory is Git-ignored; new builds keep execution history out of the final PDF directory.
+Without `--admin-data`, the TSV destination is `<repository>/.admin-wr/manifests/2026-09-W1.manifest.tsv`.
+
+The repository's `.admin-wr/` directory is Git-ignored; the default metadata layout keeps execution history out of the final PDF directory.
 The builder continues to print the absolute PDF and TSV paths on stdout, one per line.
-Existing TSVs beside final PDFs remain readable as legacy history when no new-location record exists for the same week; new builds do not move or delete them.
-Administrators may move legacy TSVs into the new directory without overwriting newer records, but migration is not required for history lookup.
+Use the shared `scripts/admin-paths` resolver, also exposed through the administrator skill, for read locations and the history write destination.
+It prefers a configured metadata file, falls back to the repository-local file when absent, and finally considers legacy history beside final PDFs.
+History fallback is per week, including when a configured directory exists but lacks that week's record.
+Existing invalid files keep precedence and must be diagnosed; fallback cannot bypass failed content or PDF-hash validation.
+Drafts never replace these records, and reads never move or delete them.
+Final writes always use the configured destination (or the local default when unconfigured), even if reads used fallback.
+Administrators may move prior TSVs into the configured history directory without overwriting newer records, but migration is not required for history lookup.
 Resolve the manifest's PDF filename against the configured administrator output, not the manifest directory.
 The execution manifest records the official date and period, completion and approval state, candidates, selection reasons, source paths relative to storage, mtimes, hashes, page ranges, missing members, and issue codes.
 The builder validates the new PDF completely before using hidden temporary files in each artifact's destination directory and atomic moves to replace an existing week without a backup.

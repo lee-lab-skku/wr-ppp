@@ -9,7 +9,9 @@ Create a traceable weekly bundle from only the members and storage locations aut
 
 ## Locate Configuration
 
-Run `scripts/resolve-repo-root` from this skill directory. Read `.manager-manifest.toml` and `.local-config` from the resolved repository.
+Run `scripts/resolve-repo-root` from this skill directory and read `.local-config` from the resolved repository.
+Run `scripts/admin-paths` and require success before using its output; read the resolved `manager-manifest` path and use its `history` records for prior-run lookup.
+It prefers configured administrator data files and falls back to repository-local files when they are absent, as described in the workflow reference.
 Run `scripts/admin-preflight` as a standalone command before discovery so Docker access, the configured image, and required PDF tools are diagnosed without hiding their error output.
 If Docker works for the user but the direct helper reports socket permission denial in the agent environment, request execution authorization for that exact helper instead of asking the user to reconfigure Docker.
 
@@ -38,5 +40,5 @@ Invoke it directly rather than wrapping it in another shell command or pipeline 
 - On approval, confirm selected source hashes have not changed and rebuild with `--approved-with-issues`. If they changed, reassess instead of publishing stale choices.
 - Never use `--draft` with the configured administrator output directory or its descendants.
 
-Final execution TSVs live in the repository's Git-ignored `.admin-wr/manifests/`; draft TSVs live under `.manifests/` in the temporary review directory.
+Final execution TSVs go to the `history-output` directory reported by `scripts/admin-paths` (repository-local by default); draft TSVs live under `.manifests/` in the temporary review directory.
 Report the final PDF and execution-manifest paths, member statuses, unresolved limitations, and whether approval was required. Do not distribute the bundle beyond its configured output directory without a separate explicit request.

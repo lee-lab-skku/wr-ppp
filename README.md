@@ -78,18 +78,22 @@ paths beginning with `~/`. Other relative paths are not accepted.
 ### Install Administrator Mode
 
 Administrator mode is a maintainer workflow documented in [CONTRIBUTING.md](CONTRIBUTING.md#administrator-weekly-bundles).
-Install it with `--admin`; use the optional `--admin-output` argument to configure the final bundle directory:
+Install it with `--admin`; use optional `--admin-output` for final PDFs and `--admin-data` for the manager manifest and execution history:
 
 ```bash
 ./scripts/setup.sh ~/report-output danteev/texlive:latest \
     --skills=codex,claude \
     --admin \
-    --admin-output=/absolute/path/to/admin-bundles
+    --admin-output=/absolute/path/to/admin-bundles \
+    --admin-data=/absolute/path/to/admin-data
 ```
 
 `--admin` requires `--skills`; `--admin-output` may be omitted until final bundle output is needed.
 The bundle cover shows cumulative weekly inclusion with weeks as rows (newest first) and members as columns, without report page counts or ranges.
-The admin workflow opens temporary drafts for review and stores final execution TSVs in the repository's Git-ignored `.admin-wr/manifests/`, separately from the final PDFs.
+`--admin-data` stores `manager-manifest.toml` and `manifests/<week>.manifest.tsv` beneath the chosen directory.
+Omitting it with `--admin` selects the existing repository-local `.manager-manifest.toml` and `.admin-wr/manifests/` locations.
+When reading a missing configured file, the workflow falls back to its local counterpart; writes still use the configured destination.
+The admin workflow opens temporary drafts for review and keeps their execution TSVs in the temporary review directory.
 
 Verify the setup by compiling the included template:
 

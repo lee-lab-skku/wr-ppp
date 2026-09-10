@@ -176,6 +176,31 @@ else:
                 self.build(status=2)
                 self.assertFalse(self.output.exists())
 
+    def test_configured_history_output_and_draft_isolation(self):
+        data = self.root / "admin data"
+        config = self.repo / ".local-config"
+        config.write_text(config.read_text() + f"ADMIN_DATA_DIR={shlex.quote(str(data))}\n")
+        result = self.build()
+        pdf, manifest = map(Path, result.stdout.splitlines())
+        self.assertEqual(manifest, data / "manifests/2026-09-W1.manifest.tsv")
+        self.assertFalse((self.repo / ".admin-wr").exists())
+        history = manifest.read_bytes()
+        self.issues()
+        draft = self.build("--draft", "--output-dir", str(self.review))
+        self.assertEqual(Path(draft.stdout.splitlines()[1]).parent, self.review / ".manifests")
+        self.assertEqual(manifest.read_bytes(), history)
+
+    def test_configured_history_write_failure_does_not_fall_back(self):
+        result = self.build()
+        paths = [Path(line) for line in result.stdout.splitlines()]
+        before = [p.read_bytes() for p in paths]
+        conflict = self.root / "blocked data"
+        conflict.write_text("not a directory")
+        config = self.repo / ".local-config"
+        config.write_text(config.read_text() + f"ADMIN_DATA_DIR={shlex.quote(str(conflict))}\n")
+        self.build(status=2)
+        self.assertEqual([p.read_bytes() for p in paths], before)
+
     def test_draft_survives_and_prints_executable_review_command(self):
         self.issues()
         result = self.build("--draft", "--output-dir", str(self.review))
@@ -242,6 +267,124 @@ Path({str(log)!r}).write_text(json.dumps(sys.argv[1:]))
             with self.subTest(target=target):
                 self.build("--draft", "--output-dir", str(target), status=2)
         self.assertEqual(list(self.output.iterdir()), [])
+
+
+class AdminPathTests(unittest.TestCase):
+    def setUp(self):
+        BundleTests.setUp(self)
+        self.data = self.root / "shared admin data"
+        self.local = self.repo / ".manager-manifest.toml"
+        self.local.write_text("local roster")
+        self.history = self.repo / ".admin-wr/manifests"
+        self.history.mkdir(parents=True)
+        self.config = self.repo / ".local-config"
+        self.config.write_text(self.config.read_text() +
+            f"PDF_OUTPUT_DIR={shlex.quote(str(self.root / 'individual output'))}\n"
+            f"ADMIN_DATA_DIR={shlex.quote(str(self.data))}\n")
+        # Redirect installation destinations inside the fixture, including sudo.
+        setup = self.repo / "scripts/setup.sh"
+        setup.write_text(setup.read_text().replace(
+            'REPORT_BUILD_TARGET="/usr/local/bin/report-build"',
+            f'REPORT_BUILD_TARGET="{self.root / "commands/report-build"}"').replace(
+            '${HOME:?HOME is not set}', str(self.root / "skill-links")))
+        executable(self.bin / "sudo", "import os, sys\nos.execvp(sys.argv[1], sys.argv[1:])\n")
+
+    def paths(self, *args, status=0, skill=False):
+        command = self.repo / ("skills/admin-wr/scripts/admin-paths" if skill else "scripts/admin-paths")
+        result = subprocess.run([str(command), *args], env=self.env,
+                                text=True, capture_output=True, cwd=self.root)
+        self.assertEqual(result.returncode, status, result.stderr)
+        return result.stdout
+
+    def setup(self, *args, status=0):
+        result = subprocess.run([str(self.repo / "scripts/setup.sh"), *args], env=self.env,
+                                text=True, capture_output=True, cwd=self.root)
+        self.assertEqual(result.returncode, status, result.stderr)
+        return result
+
+    def test_setup_custom_data_then_omitted_option_selects_local(self):
+        self.setup("--skills=codex,claude", "--admin", f"--admin-data={self.data}")
+        manifest = self.data / "manager-manifest.toml"
+        self.assertIn("schema = 1", manifest.read_text())
+        self.assertEqual(manifest.stat().st_mode & 0o777, 0o600)
+        self.assertFalse((self.data / "manifests").exists())
+        self.assertEqual(self.local.read_text(), "local roster")
+        self.assertIn(str(manifest), self.paths(skill=True))
+        manifest.write_text("external roster")
+        self.setup("--skills=codex", "--admin", f"--admin-data={self.data}", "--replace-existing")
+        self.assertEqual(manifest.read_text(), "external roster")
+        self.setup()  # Non-admin setup retains saved administrator settings.
+        self.assertIn(str(manifest), self.paths())
+        self.setup("--skills=codex", "--admin")
+        self.assertIn(f"manager-manifest\t{self.local}\n", self.paths())
+        self.assertEqual(self.paths("--history-output").strip(), str(self.history))
+        self.assertEqual(manifest.read_text(), "external roster")
+
+    def test_missing_configured_files_fall_back_per_week(self):
+        self.data.mkdir()
+        (self.data / "manifests").mkdir()
+        self.output.mkdir()
+        (self.history / "2026-08-W4.manifest.tsv").write_text("local older")
+        (self.history / "2026-09-W1.manifest.tsv").write_text("local shadowed")
+        external = self.data / "manifests/2026-09-W1.manifest.tsv"
+        external.write_text("invalid external record still takes precedence")
+        legacy = self.output / "2026-08-W3.manifest.tsv"
+        legacy.write_text("legacy")
+        (self.output / "2026-08-W4.manifest.tsv").write_text("legacy shadowed")
+        result = self.paths()
+        self.assertIn(f"manager-manifest\t{self.local}\n", result)
+        records = {r[1]: r[2] for line in result.splitlines()
+                   if (r := line.split("\t"))[0] == "history"}
+        self.assertEqual(records, {
+            "2026-09-W1": str(external),
+            "2026-08-W4": str(self.history / "2026-08-W4.manifest.tsv"),
+            "2026-08-W3": str(legacy),
+        })
+        self.assertEqual(self.paths("--history-output").strip(), str(self.data / "manifests"))
+        external.unlink()
+        external.symlink_to(self.data / "missing-record")
+        self.assertIn(str(self.history / "2026-09-W1.manifest.tsv"), self.paths())
+        configured = self.data / "manager-manifest.toml"
+        configured.write_text("invalid configured TOML")
+        self.assertIn(f"manager-manifest\t{configured}\n", self.paths())
+        self.assertNotIn(f"manager-manifest\t{self.local}\n", self.paths())
+
+    def test_missing_directory_and_legacy_config_use_local(self):
+        record = self.history / "2026-09-W1.manifest.tsv"
+        record.write_text("local history")
+        self.assertIn(str(record), self.paths())
+        self.assertIn(f"manager-manifest\t{self.local}\n", self.paths())
+        self.config.write_text("DOCKER_IMAGE=test-image\n")
+        self.assertEqual(self.paths("--history-output").strip(), str(self.history))
+        self.assertIn(f"manager-manifest\t{self.local}\n", self.paths(skill=True))
+
+    def test_existing_external_manifest_symlink_is_preserved(self):
+        self.data.mkdir()
+        manifest = self.data / "manager-manifest.toml"
+        manifest.symlink_to(self.local)
+        self.setup("--admin", "--skills=codex", f"--admin-data={self.data}", "--replace-existing")
+        self.assertTrue(manifest.is_symlink())
+        self.assertEqual(self.local.read_text(), "local roster")
+        self.assertIn(f"manager-manifest\t{manifest}\n", self.paths())
+
+    def test_setup_rejects_invalid_options_without_modifying_config(self):
+        before = self.config.read_bytes()
+        for args in (
+            (f"--admin-data={self.data}",),
+            ("--admin", "--skills=codex", "--admin-data="),
+            ("--admin", "--skills=codex", "--admin-data=relative"),
+            ("--admin", "--skills=codex", f"--admin-data={self.data}", f"--admin-data={self.data}"),
+        ):
+            with self.subTest(args=args):
+                result = subprocess.run([str(self.repo / "scripts/setup.sh"), *args],
+                                        env=self.env, capture_output=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(self.config.read_bytes(), before)
+        self.data.mkdir()
+        (self.data / "manifests").write_text("conflicting file")
+        self.setup("--admin", "--skills=codex", f"--admin-data={self.data}", status=1)
+        self.assertEqual(self.config.read_bytes(), before)
+        self.assertFalse((self.data / "manager-manifest.toml").exists())
 
 
 class PreviewTests(unittest.TestCase):

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [setup] `--admin-data` stores the manager manifest and execution history beneath one directory, with repository-local defaults and per-file read fallback for missing configured metadata.
+
 ### Changed
 
 - [skill] administrator bundle covers omit page ranges and add cumulative inclusion tables with newest weeks first and members as columns, using verified historical records and distinct markers for exceptions, optional omissions, and unknown history.
