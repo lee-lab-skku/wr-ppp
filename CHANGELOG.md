@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] &mdash; 2026-09-10
+
 ### Added
 
 - [setup] `--admin-data` stores the manager manifest and execution history beneath one directory, with repository-local defaults and per-file read fallback for missing configured metadata.
@@ -79,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.0.0...v1.1.0
