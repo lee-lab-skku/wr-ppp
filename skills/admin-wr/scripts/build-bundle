@@ -823,6 +823,7 @@ awk -F '\t' -v weeks="$HISTORY_WEEKS" -v names="$HISTORY_NAMES" \
             print " \\\\"
             print "\\midrule"
             for (w = 1; w <= week_count; w++) {
+                if (week_list[w] == current) print "\\rowcolor{currentweekblue}"
                 printf "%s", week_list[w]
                 for (m = first; m <= last; m++)
                     printf " & %s", mark(states[week_list[w] SUBSEP ids[m]])
