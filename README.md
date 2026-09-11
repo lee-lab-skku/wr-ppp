@@ -288,6 +288,8 @@ excluded from the serial-number calculation without being deleted before the
 build. This preserves the configured PDF if compilation fails. The subtitle
 and footer display the resulting number, and the footer also shows the actual
 page count. `--serial` bypasses the automatic count for that build.
+The count accepts `.pdf` extensions case-insensitively and excludes symbolic links, hidden files (including AppleDouble `._*` files), `_.*` metadata files, `~$*` lock files, and temporary or backup files ending in `.tmp.pdf`, `.temp.pdf`, or `.bak.pdf` (case-insensitively).
+Files inside subdirectories are not counted.
 
 If the reporting week or serial number does not match the expected reporting
 context, contact the repository maintainer.

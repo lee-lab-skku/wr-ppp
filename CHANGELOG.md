@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- [build] automatic report serial numbers exclude hidden, metadata, lock, temporary, and backup PDFs from the output-directory count, recognize uppercase PDF extensions, and count filenames containing newlines correctly.
+
 ## [1.3.0-beta] &mdash; 2026-09-12
 
 ### Added

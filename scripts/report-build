@@ -133,11 +133,17 @@ TMP_PDF="$(mktemp)"
 
 mkdir -p -- "$PDF_OUTPUT_DIR" "$OUTPUT_DIR"
 if [[ $SERIAL_SET -eq 0 ]]; then
-    PDF_COUNT="$(find "$PDF_OUTPUT_DIR" -maxdepth 1 -type f -name '*.pdf' | wc -l)"
+    PDF_COUNT=0
+    for pdf_path in "$PDF_OUTPUT_DIR"/*.[pP][dD][fF]; do
+        [[ -f "$pdf_path" && ! -L "$pdf_path" ]] || continue
+        pdf_name=${pdf_path##*/}
+        case "$pdf_name" in
+            .*|_.*|'~$'*|*.[tT][mM][pP].[pP][dD][fF]|*.[tT][eE][mM][pP].[pP][dD][fF]|*.[bB][aA][kK].[pP][dD][fF]) continue ;;
+        esac
+        [[ "$pdf_path" != "$CONFIGURED_DEST" ]] || continue
+        PDF_COUNT=$((PDF_COUNT + 1))
+    done
     REPORT_SERIAL_NUMBER="$((PDF_COUNT + 1))"
-    if [[ -f "$CONFIGURED_DEST" && ! -L "$CONFIGURED_DEST" ]]; then
-        REPORT_SERIAL_NUMBER="$((REPORT_SERIAL_NUMBER - 1))"
-    fi
 fi
 if [[ -e "$LOCAL_DEST" || -L "$LOCAL_DEST" ]]; then
     rm -f -- "$LOCAL_DEST"
