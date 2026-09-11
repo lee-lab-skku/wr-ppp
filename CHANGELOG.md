@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0-beta] &mdash; 2026-09-12
+
 ### Added
 
 - [skill] optional Slack Incoming Webhook notices for administrator-decided holds caused by missing required reports, with message preview, hidden credential setup, and duplicate-send protection.
@@ -93,7 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0-beta...HEAD
+[1.3.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.1...v1.3.0-beta
 [1.2.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.1.0...v1.1.1
