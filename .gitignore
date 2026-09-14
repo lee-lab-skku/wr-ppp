@@ -1,5 +1,6 @@
 template.pdf
 .local-config
+.local-config.tmp.*
 .manager-manifest.toml
 .admin-wr/
 .report-update/

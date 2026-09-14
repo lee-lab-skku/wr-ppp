@@ -60,6 +60,9 @@ already resolves to the same repository source is accepted without change. By
 default, any other file, link, or directory is preserved and reported as an
 error. All requested destinations are checked before the configuration or any
 links are changed.
+Checks include destination parent paths, and unsupported options are rejected before setup changes anything.
+Setup saves configuration atomically after installing the requested links; if installation fails, it preserves the previous configuration and attempts to restore links changed by that run.
+Any incomplete rollback reports the preserved backup locations.
 
 Use `--replace-existing` to replace conflicting files or links explicitly:
 
@@ -91,6 +94,7 @@ Install it with `--admin`; use optional `--admin-output` for final PDFs and `--a
 ```
 
 `--admin` requires `--skills`; `--admin-output` may be omitted until final bundle output is needed.
+Administrator paths must not contain tabs, newlines, carriage returns, or `.` / `..` path components; setup and administrator commands apply the same rules.
 The bundle cover shows cumulative weekly inclusion with weeks as rows (newest first) and members as columns, without report page counts or ranges.
 `--admin-data` stores `manager-manifest.toml` and `manifests/<week>.manifest.tsv` beneath the chosen directory.
 The manifest can be stored on a NAS that manages permissions on the server; setup does not require changing its permissions after creation.

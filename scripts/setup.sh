@@ -10,6 +10,8 @@ REPOSITORY_VERSION="$(
         2>/dev/null || echo "unknown"
 )"
 
+source "$REPO_DIR/scripts/admin-path-utils.sh"
+
 CONFIG_FILE="$REPO_DIR/.local-config"
 MANAGER_MANIFEST="$REPO_DIR/.manager-manifest.toml"
 REPORT_BUILD_TARGET="/usr/local/bin/report-build"
@@ -18,7 +20,7 @@ WRITER_SKILL_NAME="wr-wr"
 ADMIN_SKILL_NAME="admin-wr"
 
 usage() {
-    echo "Usage: $0" >&2
+    echo "Usage: $0 [--help]" >&2
     echo "       $0 <absolute-pdf-output-directory>" >&2
     echo "       $0 <docker-image>" >&2
     echo "       $0 <absolute-pdf-output-directory> <docker-image>" >&2
@@ -67,6 +69,7 @@ preflight_link() {
     local target=$2
     local description=$3
 
+    preflight_directory_path "$(dirname -- "$target")" || return
     if link_matches_source "$source" "$target"; then
         return
     fi
@@ -98,17 +101,6 @@ preflight_directory_path() {
     done
 }
 
-normalize_admin_path() {
-    local value
-    value="$(normalize_output_directory "$1")" || return
-    if [[ $value == *$'\t'* || $value == *$'\n'* || $value == *$'\r'* ||
-        $value == */../* || $value == */.. || $value == */./* || $value == */. ]]; then
-        echo "Administrator paths cannot contain control characters or dot components." >&2
-        return 1
-    fi
-    printf '%s\n' "$value"
-}
-
 preflight_manager_manifest() {
     preflight_directory_path "$(dirname -- "$MANAGER_MANIFEST")" || return
     if [[ -L "$MANAGER_MANIFEST" ]]; then
@@ -138,52 +130,81 @@ next_backup_path() {
     echo "$backup_path"
 }
 
+# The journal includes only changes made by this setup invocation.
+CHANGED_TARGETS=()
+CHANGED_SOURCES=()
+CHANGED_BACKUPS=()
+CHANGED_ELEVATED=()
+CHANGE_COUNT=0
+CONFIG_STAGE=""
+SETUP_COMMITTED=0
+
+setup_cleanup() {
+    local status=$? index target source backup elevated
+    if [[ $SETUP_COMMITTED -eq 0 ]]; then
+        index=$CHANGE_COUNT
+        while [[ $index -gt 0 ]]; do
+            index=$((index - 1))
+            target=${CHANGED_TARGETS[$index]}
+            source=${CHANGED_SOURCES[$index]}
+            backup=${CHANGED_BACKUPS[$index]}
+            elevated=${CHANGED_ELEVATED[$index]}
+            if [[ -L $target && $(readlink "$target") == "$source" ]]; then
+                if ! run_install_command "$elevated" rm -- "$target"; then
+                    echo "Rollback could not remove installed link: $target" >&2
+                fi
+            fi
+            if [[ -n $backup && ( -e $backup || -L $backup ) ]]; then
+                if [[ ! -e $target && ! -L $target ]] &&
+                    run_install_command "$elevated" mv -- "$backup" "$target"; then
+                    echo "Restored previous entry: $target" >&2
+                else
+                    echo "Rollback incomplete; previous entry remains at: $backup; inspect target: $target" >&2
+                fi
+            fi
+        done
+    fi
+    if [[ -n $CONFIG_STAGE ]]; then
+        rm -f -- "$CONFIG_STAGE" || echo "Could not remove temporary configuration: $CONFIG_STAGE" >&2
+    fi
+    return "$status"
+}
+trap setup_cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 install_link() {
-    local source=$1
-    local target=$2
-    local description=$3
-    local elevated=$4
-    local target_parent
-    local backup_path
+    local source=$1 target=$2 description=$3 elevated=$4
+    local backup_path=""
 
     if link_matches_source "$source" "$target"; then
         echo "Already linked: $description: $target"
         return
     fi
-
-    target_parent="$(dirname -- "$target")"
-    run_install_command "$elevated" mkdir -p -- "$target_parent"
-
-    if [[ -e "$target" || -L "$target" ]]; then
-        if [[ -d "$target" && ! -L "$target" ]]; then
+    run_install_command "$elevated" mkdir -p -- "$(dirname -- "$target")"
+    if [[ -e $target || -L $target ]]; then
+        if [[ -d $target && ! -L $target ]]; then
             echo "$description target is a directory and cannot be replaced: $target" >&2
             return 1
         elif [[ $REPLACE_EXISTING -ne 1 ]]; then
             echo "$description target appeared after the setup preflight: $target" >&2
             return 1
         fi
-
         backup_path="$(next_backup_path "$target")"
-        run_install_command "$elevated" mv -- "$target" "$backup_path"
-
-        if run_install_command "$elevated" ln -s -- "$source" "$target"; then
-            echo "WARNING: Replaced existing $description: $target" >&2
-            echo "WARNING: Previous entry saved as: $backup_path" >&2
-            return
-        fi
-
-        echo "Failed to link $description after backing up the existing target." >&2
-        if [[ ! -e "$target" && ! -L "$target" ]] &&
-            run_install_command "$elevated" mv -- "$backup_path" "$target"
-        then
-            echo "Restored previous entry: $target" >&2
-        else
-            echo "Previous entry remains at: $backup_path" >&2
-        fi
-        return 1
     fi
-
+    CHANGED_TARGETS[$CHANGE_COUNT]=$target
+    CHANGED_SOURCES[$CHANGE_COUNT]=$source
+    CHANGED_BACKUPS[$CHANGE_COUNT]=$backup_path
+    CHANGED_ELEVATED[$CHANGE_COUNT]=$elevated
+    CHANGE_COUNT=$((CHANGE_COUNT + 1))
+    if [[ -n $backup_path ]]; then
+        run_install_command "$elevated" mv -- "$target" "$backup_path"
+    fi
     run_install_command "$elevated" ln -s -- "$source" "$target"
+    if [[ -n $backup_path ]]; then
+        echo "WARNING: Replaced existing $description: $target" >&2
+        echo "WARNING: Previous entry saved as: $backup_path" >&2
+    fi
     echo "Linked: $description: $target -> $source"
 }
 
@@ -253,6 +274,10 @@ AUTO_UPDATE_SET=0
 AUTO_UPDATE_VALUE=""
 while [[ $# -gt 0 ]]; do
     case $1 in
+        -h|--help)
+            usage
+            exit 0
+            ;;
         --auto-update|--auto-update=*)
             if [[ $AUTO_UPDATE_SET -eq 1 ]]; then
                 echo "Automatic update channel specified more than once." >&2
@@ -346,6 +371,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --replace-existing=*)
             echo "--replace-existing does not take a value." >&2
+            usage
+            exit 2
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
             usage
             exit 2
             ;;
@@ -447,7 +477,7 @@ fi
 
 OUTPUT_DIR="$(normalize_output_directory "$OUTPUT_DIR")"
 if [[ $ADMIN_OUTPUT_SET -eq 1 ]]; then
-    ADMIN_OUTPUT_DIR="$(normalize_output_directory "$ADMIN_OUTPUT_VALUE")"
+    ADMIN_OUTPUT_DIR="$(normalize_admin_path "$ADMIN_OUTPUT_VALUE")"
 fi
 
 if [[ $ADMIN -eq 1 ]]; then
@@ -461,6 +491,14 @@ if [[ $ADMIN -eq 1 ]]; then
     if [[ -n $ADMIN_DATA_DIR ]]; then
         ADMIN_HISTORY_TARGET="${ADMIN_DATA_DIR%/}/manifests"
     fi
+fi
+
+# Validate final saved values too, after explicit overrides and local reset.
+if [[ -n $ADMIN_OUTPUT_DIR ]]; then
+    ADMIN_OUTPUT_DIR="$(normalize_admin_path "$ADMIN_OUTPUT_DIR")"
+fi
+if [[ -n $ADMIN_DATA_DIR ]]; then
+    ADMIN_DATA_DIR="$(normalize_admin_path "$ADMIN_DATA_DIR")"
 fi
 
 if [[ ! -x "$REPORT_BUILD_SOURCE" ]]; then
@@ -528,18 +566,14 @@ if [[ $ADMIN -eq 1 ]]; then
     create_manager_manifest
 fi
 
-cat > "$CONFIG_FILE" <<EOF
+CONFIG_STAGE="$(umask 077; mktemp "$REPO_DIR/.local-config.tmp.XXXXXX")"
+cat > "$CONFIG_STAGE" <<EOF
 PDF_OUTPUT_DIR=$(printf '%q' "$OUTPUT_DIR")
 DOCKER_IMAGE=$(printf '%q' "$DOCKER_IMAGE")
 ADMIN_OUTPUT_DIR=$(printf '%q' "$ADMIN_OUTPUT_DIR")
 ADMIN_DATA_DIR=$(printf '%q' "$ADMIN_DATA_DIR")
 AUTO_UPDATE_CHANNEL=$(printf '%q' "$AUTO_UPDATE_CHANNEL")
 EOF
-
-chmod 0600 "$CONFIG_FILE"
-if [[ $AUTO_UPDATE_CHANNEL != "$PREVIOUS_AUTO_UPDATE_CHANNEL" ]]; then
-    rm -f -- "$REPO_DIR/.report-update/state"
-fi
 
 install_link \
     "$REPORT_BUILD_SOURCE" \
@@ -555,6 +589,13 @@ for service in "${SKILL_SERVICES[@]}"; do
             "$skill_source" "$skill_link" "$service $skill_name skill" 0
     done
 done
+
+if [[ $AUTO_UPDATE_CHANNEL != "$PREVIOUS_AUTO_UPDATE_CHANNEL" ]]; then
+    rm -f -- "$REPO_DIR/.report-update/state"
+fi
+mv -f -- "$CONFIG_STAGE" "$CONFIG_FILE"
+SETUP_COMMITTED=1
+CONFIG_STAGE=""
 
 echo
 echo "Installed:    $REPORT_BUILD_TARGET"

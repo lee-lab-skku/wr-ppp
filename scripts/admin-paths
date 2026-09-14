@@ -9,18 +9,7 @@ die() {
     exit 2
 }
 
-normalize_path() {
-    local value=$1
-    if [[ $value == '~/'* ]]; then
-        value="${HOME:?HOME is not set}/${value#\~/}"
-    fi
-    if [[ $value != /* || $value == *$'\t'* || $value == *$'\n'* ||
-        $value == *$'\r'* || $value == */../* || $value == */.. ||
-        $value == */./* || $value == */. ]]; then
-        die "Invalid administrator path: $value"
-    fi
-    printf '%s\n' "$value"
-}
+source "$REPO_DIR/scripts/admin-path-utils.sh"
 
 [[ $# -eq 0 || ( $# -eq 1 && $1 == --history-output ) ]] ||
     die "Usage: $0 [--history-output]"
@@ -35,7 +24,7 @@ LOCAL_HISTORY="$REPO_DIR/.admin-wr/manifests"
 MANIFEST_PATH=$LOCAL_MANIFEST
 HISTORY_OUTPUT=$LOCAL_HISTORY
 if [[ -n $ADMIN_DATA_DIR ]]; then
-    ADMIN_DATA_DIR="$(normalize_path "$ADMIN_DATA_DIR")"
+    ADMIN_DATA_DIR="$(normalize_admin_path "$ADMIN_DATA_DIR")" || exit 2
     MANIFEST_PATH="${ADMIN_DATA_DIR%/}/manager-manifest.toml"
     HISTORY_OUTPUT="${ADMIN_DATA_DIR%/}/manifests"
 fi
@@ -57,7 +46,7 @@ printf 'manager-manifest\t%s\nhistory-output\t%s\n' "$MANIFEST_PATH" "$HISTORY_O
 # Existing invalid records retain precedence for subsequent validation by the agent.
 LEGACY_HISTORY=""
 if [[ -n $ADMIN_OUTPUT_DIR ]]; then
-    LEGACY_HISTORY="$(normalize_path "$ADMIN_OUTPUT_DIR")"
+    LEGACY_HISTORY="$(normalize_admin_path "$ADMIN_OUTPUT_DIR")" || exit 2
 fi
 {
     for directory in "$HISTORY_OUTPUT" "$LOCAL_HISTORY" "$LEGACY_HISTORY"; do

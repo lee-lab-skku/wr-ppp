@@ -114,13 +114,11 @@ class SetupSafetyTests(unittest.TestCase):
         return subprocess.run([str(self.repo / 'scripts/setup.sh'), *args],
                               env=self.env, capture_output=True, text=True, timeout=10)
 
-    @unittest.expectedFailure
     def test_unknown_option_does_not_change_config(self):
         before = self.config.read_bytes()
         self.assertEqual(self.run_setup('--typo').returncode, 2)
         self.assertEqual(self.config.read_bytes(), before)
 
-    @unittest.expectedFailure
     def test_help_does_not_change_config(self):
         before = self.config.read_bytes()
         result = self.run_setup('--help')
@@ -129,7 +127,6 @@ class SetupSafetyTests(unittest.TestCase):
         self.assertEqual(self.config.read_bytes(), before)
         self.assertFalse((self.root / 'commands').exists())
 
-    @unittest.expectedFailure
     def test_parent_conflict_is_detected_before_mutation(self):
         parent = self.root / 'skill-links/.agents'
         parent.mkdir(parents=True)
@@ -139,7 +136,6 @@ class SetupSafetyTests(unittest.TestCase):
         self.assertEqual(self.config.read_bytes(), before)
         self.assertFalse((self.root / 'commands').exists())
 
-    @unittest.expectedFailure
     def test_admin_output_uses_same_path_rules_as_reader(self):
         before = self.config.read_bytes()
         for value in (str(self.root / 'one/../two'), str(self.root / 'a\tb')):
@@ -147,7 +143,6 @@ class SetupSafetyTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(self.config.read_bytes(), before)
 
-    @unittest.expectedFailure
     def test_failed_link_install_restores_config_and_previous_links(self):
         command = self.root / 'commands/report-build'
         command.parent.mkdir()
@@ -165,6 +160,37 @@ os.execv({real_ln!r}, [{real_ln!r}, *sys.argv[1:]])
         self.assertEqual(self.config.read_bytes(), before)
         self.assertFalse(command.is_symlink())
         self.assertEqual(command.read_text(), 'previous command')
+
+    def test_invalid_saved_path_is_rejected_but_explicit_override_repairs_it(self):
+        self.config.write_text(self.config.read_text() + f'ADMIN_OUTPUT_DIR={shlex.quote(str(self.root / "bad/../output"))}\n')
+        before = self.config.read_bytes()
+        self.assertNotEqual(self.run_setup().returncode, 0)
+        self.assertEqual(self.config.read_bytes(), before)
+        result = self.run_setup('--admin', '--skills=agents', f'--admin-output={self.root}/repaired')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.root / 'repaired').exists())
+
+    def test_config_save_failure_rolls_back_new_links(self):
+        before = self.config.read_bytes()
+        real_mv = shutil.which('mv')
+        admin.executable(self.bin / 'mv', f"import os,sys\nif sys.argv[-1].endswith('/.local-config'): sys.exit(18)\nos.execv({real_mv!r}, [{real_mv!r}, *sys.argv[1:]])\n")
+        result = self.run_setup('--skills=agents', 'new-image')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.config.read_bytes(), before)
+        self.assertFalse((self.root / 'commands/report-build').is_symlink())
+        self.assertFalse((self.root / 'skill-links/.agents/skills/wr-wr').is_symlink())
+        self.assertFalse(list(self.repo.glob('.local-config.tmp.*')))
+
+    def test_configuration_is_private_and_unchanged_until_links_are_ready(self):
+        before = self.config.read_bytes()
+        snapshot = self.root / 'config-during-install'
+        real_ln = shutil.which('ln')
+        admin.executable(self.bin / 'ln', f"import os,sys\nfrom pathlib import Path\nPath({str(snapshot)!r}).write_bytes(Path({str(self.config)!r}).read_bytes())\nos.execv({real_ln!r}, [{real_ln!r}, *sys.argv[1:]])\n")
+        self.assertEqual(self.run_setup('--skills=agents', 'new-image').returncode, 0)
+        self.assertEqual(snapshot.read_bytes(), before)
+        self.assertIn('DOCKER_IMAGE=new-image', self.config.read_text())
+        self.assertEqual(self.config.stat().st_mode & 0o777, 0o600)
+
 
 
 class BundleConcurrencyTests(unittest.TestCase):

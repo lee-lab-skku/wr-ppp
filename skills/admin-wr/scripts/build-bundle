@@ -7,6 +7,7 @@ SCRIPT_DIR="$(
 )"
 REPO_DIR="$("$SCRIPT_DIR/resolve-repo-root")"
 CONFIG_FILE="$REPO_DIR/.local-config"
+source "$REPO_DIR/scripts/admin-path-utils.sh"
 
 usage() {
     echo "Usage: $0 --storage-root directory --plan file --date YYYY-MM-DD" >&2
@@ -19,20 +20,7 @@ die() {
 }
 
 normalize_output_directory() {
-    local value=$1
-
-    if [[ $value == '~/'* ]]; then
-        value="${HOME:?HOME is not set}/${value#\~/}"
-    elif [[ $value != /* ]]; then
-        die "Relative output directories are not allowed: $value" 2
-    fi
-    if [[ $value == */../* || $value == */.. ||
-        $value == */./* || $value == */. ]]
-    then
-        die "Output directories cannot contain '.' or '..' components: $value" 2
-    fi
-
-    printf '%s\n' "$value"
+    normalize_admin_path "$1" || exit 2
 }
 
 canonical_directory_target() {

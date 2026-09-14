@@ -21,6 +21,10 @@ Routine report content should not require changes to the template, style, or sha
 
 Apply the [shared setup destination policy](README.md#quick-start) to command and skill links, preserving idempotency, explicit replacement, directory protection, and preflight before mutation.
 Normalize supported destination aliases before checking for duplicates.
+Preflight every requested link's parent path and validate final administrator path settings with the shared path helper before changing installation state.
+Prepare private configuration separately and commit it atomically only after link installation succeeds.
+Journal link changes for reverse-order rollback on failure; preserve existing configuration and never overwrite an unrelated entry during rollback.
+If restoration fails, report the backup path and remaining partial changes.
 
 ## Shell and Build Safety
 
