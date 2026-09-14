@@ -2,3 +2,4 @@ template.pdf
 .local-config
 .manager-manifest.toml
 .admin-wr/
+.report-update/

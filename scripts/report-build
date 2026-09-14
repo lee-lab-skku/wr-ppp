@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+ORIGINAL_ARGS=("$@")
 
 SCRIPT_PATH=${BASH_SOURCE[0]}
 while [[ -L "$SCRIPT_PATH" ]]; do
@@ -29,6 +30,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     exit 2
 fi
 
+AUTO_UPDATE_CHANNEL=off
 source "$CONFIG_FILE"
 source "$STYLE_DIR/scripts/report-metadata.sh"
 
@@ -123,6 +125,19 @@ SRC_DIR="$PWD"
 if [[ ! -f "$SRC_DIR/$MAIN" ]]; then
     echo "TeX source not found: $SRC_DIR/$MAIN" >&2
     exit 2
+fi
+
+# The supervisor holds the installation lock throughout the refreshed build.
+# A marker is valid only for its immediate child in this installation.
+if [[ ${WR_REPORT_UPDATE_ROOT:-} != "$STYLE_DIR" ||
+      ${WR_REPORT_UPDATE_PARENT:-} != "$PPID" ]]; then
+    case ${AUTO_UPDATE_CHANNEL:-off} in
+        stable|prerelease)
+            exec bash "$STYLE_DIR/scripts/report-update" "${ORIGINAL_ARGS[@]}"
+            ;;
+        off) ;;
+        *) echo "Invalid automatic update channel in $CONFIG_FILE" >&2; exit 2 ;;
+    esac
 fi
 
 REPORT_NAME="$(basename "$SRC_DIR")"

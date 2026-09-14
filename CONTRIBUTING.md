@@ -43,6 +43,23 @@ Preserve the builds' isolation and output-safety properties.
 TeX containers run without network access and compile in temporary storage.
 A completed PDF should replace its target only after a successful build and validation, and containers must not modify source files.
 
+### Automatic Updates
+
+See the [automatic release update workflow](README.md#automatic-release-updates) for setup options, update intervals, and recovery.
+Keep development clones opted out; enabling updates authorizes release checkout changes during builds.
+Implement version selection with Bash and standard utilities without new language runtimes or package dependencies, retaining the existing Linux/macOS source-level compatibility target.
+
+Validate build arguments and inputs before invoking automatic updates or touching output PDFs.
+Use only eligible tags advertised by the existing origin remote and verify the fetched commit against that advertisement.
+Never force-update conflicting tags, discard tracked changes, or move to a commit that does not contain the current HEAD.
+Preserve branches when switching to a release, retain report arguments and configuration, and restart with the updated build implementation.
+Keep update status on stderr and leave the PDF output contract intact.
+
+Persist check state as data rather than shell code, write it atomically, and invalidate it when the channel changes.
+Hold an installation-wide directory lock through the refreshed build, recheck state after acquiring it, and release it on ordinary exit or handled signals.
+Bound lock and network waits, preserve active locks, and continue with the existing checkout on update failures when no concurrent update lock prevents a consistent build.
+Tests must use local Git remotes and substituted network/build dependencies without updating a real installation or contacting publication remotes.
+
 ## Administrator Weekly Bundles
 
 See the [administrator setup](README.md#install-administrator-mode), [manager manifest](skills/admin-wr/references/manager-manifest.md), and [rollup workflow](skills/admin-wr/references/rollup-workflow.md) for installation, configuration schema, discovery, review, and artifact formats.
@@ -188,11 +205,16 @@ Begin every changelog item with the most relevant component marker: `[latex]`, `
 Describe notable user-facing differences rather than copying the commit log, and combine closely related commits into one entry when they deliver one change.
 
 If you are an AI agent, do not increment the version or create a release tag without explicit developer confirmation.
-Versions are recorded by Git tags named `vMAJOR.MINOR.PATCH`.
+Versions are recorded by Git tags named `vMAJOR.MINOR.PATCH`, optionally followed by exactly `-beta` or `-rc` for prereleases.
+Each numeric component is `0` or a positive decimal integer without leading zeroes.
+Do not use other prerelease identifiers, numbered prereleases such as `-beta.1` or `-rc.2`, or build metadata in release tags.
+Compare major, minor, and patch numerically, then order equal base versions as beta, release candidate, and official release.
+Published tags are immutable; use the next allowed release stage or a new base version for subsequent publications rather than rewriting a tag.
 For every confirmed release, move the relevant changelog entries from `Unreleased` into a dated version section, update the version comment at the beginning of `template.tex`, commit those changes, and create the matching tag on that exact commit.
 Confirm that the latest-version badge near the beginning of `README.md` remains configured to derive its value from the repository's SemVer tags.
 Do not omit the changelog update, template update, badge check, or tag.
 
 The setup and build scripts report the version derived from the current Git checkout.
 A tagged release prints its tag, while later development commits may include a commit suffix and a dirty checkout may include `-dirty`.
-The build always uses the current checkout; do not add a facility for selecting another repository version at build time.
+By default the build uses the current checkout; the optional automatic updater may advance it to an eligible published release before compilation.
+This channel-based update is the supported exception; do not add arbitrary per-build version selection.

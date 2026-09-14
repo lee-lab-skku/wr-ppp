@@ -1,0 +1,259 @@
+#!/usr/bin/env bash
+# Internal report-build supervisor; configuration belongs to setup.sh.
+set -euo pipefail
+
+update_note() {
+    echo "auto-update: $*" >&2
+}
+
+# Emit exact decimal components, stage rank, and original tag. Do not use
+# shell arithmetic or awk floating-point conversions for version components.
+release_row() {
+    local tag=$1 stage=2
+    local pattern='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(beta|rc))?$'
+    [[ $tag =~ $pattern ]] || return 0
+    case ${BASH_REMATCH[5]} in
+        beta) stage=0 ;;
+        rc) stage=1 ;;
+    esac
+    printf '%s\t%s\t%s\t%s\t%s\n' \
+        "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
+        "${BASH_REMATCH[3]}" "$stage" "$tag"
+}
+
+latest_release() {
+    LC_ALL=C sort -t $'\t' -k1,1n -k2,2n -k3,3n -k4,4n |
+        tail -n 1 | cut -f 5
+}
+
+update_cleanup() {
+    if [[ -n ${UPDATE_CHILD:-} ]]; then
+        kill -TERM -- "-$UPDATE_CHILD" 2>/dev/null || :
+        sleep 1
+        kill -KILL -- "-$UPDATE_CHILD" 2>/dev/null || :
+        wait "$UPDATE_CHILD" 2>/dev/null || :
+    fi
+    if [[ -n ${UPDATE_TIMER:-} ]]; then
+        kill -- "-$UPDATE_TIMER" 2>/dev/null || :
+        wait "$UPDATE_TIMER" 2>/dev/null || :
+    fi
+    if [[ ${UPDATE_LOCKED:-0} -eq 1 ]]; then
+        rm -f -- "$UPDATE_LOCK/owner" "$UPDATE_LOCK/remote" \
+            "$UPDATE_LOCK/error" "$UPDATE_LOCK/state"
+        rmdir -- "$UPDATE_LOCK" 2>/dev/null || :
+    fi
+}
+
+# Bound network waits without requiring GNU timeout (absent on stock macOS).
+# Disable Git credential prompts and bound SSH/helpers as a process group too.
+update_network() {
+    local status=0
+    set -m
+    GIT_TERMINAL_PROMPT=0 git -c credential.interactive=false -C "$UPDATE_ROOT" "$@" &
+    UPDATE_CHILD=$!
+    (
+        sleep 30
+        kill -TERM -- "-$UPDATE_CHILD" 2>/dev/null || exit 0
+        sleep 2
+        kill -KILL -- "-$UPDATE_CHILD" 2>/dev/null || :
+    ) >/dev/null 2>&1 &
+    UPDATE_TIMER=$!
+    set +m
+    wait "$UPDATE_CHILD" || status=$?
+    # The direct Git process may have exited before an SSH/helper descendant.
+    kill -TERM -- "-$UPDATE_CHILD" 2>/dev/null || :
+    kill -KILL -- "-$UPDATE_CHILD" 2>/dev/null || :
+    UPDATE_CHILD=""
+    kill -- "-$UPDATE_TIMER" 2>/dev/null || :
+    wait "$UPDATE_TIMER" 2>/dev/null || :
+    UPDATE_TIMER=""
+    return "$status"
+}
+
+update_record() {
+    local interval=$1 checked
+    checked=$(date +%s)
+    if ! printf '%s\t%s\t%s\n' "$AUTO_UPDATE_CHANNEL" "$checked" "$interval" \
+        > "$UPDATE_LOCK/state" ||
+        ! mv -f -- "$UPDATE_LOCK/state" "$UPDATE_STATE"; then
+        update_note "could not save the check time; continuing with the current checkout."
+    fi
+}
+
+update_check() {
+    local saved_channel="" checked="" interval="" extra="" now
+    local oid ref tag candidate expected target current head dirty newest
+    now=$(date +%s)
+    if [[ -f $UPDATE_STATE ]]; then
+        IFS=$'\t' read -r saved_channel checked interval extra < "$UPDATE_STATE" || :
+        if [[ $saved_channel == "$AUTO_UPDATE_CHANNEL" && -z $extra &&
+              $checked =~ ^[0-9]{1,12}$ &&
+              ($interval == 86400 || $interval == 3600) ]]; then
+            # 10# prevents leading-zero values from being treated as octal.
+            if (( now >= 10#$checked && now - 10#$checked < interval )); then
+                return
+            fi
+        fi
+    fi
+
+    update_note "checking origin ($AUTO_UPDATE_CHANNEL)."
+    if ! update_network ls-remote --tags origin > "$UPDATE_LOCK/remote" 2> "$UPDATE_LOCK/error"; then
+        update_note "remote lookup failed or timed out; using the current checkout."
+        cat "$UPDATE_LOCK/error" >&2
+        update_record 3600
+        return
+    fi
+    candidate=$(
+        while IFS=$'\t' read -r oid ref; do
+            [[ $ref == refs/tags/* ]] || continue
+            tag=${ref#refs/tags/}
+            if [[ $AUTO_UPDATE_CHANNEL == stable && $tag == *-* ]]; then
+                continue
+            fi
+            release_row "$tag"
+        done < "$UPDATE_LOCK/remote" | latest_release
+    )
+    if [[ -z $candidate ]]; then
+        update_note "no eligible release on origin; using the current checkout."
+        update_record 86400
+        return
+    fi
+
+    if ! head=$(git -C "$UPDATE_ROOT" rev-parse HEAD) ||
+        ! dirty=$(git -C "$UPDATE_ROOT" status --porcelain --untracked-files=no); then
+        update_note "cannot inspect the checkout; skipping the update."
+        update_record 3600
+        return
+    fi
+    if [[ -n $dirty ]]; then
+        update_note "tracked changes are present; skipping the update."
+        update_record 86400
+        return
+    fi
+
+    # Compare against published release tags on HEAD, including pre-releases
+    # when switching to stable. Local-only tags cannot influence selection.
+    current=$(
+        while IFS=$'\t' read -r oid ref; do
+            [[ $oid == "$head" && $ref == refs/tags/* ]] || continue
+            tag=${ref#refs/tags/}
+            release_row "${tag%\^\{\}}"
+        done < "$UPDATE_LOCK/remote" | latest_release
+    )
+    if [[ -n $current ]]; then
+        newest=$({ release_row "$current"; release_row "$candidate"; } | latest_release)
+        if [[ $newest == "$current" ]]; then
+            update_note "already at $current or newer than the eligible release."
+            update_record 86400
+            return
+        fi
+    fi
+
+    # Prefer an annotated tag's peeled commit over its tag-object ID.
+    expected=$(awk -F '\t' -v ref="refs/tags/$candidate" '
+        $2 == ref { direct = $1 }
+        $2 == ref "^{}" { peeled = $1 }
+        END { print (peeled != "" ? peeled : direct) }
+    ' "$UPDATE_LOCK/remote")
+    if ! update_network fetch --no-tags origin "refs/tags/$candidate:refs/tags/$candidate" \
+        > /dev/null 2> "$UPDATE_LOCK/error"; then
+        update_note "fetch failed or timed out; using the current checkout."
+        cat "$UPDATE_LOCK/error" >&2
+        update_record 3600
+        return
+    fi
+    if ! target=$(git -C "$UPDATE_ROOT" rev-parse 'FETCH_HEAD^{commit}') ||
+        [[ $target != "$expected" ]]; then
+        update_note "release changed during lookup or does not name a commit; skipping."
+        update_record 3600
+        return
+    fi
+    if [[ $head == "$target" ]]; then
+        update_record 86400
+        return
+    fi
+    if ! git -C "$UPDATE_ROOT" merge-base --is-ancestor "$head" "$target"; then
+        update_note "$candidate does not include the current commits; skipping."
+        update_record 86400
+        return
+    fi
+    if [[ $(git -C "$UPDATE_ROOT" rev-parse HEAD) != "$head" ]] ||
+        ! dirty=$(git -C "$UPDATE_ROOT" status --porcelain --untracked-files=no) ||
+        [[ -n $dirty ]]; then
+        update_note "checkout changed during the check; skipping the update."
+        update_record 3600
+        return
+    fi
+    if ! git -C "$UPDATE_ROOT" checkout --no-overwrite-ignore --detach "$target" \
+        2> "$UPDATE_LOCK/error"; then
+        update_note "checkout failed; using the current checkout."
+        cat "$UPDATE_LOCK/error" >&2
+        update_record 3600
+        return
+    fi
+    update_note "updated ${current:-$head} -> $candidate."
+    update_record 86400
+}
+
+update_main() {
+    UPDATE_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+    UPDATE_LOCK="$UPDATE_ROOT/.report-update/lock"
+    UPDATE_STATE="$UPDATE_ROOT/.report-update/state"
+    UPDATE_LOCKED=0
+    UPDATE_CHILD=""
+    UPDATE_TIMER=""
+    trap update_cleanup EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    if mkdir -p -- "$UPDATE_ROOT/.report-update"; then
+        local attempt=0
+        while :; do
+            if mkdir -- "$UPDATE_LOCK" 2>/dev/null; then
+                UPDATE_LOCKED=1
+                break
+            fi
+            if [[ ! -d $UPDATE_LOCK ]]; then
+                update_note "cannot create the update lock; using the current checkout."
+                break
+            fi
+            if [[ $attempt -ge 30 ]]; then
+                update_note "installation is locked; retry after the other build finishes."
+                update_note "If a process was killed, verify .report-update/lock/owner before removing the stale lock."
+                return 1
+            fi
+            sleep 1
+            attempt=$((attempt + 1))
+        done
+        if [[ $UPDATE_LOCKED -eq 1 ]]; then
+            if ! printf '%s\t%s\n' "$(hostname)" "$$" > "$UPDATE_LOCK/owner"; then
+                update_note "cannot record lock ownership; using the current checkout."
+            else
+                # Setup or another completed build may have changed the channel
+                # or check time while this invocation was waiting for the lock.
+                AUTO_UPDATE_CHANNEL=off
+                source "$UPDATE_ROOT/.local-config"
+                case $AUTO_UPDATE_CHANNEL in
+                    stable|prerelease) update_check ;;
+                    off) ;;
+                    *) update_note "invalid channel in .local-config"; return 2 ;;
+                esac
+            fi
+        fi
+    else
+        update_note "cannot store update state; using the current checkout."
+    fi
+
+    local status=0
+    set -m
+    WR_REPORT_UPDATE_ROOT="$UPDATE_ROOT" WR_REPORT_UPDATE_PARENT="$$" \
+        bash "$UPDATE_ROOT/scripts/report-build" "$@" &
+    UPDATE_CHILD=$!
+    set +m
+    wait "$UPDATE_CHILD" || status=$?
+    UPDATE_CHILD=""
+    return "$status"
+}
+
+# Functions are fully parsed before checkout can replace this script on disk.
+update_main "$@"

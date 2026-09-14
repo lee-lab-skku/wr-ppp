@@ -25,6 +25,7 @@ usage() {
     echo "       $0 [setup-arguments] [--skills=<agents|claude>[,...]] [--admin]" >&2
     echo "          [--admin-output=<absolute-directory>] [--replace-existing]" >&2
     echo "          [--admin-data=<absolute-directory>]" >&2
+    echo "          [--auto-update[=stable|prerelease|off]]" >&2
     echo "Skill service codex is an alias for agents." >&2
     echo "Output directories must start with '/' or '~/'." >&2
 }
@@ -248,8 +249,25 @@ ADMIN_OUTPUT_VALUE=""
 ADMIN_DATA_SET=0
 ADMIN_DATA_VALUE=""
 REPLACE_EXISTING=0
+AUTO_UPDATE_SET=0
+AUTO_UPDATE_VALUE=""
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --auto-update|--auto-update=*)
+            if [[ $AUTO_UPDATE_SET -eq 1 ]]; then
+                echo "Automatic update channel specified more than once." >&2
+                exit 2
+            fi
+            AUTO_UPDATE_VALUE=stable
+            if [[ $1 == *=* ]]; then
+                AUTO_UPDATE_VALUE=${1#*=}
+            fi
+            case $AUTO_UPDATE_VALUE in
+                stable|prerelease|off) ;;
+                *) echo "Invalid automatic update channel: $AUTO_UPDATE_VALUE" >&2; exit 2 ;;
+            esac
+            AUTO_UPDATE_SET=1
+            ;;
         --skills=*)
             if [[ $SKILLS_SET -eq 1 ]]; then
                 echo "Skills specified more than once." >&2
@@ -389,9 +407,18 @@ PDF_OUTPUT_DIR=""
 DOCKER_IMAGE=""
 ADMIN_OUTPUT_DIR=""
 ADMIN_DATA_DIR=""
+AUTO_UPDATE_CHANNEL=off
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
 fi
+PREVIOUS_AUTO_UPDATE_CHANNEL=$AUTO_UPDATE_CHANNEL
+if [[ $AUTO_UPDATE_SET -eq 1 ]]; then
+    AUTO_UPDATE_CHANNEL=$AUTO_UPDATE_VALUE
+fi
+case $AUTO_UPDATE_CHANNEL in
+    stable|prerelease|off) ;;
+    *) echo "Invalid saved automatic update channel; set --auto-update explicitly." >&2; exit 2 ;;
+esac
 
 OUTPUT_DIR="$PDF_OUTPUT_DIR"
 
@@ -506,9 +533,13 @@ PDF_OUTPUT_DIR=$(printf '%q' "$OUTPUT_DIR")
 DOCKER_IMAGE=$(printf '%q' "$DOCKER_IMAGE")
 ADMIN_OUTPUT_DIR=$(printf '%q' "$ADMIN_OUTPUT_DIR")
 ADMIN_DATA_DIR=$(printf '%q' "$ADMIN_DATA_DIR")
+AUTO_UPDATE_CHANNEL=$(printf '%q' "$AUTO_UPDATE_CHANNEL")
 EOF
 
 chmod 0600 "$CONFIG_FILE"
+if [[ $AUTO_UPDATE_CHANNEL != "$PREVIOUS_AUTO_UPDATE_CHANNEL" ]]; then
+    rm -f -- "$REPO_DIR/.report-update/state"
+fi
 
 install_link \
     "$REPORT_BUILD_SOURCE" \
@@ -529,6 +560,7 @@ echo
 echo "Installed:    $REPORT_BUILD_TARGET"
 echo "Style:        $REPO_DIR"
 echo "Image:        $DOCKER_IMAGE"
+echo "Auto update:  $AUTO_UPDATE_CHANNEL"
 echo "PDF dir:      $OUTPUT_DIR"
 if [[ $ADMIN -eq 1 ]]; then
     if [[ -n $ADMIN_OUTPUT_DIR ]]; then

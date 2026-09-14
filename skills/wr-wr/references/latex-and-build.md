@@ -58,7 +58,9 @@ If the context is unclear, request the missing explanation from the author and r
 
 Use the canonical `report-build` command so the report sees the shared style and resolved metadata. On failure, identify the first actionable error rather than reacting only to the final generic failure message. Apply a repair, rebuild, and stop when the requested issue is resolved or when progress requires missing user information or authorization.
 
-Note the repository version printed by `report-build` when diagnosing version-sensitive behavior or comparing results from different checkouts. The command builds the current checkout; the displayed version identifies that checkout rather than selecting a version to build.
+Note the repository version printed by `report-build` when diagnosing version-sensitive behavior or comparing results from different checkouts.
+If automatic updates are enabled, the checkout may advance to an eligible release before compilation; the displayed build version identifies the checkout actually used.
+See the README's "Automatic Release Updates" for channels, skipped updates, and lock recovery; do not bypass a lock or discard local work to make an update succeed.
 
 For work intended as a final report, check as relevant:
 
