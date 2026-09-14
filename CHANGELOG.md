@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] &mdash; 2026-09-14
+
 ### Added
 
 - [setup] optional `--auto-update[=stable|prerelease|off]` release channels, checked at build time once per 24 hours, with shared installation locking, failure retry delays, and branch-preserving release checkout updates.
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [latex] pin `mhchem` syntax to version 4.
 - [skill] preserve literal quotes in missing-member notification names.
 - [setup] reject invalid options and paths before installation, and preserve configuration and restore changed links when setup fails.
-- [build] preserve existing PDFs until validated replacements are ready, refresh viewers after atomic replacement, and serialize administrator publication.
+- [build] preserve existing PDFs until validated replacements are ready, update mtime after atomic replacement, and serialize administrator publication.
 - [build] automatic report serial numbers exclude hidden, metadata, lock, temporary, and backup PDFs from the output-directory count, recognize uppercase PDF extensions, and count filenames containing newlines correctly.
 
 ## [1.3.0-beta] &mdash; 2026-09-12
@@ -114,7 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0-beta...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0-beta...v1.3.0
 [1.3.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.1...v1.3.0-beta
 [1.2.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.1.1...v1.2.0
