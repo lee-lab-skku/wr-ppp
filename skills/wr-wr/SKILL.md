@@ -31,6 +31,8 @@ Before drafting, substantively revising, or reviewing report content, read the i
 The README defines shared report policy; template comments explain how to apply it while writing.
 Use the comments with judgment: distinguish report requirements, adaptable suggestions, and illustrative content.
 Suggested elements and example layouts are optional; do not turn them into compulsory fields or treat example data as evidence for the user's report.
+The README's figure, table, and equation reference rules are requirements, not optional example conventions.
+When drafting, revising, or reviewing content, apply the reference checks in [references/latex-and-build.md](references/latex-and-build.md), including to existing user-written prose.
 
 Read only the references needed for the current request. Combine them when a problem crosses boundaries.
 

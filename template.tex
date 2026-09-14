@@ -26,6 +26,13 @@
 % Use other commands, argument forms, and options supported by the loaded
 % package versions as appropriate; do not add content just to use an example.
 
+% Reference every figure at least once in the body, in meaningful context.
+% Table and equation references are optional, but all figure, table, and
+% equation references must use label-based cleveref commands, not typed numbers.
+% Use \cref, \Cref, or other supported variants as the context requires;
+% capitalization, multiple-label, and range forms are not restricted here.
+% Labels must be unique; prefixes such as fig:, tab:, and eq: are optional.
+
 % =========================================================
 % Report information -- edit these three values.
 % Choose a title that reflects the scope of the week's research,
@@ -110,6 +117,8 @@ larger values produced under-confident predictions. The tested loss was
 
 The effect was strongest near class boundaries, motivating a label audit
 before attributing the rare-class gain to the loss formulation.
+\Cref{fig:calibration-curve,fig:rare-class-errors} present the calibration
+comparison and rare-class error composition for this analysis.
 
 \end{pppbox}
 
@@ -142,7 +151,8 @@ before attributing the rare-class gain to the loss formulation.
 \ReportSubsection{Rare-Class Instability}
 
 Worst-class F1 still varied by 7.8 points across seeds, so the apparent
-gain is not yet strong enough to support a general conclusion.
+gain is not yet strong enough to support a general conclusion
+(\cref{fig:seed-variance}).
 
 \begin{itemize}
     \item \textbf{Working hypothesis:} a small cluster of inconsistently

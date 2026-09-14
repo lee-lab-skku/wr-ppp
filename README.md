@@ -201,6 +201,11 @@ These relationships do not require three labeled parts, a fixed sentence sequenc
 Give significant developments prominence and keep supporting details subordinate to them.
 Use concise headings where helpful and remove repeated background and activity-log detail that does not help the reader assess the research.
 
+Every figure must be referenced at least once in the report's body using a label-based `cleveref` command, in a context that explains its connection to the discussion.
+References to tables and equations are optional, but any such references must also use `cleveref` rather than manually written numbers.
+Use `\cref` or an appropriate supported variant, such as `\Cref` for capitalization or commands for multiple labels and ranges; this rule does not restrict valid calling forms.
+Labels must be unique; prefixes such as `fig:`, `tab:`, and `eq:` are optional.
+
 PPP and the abstract provide useful perspectives on the week:
 
 - **Abstract:** an overview of the scope and significant developments
@@ -234,6 +239,8 @@ Before authoring or changing report LaTeX, it first checks the packages and conf
 The template includes commented examples for cross-references (`\cref`), units (`\si`, `\SI`), and chemical notation (`\ce`); these illustrate usage without restricting other supported commands, argument forms, or options.
 It applies relevant prompts with judgment and preserves useful author choices; matching the example's organization is not a review requirement.
 Its references provide task-specific procedures for source conventions, editorial judgment and evidence, and LaTeX and build validation.
+During review, the agent must identify manually written figure, table, and equation numbers and correct them to label-based `cleveref` references when editing is in scope; review-only feedback must specify the correction.
+For an unreferenced figure, it must guide the author to a suitable place and context for a body reference, or add one when editing is authorized and the available material supports the connection.
 It checks the rendered page count and revises overlength drafts within the authorized scope; any unavoidable exception must be explained in the handoff.
 
 When creating a report from the template, the agent preserves retained instructional comments verbatim.

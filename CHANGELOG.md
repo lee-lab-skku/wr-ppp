@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [skill] every figure requires a contextual body reference through `cleveref`; table and equation references remain optional but must use it when present.
+  Review must correct manually written reference numbers and address missing figure references, while label prefixes and supported calling forms remain flexible.
 - [skill] report authoring checks the shared style's loaded packages first and uses their relevant functionality; template comments illustrate cross-references, units, and chemical notation without restricting usage to the example calls.
 
 ### Fixed
