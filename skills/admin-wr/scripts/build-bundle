@@ -315,13 +315,23 @@ MANIFEST_DIR=$CANONICAL_DIRECTORY_TARGET
 
 TMP_ROOT="$(mktemp -d)"
 OUTPUT_STAGE_MANIFEST=""
+HELD_LOCKS=()
+LOCK_COUNT=0
 cleanup() {
+    local index=0
+    while [[ $index -lt $LOCK_COUNT ]]; do
+        rm -f -- "${HELD_LOCKS[$index]}/owner"
+        rmdir -- "${HELD_LOCKS[$index]}" 2>/dev/null || :
+        index=$((index + 1))
+    done
     rm -rf -- "$TMP_ROOT"
     if [[ -n $OUTPUT_STAGE_MANIFEST ]]; then
         rm -f -- "$OUTPUT_STAGE_MANIFEST"
     fi
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 ENTRIES="$TMP_ROOT/entries.tsv"
 SORTED_ENTRIES="$TMP_ROOT/entries-sorted.tsv"
@@ -935,6 +945,38 @@ while IFS=$'\t' read -r severity code member_id message; do
         "$severity" "$code" "$member_id" "$message" >> "$MANIFEST_FILE"
 done < "$ISSUES"
 
+mkdir -p -- "$OUTPUT_DIR"
+mkdir -p -- "$MANIFEST_DIR"
+OUTPUT_DIR="$(
+    cd -P -- "$OUTPUT_DIR"
+    pwd -P
+)"
+FINAL_PDF="$OUTPUT_DIR/$REPORT_WEEK_LABEL.pdf"
+FINAL_MANIFEST="$MANIFEST_DIR/$REPORT_WEEK_LABEL.manifest.tsv"
+
+# Lock both artifacts in a stable order, including when installations share only
+# one destination. Hold the pair through PDF and execution-record replacement.
+LOCK_PATHS="$TMP_ROOT/publication-locks"
+printf '%s\n' "$OUTPUT_DIR/.$REPORT_WEEK_LABEL.pdf.publish.lock" \
+    "$MANIFEST_DIR/.$REPORT_WEEK_LABEL.manifest.tsv.publish.lock" |
+    LC_ALL=C sort -u > "$LOCK_PATHS"
+LOCK_WAIT_START=$(date +%s)
+LOCK_WAIT_ATTEMPTS=0
+while IFS= read -r publication_lock; do
+    while ! mkdir -- "$publication_lock" 2>/dev/null; do
+        [[ -d $publication_lock ]] || die "Cannot create publication lock: $publication_lock"
+        if [[ $LOCK_WAIT_ATTEMPTS -ge 30 ]] ||
+            (( $(date +%s) - LOCK_WAIT_START >= 30 )); then
+            die "Bundle publication is locked; retry later. Verify the host and PID in $publication_lock/owner before removing a stale lock."
+        fi
+        sleep 1
+        LOCK_WAIT_ATTEMPTS=$((LOCK_WAIT_ATTEMPTS + 1))
+    done
+    HELD_LOCKS[$LOCK_COUNT]=$publication_lock
+    LOCK_COUNT=$((LOCK_COUNT + 1))
+    (umask 077; printf '%s\t%s\n' "$(hostname)" "$$" > "$publication_lock/owner")
+done < "$LOCK_PATHS"
+
 while IFS=$'\t' read -r member_id relative_source source_mtime \
     source_hash staged_name
 do
@@ -952,14 +994,6 @@ do
     fi
 done < "$SELECTED_META"
 
-mkdir -p -- "$OUTPUT_DIR"
-mkdir -p -- "$MANIFEST_DIR"
-OUTPUT_DIR="$(
-    cd -P -- "$OUTPUT_DIR"
-    pwd -P
-)"
-FINAL_PDF="$OUTPUT_DIR/$REPORT_WEEK_LABEL.pdf"
-FINAL_MANIFEST="$MANIFEST_DIR/$REPORT_WEEK_LABEL.manifest.tsv"
 if [[ ( -e $FINAL_PDF || -L $FINAL_PDF ) && ! -f $FINAL_PDF ]]; then
     die "Existing bundle PDF target is not a regular file: $FINAL_PDF"
 fi

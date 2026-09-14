@@ -22,9 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- [build] personal builds preserve existing PDFs through compilation and validate readable, nonempty output; all PDF publishers stage beside the destination and update mtime after atomic replacement for viewer refresh.
-
-- [build] automatic report serial numbers exclude hidden, metadata, lock, temporary, and backup PDFs from the output-directory count, recognize uppercase PDF extensions, and count filenames containing newlines correctly.
+- [build] personal builds preserve existing PDFs through compilation, validate readable nonempty output, and exclude hidden, metadata, lock, temporary, and backup PDFs from automatic numbering while recognizing uppercase extensions and filenames containing newlines.
+  All PDF publishers stage beside the destination and update mtime after atomic replacement for viewer refresh.
+  Concurrent administrator publications lock both artifact destinations and revalidate sources after waiting, preventing mixed PDF and execution-record results.
 
 ## [1.3.0-beta] &mdash; 2026-09-12
 

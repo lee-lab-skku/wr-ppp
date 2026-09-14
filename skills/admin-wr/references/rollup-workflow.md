@@ -196,6 +196,11 @@ A caller may explicitly choose the PDF output as the history destination; otherw
 Existing local and legacy history needs no migration to remain readable.
 Administrators may move prior TSVs to the configured history directory without overwriting existing records for the same week.
 The PDF filename in a final manifest remains relative to the configured administrator output, including after a configuration change; a missing PDF or hash mismatch still requires reassessment.
+Final and draft publication lock both canonical artifact destinations in a fixed order, wait at most 30 seconds in total, and revalidate selected source hashes after acquiring the locks.
+A busy publication fails without replacing the existing artifacts; retry after the other run finishes.
+Locks are adjacent hidden directories named `.<week>.pdf.publish.lock` and `.<week>.manifest.tsv.publish.lock`, each with an `owner` file containing the host and process ID.
+Normal exits and handled signals release acquired locks.
+After a forced kill, verify that the recorded host and process no longer own a running publication before manually removing a stale lock; do not remove another active run's lock.
 Each artifact is staged in its own destination directory and replaced atomically, but the PDF/TSV pair is not a single atomic transaction.
 PDF replacement has no deletion gap and updates mtime for viewers; a timestamp-update error is reported after the matching TSV has been written.
 

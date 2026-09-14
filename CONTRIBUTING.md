@@ -110,6 +110,8 @@ A viewer opening is not approval; source or candidate changes invalidate the pre
 Apply the workflow's approval conditions before promotion and revalidate source hashes before rebuilding the final bundle.
 
 Validate the completed PDF before replacing final artifacts, using temporary files in each destination directory and atomic moves.
+Serialize publication against both canonical PDF and execution-record destinations, using a fixed lock order and a bounded total wait.
+Revalidate sources after acquiring the locks, hold them through both replacements, and release only locks acquired by the current run.
 Preserve the builder's stdout contract: absolute PDF and execution-record paths, one per line in that order.
 Drafts must never replace final history.
 PDF and execution-record replacement is not a single transaction: an interruption between replacements must be detected through PDF-hash validation on the next run and require approval.

@@ -170,7 +170,6 @@ os.execv({real_ln!r}, [{real_ln!r}, *sys.argv[1:]])
 class BundleConcurrencyTests(unittest.TestCase):
     setUp = admin.BundleTests.setUp
 
-    @unittest.expectedFailure
     def test_concurrent_publications_keep_pdf_and_manifest_together(self):
         entered, release, waiting = (self.root / p for p in ('entered', 'release', 'waiting'))
         real_mv, real_sleep = shutil.which('mv'), shutil.which('sleep')
@@ -220,6 +219,67 @@ os.execv({real_sleep!r}, [{real_sleep!r}, *sys.argv[1:]])
                 if process is not None and process.poll() is None:
                     process.kill()
                     process.communicate()
+
+    def prepare_final(self):
+        result = admin.BundleTests.build(self)
+        return [Path(p) for p in result.stdout.splitlines()]
+
+    def command(self):
+        return [str(self.builder), '--storage-root', str(self.storage),
+                '--plan', str(self.plan), '--date', '2026-09-04']
+
+    def test_active_lock_times_out_without_replacing_outputs(self):
+        paths = self.prepare_final()
+        before = [p.read_bytes() for p in paths]
+        lock = self.output / '.2026-09-W1.pdf.publish.lock'
+        lock.mkdir(); (lock / 'owner').write_text('other-host\t123\n')
+        admin.executable(self.bin / 'sleep', 'pass\n')
+        result = subprocess.run(self.command(), env=self.env, capture_output=True, text=True, timeout=10)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('publication is locked', result.stderr)
+        self.assertEqual([p.read_bytes() for p in paths], before)
+        self.assertEqual((lock / 'owner').read_text(), 'other-host\t123\n')
+
+    def test_signal_releases_only_acquired_locks(self):
+        paths = self.prepare_final()
+        acquired = self.output / '.2026-09-W1.pdf.publish.lock'
+        occupied = paths[1].parent / '.2026-09-W1.manifest.tsv.publish.lock'
+        occupied.mkdir(); (occupied / 'owner').write_text('other-host\t123\n')
+        waiting = self.root / 'waiting'
+        admin.executable(self.bin / 'sleep', f"from pathlib import Path\nimport time\nPath({str(waiting)!r}).touch()\ntime.sleep(.05)\n")
+        process = subprocess.Popen(self.command(), env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            deadline = time.monotonic() + 10
+            while not waiting.exists() and process.poll() is None and time.monotonic() < deadline:
+                time.sleep(.01)
+            self.assertTrue(waiting.exists())
+            process.send_signal(signal.SIGTERM)
+            _, error = process.communicate(timeout=10)
+            self.assertEqual(process.returncode, 143, error)
+            self.assertFalse(acquired.exists())
+            self.assertTrue(occupied.exists())
+        finally:
+            if process.poll() is None: process.kill(); process.communicate()
+
+    def test_changed_source_while_waiting_is_rejected(self):
+        paths = self.prepare_final()
+        before = [p.read_bytes() for p in paths]
+        occupied = paths[1].parent / '.2026-09-W1.manifest.tsv.publish.lock'
+        occupied.mkdir()
+        admin.executable(self.bin / 'sleep', f"from pathlib import Path\nPath({str(self.source)!r}).write_bytes(b'changed')\nPath({str(occupied)!r}).rmdir()\n")
+        result = subprocess.run(self.command(), env=self.env, capture_output=True, text=True, timeout=10)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Selected source changed', result.stderr)
+        self.assertEqual([p.read_bytes() for p in paths], before)
+        self.assertFalse(list(self.output.glob('*.lock')))
+
+    def test_refresh_failure_still_writes_matching_record(self):
+        admin.executable(self.bin / 'touch', 'import sys\nsys.exit(1)\n')
+        result = subprocess.run(self.command(), env=self.env, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 3, result.stderr)
+        pdf, manifest = map(Path, result.stdout.splitlines())
+        row = next(r.split('\t') for r in manifest.read_text().splitlines() if r.startswith('bundle\t'))
+        self.assertEqual(hashlib.sha256(pdf.read_bytes()).hexdigest(), row[8])
 
 
 class ProbeAndResolverTests(unittest.TestCase):
