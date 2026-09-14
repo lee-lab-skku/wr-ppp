@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [latex] pin `mhchem` syntax to version 4.
 - [skill] preserve literal quotes in missing-member notification names.
 - [setup] reject invalid options and paths before installation, and preserve configuration and restore changed links when setup fails.
 - [build] preserve existing PDFs until validated replacements are ready, refresh viewers after atomic replacement, and serialize administrator publication.
