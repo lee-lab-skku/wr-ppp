@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Publish a validated PDF without a deletion gap, then notify file watchers.
+set -euo pipefail
+
+[[ $# -eq 2 ]] || { echo "Usage: $0 validated.pdf /absolute/target.pdf" >&2; exit 2; }
+SOURCE=$1
+DEST=$2
+[[ -f $SOURCE && -s $SOURCE ]] || { echo "PDF is missing or empty: $SOURCE" >&2; exit 2; }
+[[ $(LC_ALL=C head -c 5 "$SOURCE") == '%PDF-' ]] || {
+    echo "PDF output has an invalid header: $SOURCE" >&2; exit 2;
+}
+[[ $DEST == /* ]] || { echo "PDF destination must be absolute: $DEST" >&2; exit 2; }
+check_target() {
+    if [[ ( -e $DEST || -L $DEST ) && ! -f $DEST ]]; then
+        echo "PDF target is not a regular file: $DEST" >&2
+        return 1
+    fi
+}
+check_target
+PARENT=$(dirname -- "$DEST")
+mkdir -p -- "$PARENT"
+STAGE=$(mktemp "$PARENT/.report-pdf.XXXXXX")
+cleanup() { rm -f -- "$STAGE"; }
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+cp -- "$SOURCE" "$STAGE"
+# Check the transferred bytes before replacing an existing output (also on NAS).
+cmp -s -- "$SOURCE" "$STAGE" || { echo "PDF staging verification failed: $DEST" >&2; exit 1; }
+check_target
+mv -f -- "$STAGE" "$DEST"
+# VS Code PDF viewers refresh on change events; never unlink the open PDF first.
+if ! touch -c -- "$DEST"; then
+    echo "PDF was replaced, but its viewer refresh timestamp could not be updated: $DEST" >&2
+    exit 3
+fi

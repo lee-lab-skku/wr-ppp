@@ -22,4 +22,4 @@ cp -- "$REPO_DIR/template.tex" "$TEST_DIR/template.tex"
     "$REPO_DIR/scripts/report-build" --here --serial 1 template.tex
 )
 
-mv -f -- "$TEST_DIR/template.pdf" "$REPO_DIR/template.pdf"
+"$REPO_DIR/scripts/publish-pdf" "$TEST_DIR/template.pdf" "$REPO_DIR/template.pdf"

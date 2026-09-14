@@ -142,9 +142,14 @@ fi
 
 REPORT_NAME="$(basename "$SRC_DIR")"
 DEST="$OUTPUT_DIR/$REPORT_NAME.pdf"
-LOCAL_DEST="$SRC_DIR/$REPORT_NAME.pdf"
 CONFIGURED_DEST="$PDF_OUTPUT_DIR/$REPORT_NAME.pdf"
 TMP_PDF="$(mktemp)"
+cleanup() {
+    rm -f -- "$TMP_PDF"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 mkdir -p -- "$PDF_OUTPUT_DIR" "$OUTPUT_DIR"
 if [[ $SERIAL_SET -eq 0 ]]; then
@@ -160,16 +165,6 @@ if [[ $SERIAL_SET -eq 0 ]]; then
     done
     REPORT_SERIAL_NUMBER="$((PDF_COUNT + 1))"
 fi
-if [[ -e "$LOCAL_DEST" || -L "$LOCAL_DEST" ]]; then
-    rm -f -- "$LOCAL_DEST"
-    echo "removed: $LOCAL_DEST" >&2
-fi
-
-cleanup() {
-    rm -f -- "$TMP_PDF"
-}
-trap cleanup EXIT
-
 echo "source : $SRC_DIR" >&2
 echo "version: $REPOSITORY_VERSION" >&2
 echo "main   : $MAIN" >&2
@@ -207,12 +202,14 @@ if tar -C "$SRC_DIR" -cf - . |
 
             PDF="${MAIN%.tex}.pdf"
 
-            test -f "$PDF"
+            test -s "$PDF"
+            LC_ALL=C pdfinfo "$PDF" > /work/pdfinfo.txt
+            awk '\''$1 == "Pages:" && $2 ~ /^[1-9][0-9]*$/ { valid = 1 }
+                END { exit !valid }'\'' /work/pdfinfo.txt
             cat "$PDF"
         ' > "$TMP_PDF"
 then
-    mv -f -- "$TMP_PDF" "$DEST"
-    trap - EXIT
+    "$STYLE_DIR/scripts/publish-pdf" "$TMP_PDF" "$DEST"
 
     echo "written: $DEST" >&2
 else

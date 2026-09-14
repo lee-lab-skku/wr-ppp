@@ -28,6 +28,7 @@ sure that:
 
 The recommended image is `danteev/texlive:latest`. Another compatible TeX Live
 Docker image may be supplied to `scripts/setup.sh` if preferred.
+The image must provide XeLaTeX, `latexmk`, and `pdfinfo` (Poppler); these PDF tools are not required on the host.
 
 ## Quick Start
 
@@ -207,10 +208,12 @@ The directory name is still used as the PDF filename. For example, running
 `report-build --here` inside `~/report-source/W1` writes
 `~/report-source/W1/W1.pdf`.
 
-Before every build, `report-build` removes an existing PDF with that name from
-the current directory. With `--here`, the new PDF replaces it; without
-`--here`, the new PDF is written only to the configured output directory. Other
-PDFs in the current directory do not affect the report serial number.
+Existing PDFs remain available throughout compilation, including with `--here` or when the configured output is the source directory.
+After validating the completed PDF, the build stages it beside its destination, replaces it atomically, and updates its modification time so PDF viewers can notice the change.
+A failed compilation or staging operation preserves the previous PDF.
+A local PDF that is not the output target is left unchanged.
+This avoids the deletion gap that can interrupt LaTeX Workshop and vscode-pdf file watching; viewer or filesystem limitations may still affect automatic refresh.
+If the final timestamp update fails, the command reports that the PDF has already been replaced.
 
 The shared `weekly-report.sty` file does not need to be copied into each report
 directory; `report-build` makes it available during compilation.

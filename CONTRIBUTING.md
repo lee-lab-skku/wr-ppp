@@ -42,6 +42,10 @@ Quote path and variable expansions, preserve `set -euo pipefail` where it is alr
 Preserve the builds' isolation and output-safety properties.
 TeX containers run without network access and compile in temporary storage.
 A completed PDF should replace its target only after a successful build and validation, and containers must not modify source files.
+Validate report readability and a positive page count with container-provided `pdfinfo`; keep PDF tooling off the host.
+Use the shared PDF publisher for user-facing PDFs: stage and verify bytes in the destination directory, atomically replace without a deletion gap, and update mtime for file watchers.
+A timestamp-update error occurs after replacement and must be reported as such; bundle publication must still complete its matching execution record.
+Do not use in-place truncation or pre-build deletion to refresh a viewer.
 
 ### Automatic Updates
 

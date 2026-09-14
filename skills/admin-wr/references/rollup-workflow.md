@@ -197,6 +197,7 @@ Existing local and legacy history needs no migration to remain readable.
 Administrators may move prior TSVs to the configured history directory without overwriting existing records for the same week.
 The PDF filename in a final manifest remains relative to the configured administrator output, including after a configuration change; a missing PDF or hash mismatch still requires reassessment.
 Each artifact is staged in its own destination directory and replaced atomically, but the PDF/TSV pair is not a single atomic transaction.
+PDF replacement has no deletion gap and updates mtime for viewers; a timestamp-update error is reported after the matching TSV has been written.
 
 The final `<week>.manifest.tsv` retains schema `admin-wr-bundle/v1`. Its tab-separated records are:
 

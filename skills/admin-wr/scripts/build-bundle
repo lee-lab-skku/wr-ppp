@@ -314,13 +314,9 @@ canonical_directory_target "$MANIFEST_DIR"
 MANIFEST_DIR=$CANONICAL_DIRECTORY_TARGET
 
 TMP_ROOT="$(mktemp -d)"
-OUTPUT_STAGE_PDF=""
 OUTPUT_STAGE_MANIFEST=""
 cleanup() {
     rm -rf -- "$TMP_ROOT"
-    if [[ -n $OUTPUT_STAGE_PDF ]]; then
-        rm -f -- "$OUTPUT_STAGE_PDF"
-    fi
     if [[ -n $OUTPUT_STAGE_MANIFEST ]]; then
         rm -f -- "$OUTPUT_STAGE_MANIFEST"
     fi
@@ -972,15 +968,15 @@ if [[ ( -e $FINAL_MANIFEST || -L $FINAL_MANIFEST ) &&
 then
     die "Existing bundle manifest target is not a regular file: $FINAL_MANIFEST"
 fi
-OUTPUT_STAGE_PDF="$(mktemp "$OUTPUT_DIR/.$REPORT_WEEK_LABEL.pdf.tmp.XXXXXX")"
 OUTPUT_STAGE_MANIFEST="$(
     mktemp "$MANIFEST_DIR/.$REPORT_WEEK_LABEL.manifest.tsv.tmp.XXXXXX"
 )"
 
-cp -- "$RESULT_DIR/bundle.pdf" "$OUTPUT_STAGE_PDF"
 cp -- "$MANIFEST_FILE" "$OUTPUT_STAGE_MANIFEST"
-mv -f -- "$OUTPUT_STAGE_PDF" "$FINAL_PDF"
-OUTPUT_STAGE_PDF=""
+PUBLISH_STATUS=0
+"$REPO_DIR/scripts/publish-pdf" "$RESULT_DIR/bundle.pdf" "$FINAL_PDF" || PUBLISH_STATUS=$?
+# A refresh notification failure follows a successful replacement; finish its record.
+[[ $PUBLISH_STATUS -eq 0 || $PUBLISH_STATUS -eq 3 ]] || exit "$PUBLISH_STATUS"
 mv -f -- "$OUTPUT_STAGE_MANIFEST" "$FINAL_MANIFEST"
 OUTPUT_STAGE_MANIFEST=""
 
@@ -991,3 +987,4 @@ if [[ $DRAFT -eq 1 ]]; then
         "$SCRIPT_DIR/open-bundle" "$FINAL_PDF" >&2
 fi
 printf '%s\n%s\n' "$FINAL_PDF" "$FINAL_MANIFEST"
+exit "$PUBLISH_STATUS"

@@ -29,7 +29,6 @@ class ReportSafetyTests(unittest.TestCase):
     def fail_docker(self):
         (self.bin / 'docker').write_text('#!/bin/sh\ncat >/dev/null\nexit 17\n')
 
-    @unittest.expectedFailure
     def test_here_failure_preserves_pdf(self):
         pdf = self.source / (self.source.name + '.pdf')
         pdf.write_bytes(b'previous')
@@ -37,7 +36,6 @@ class ReportSafetyTests(unittest.TestCase):
         self.assertNotEqual(self.run_build('--here').returncode, 0)
         self.assertEqual(pdf.read_bytes(), b'previous')
 
-    @unittest.expectedFailure
     def test_output_alias_of_source_preserves_pdf_on_failure(self):
         alias = self.root / 'alias'
         alias.symlink_to(self.source, target_is_directory=True)
@@ -49,7 +47,6 @@ class ReportSafetyTests(unittest.TestCase):
         self.assertNotEqual(self.run_build().returncode, 0)
         self.assertEqual(pdf.read_bytes(), b'previous')
 
-    @unittest.expectedFailure
     def test_empty_output_is_rejected_without_replacement(self):
         pdf = self.output / (self.source.name + '.pdf')
         pdf.write_bytes(b'previous')
@@ -58,14 +55,12 @@ class ReportSafetyTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(pdf.read_bytes(), b'previous')
 
-    @unittest.expectedFailure
     def test_success_preserves_unselected_local_pdf(self):
         pdf = self.source / (self.source.name + '.pdf')
         pdf.write_bytes(b'local review')
         self.assertEqual(self.run_build().returncode, 0)
         self.assertEqual(pdf.read_bytes(), b'local review')
 
-    @unittest.expectedFailure
     def test_existing_pdf_remains_available_during_build(self):
         pdf = self.source / (self.source.name + '.pdf')
         pdf.write_bytes(b'previous')
@@ -84,7 +79,6 @@ sys.stdout.buffer.write(b'%PDF-1.4\\nnew')
         self.assertEqual(self.run_build('--here').returncode, 0)
         self.assertEqual(snapshot.read_bytes(), b'%PDF-1.4\nnew')
 
-    @unittest.expectedFailure
     def test_replacement_is_staged_beside_destination_and_touched(self):
         log = self.root / 'publish-events'
         for name in ('mv', 'touch'):
@@ -302,3 +296,79 @@ class LiteralManifestTests(unittest.TestCase):
         notice = runpy.run_path(str(admin.REPO / 'scripts/notify-held'))['notice']
         payload, _ = notice(manifest)
         self.assertIn('• ' + name, payload['blocks'][0]['text']['text'])
+
+
+class PdfPublisherTests(unittest.TestCase):
+    setUp = report.ReportSerialTests.setUp
+
+    def publish(self):
+        return subprocess.run([str(self.repo / 'scripts/publish-pdf'), str(self.source_pdf), str(self.target_pdf)],
+                              env=dict(os.environ, PATH=f'{self.bin}:{os.environ["PATH"]}'),
+                              capture_output=True, text=True, timeout=10)
+
+    def prepare(self):
+        self.source_pdf = self.root / 'new.pdf'
+        self.source_pdf.write_bytes(b'%PDF-1.4\nnew content')
+        self.target_pdf = self.output / 'target.pdf'
+        self.target_pdf.write_bytes(b'%PDF-1.4\nprevious')
+
+    def test_invalid_bytes_and_copy_failure_preserve_target(self):
+        self.prepare()
+        before = self.target_pdf.read_bytes()
+        self.source_pdf.write_bytes(b'not PDF')
+        self.assertNotEqual(self.publish().returncode, 0)
+        self.assertEqual(self.target_pdf.read_bytes(), before)
+        self.source_pdf.write_bytes(b'%PDF-1.4\nnew')
+        admin.executable(self.bin / 'cp', 'import sys\nfrom pathlib import Path\nPath(sys.argv[-1]).write_bytes(b"partial")\nsys.exit(1)\n')
+        self.assertNotEqual(self.publish().returncode, 0)
+        self.assertEqual(self.target_pdf.read_bytes(), before)
+        self.assertFalse(list(self.output.glob('.report-pdf.*')))
+
+    def test_directory_rejected_and_file_symlink_replaced_without_following(self):
+        self.prepare()
+        self.target_pdf.unlink()
+        self.target_pdf.mkdir()
+        self.assertNotEqual(self.publish().returncode, 0)
+        self.assertFalse(list(self.target_pdf.iterdir()))
+        self.target_pdf.rmdir()
+        other = self.root / 'other.pdf'
+        other.write_bytes(b'other content')
+        self.target_pdf.symlink_to(other)
+        self.assertEqual(self.publish().returncode, 0)
+        self.assertFalse(self.target_pdf.is_symlink())
+        self.assertEqual(other.read_bytes(), b'other content')
+
+    def test_touch_failure_reports_already_replaced(self):
+        self.prepare()
+        admin.executable(self.bin / 'touch', 'import sys\nsys.exit(1)\n')
+        result = self.publish()
+        self.assertEqual(result.returncode, 3)
+        self.assertIn('PDF was replaced', result.stderr)
+        self.assertEqual(self.target_pdf.read_bytes(), self.source_pdf.read_bytes())
+
+    @unittest.skipUnless(os.name == 'posix' and Path('/proc/sys/fs/inotify').exists(), 'Linux inotify check')
+    def test_repeated_publication_emits_changes_without_target_deletion(self):
+        import ctypes
+        import struct
+        self.prepare()
+        libc = ctypes.CDLL(None, use_errno=True)
+        fd = libc.inotify_init1(os.O_NONBLOCK)
+        self.assertGreaterEqual(fd, 0)
+        try:
+            # Watch the containing directory as VS Code's filesystem service does.
+            watch = libc.inotify_add_watch(fd, os.fsencode(self.output), 0x00000FFF)
+            self.assertGreaterEqual(watch, 0)
+            self.assertEqual(self.publish().returncode, 0)
+            self.assertEqual(self.publish().returncode, 0)
+            raw = os.read(fd, 65536)
+            offset, events = 0, []
+            while offset < len(raw):
+                _, mask, _, size = struct.unpack_from('iIII', raw, offset)
+                name = raw[offset + 16:offset + 16 + size].rstrip(b'\0')
+                offset += 16 + size
+                if name == b'target.pdf': events.append(mask)
+            self.assertFalse(any(mask & 0x200 for mask in events))  # IN_DELETE
+            self.assertGreaterEqual(sum(bool(mask & 0x80) for mask in events), 2)  # IN_MOVED_TO
+            self.assertTrue(any(mask & 0x4 for mask in events))  # IN_ATTRIB (touch)
+        finally:
+            os.close(fd)

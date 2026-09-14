@@ -45,6 +45,7 @@ The source must provide the report title, author, and project through `\ReportHe
 
 ## Build and Output
 
-Run `report-build` from the report source directory. It uses `main.tex` unless another source is supplied. Use `--here` only when a local PDF is desired; it replaces the same-named local PDF. Without `--here`, the configured output directory receives the result.
+Run `report-build` from the report source directory. It uses `main.tex` unless another source is supplied. Use `--here` only when a local PDF is desired; it replaces the same-named local PDF after successful compilation and validation.
+Existing PDFs remain available while compiling, and local PDFs outside the selected output target are preserved. Without `--here`, the configured output directory receives the result.
 
 If `report-build` or its configuration is unavailable, explain or perform the repository setup appropriate to the user's request. Installing the command or user-level skill links may require permissions outside the report directory, so do not assume authorization beyond the current task.
