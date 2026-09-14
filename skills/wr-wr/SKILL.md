@@ -24,6 +24,9 @@ Infer these from the request and accessible files when practical. Do not turn th
 
 ## Choose and Combine Relevant Guidance
 
+Before authoring or changing report LaTeX, first inspect the package declarations and relevant configuration in the resolved repository's `weekly-report.sty`.
+Use the loaded packages where they suit the content, following [references/latex-and-build.md](references/latex-and-build.md); template command examples illustrate usage without limiting the supported commands or argument forms.
+
 Before drafting, substantively revising, or reviewing report content, read the instructional comments in the resolved repository's canonical `template.tex` and the `README.md` sections "Write the Report" and "Length and Exceptions".
 The README defines shared report policy; template comments explain how to apply it while writing.
 Use the comments with judgment: distinguish report requirements, adaptable suggestions, and illustrative content.

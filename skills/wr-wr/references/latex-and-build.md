@@ -11,6 +11,17 @@ Use this guidance when a report needs formatting, template-specific source work,
 
 When inserting ordinary text, handle LaTeX-sensitive characters such as `%`, `&`, `_`, `#`, braces, backslashes, tildes, and carets according to context. Do not escape characters blindly inside commands, paths, URLs, or mathematics.
 
+## Use the Style's Packages
+
+Inspect `weekly-report.sty` for its current `\RequirePackage` declarations, options, and configuration before choosing LaTeX constructs or adding packages.
+Use suitable functionality already provided by the style instead of manually reproducing it or loading the same package again.
+For example, use `cleveref` for labeled cross-references, `siunitx` for numbers and units, and `mhchem` for chemical notation when the report calls for them.
+These are examples, not an exhaustive package list; the style remains the source of truth.
+
+Read the package-usage comments in canonical `template.tex` as starting points.
+Choose other commands, argument forms, and options supported by the loaded package version when they better express the material; do not constrain usage to the exact example calls or insert unrelated scientific content merely to demonstrate them.
+When syntax or version support is uncertain, consult the package documentation available in the build environment and validate the chosen construct by compiling.
+
 ## Template Interfaces
 
 Confirm the current definitions in `weekly-report.sty` when exact arguments matter. The principal interfaces are:

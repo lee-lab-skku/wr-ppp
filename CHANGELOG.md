@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- [skill] report authoring checks the shared style's loaded packages first and uses their relevant functionality; template comments illustrate cross-references, units, and chemical notation without restricting usage to the example calls.
+
 ### Fixed
 
 - [build] automatic report serial numbers exclude hidden, metadata, lock, temporary, and backup PDFs from the output-directory count, recognize uppercase PDF extensions, and count filenames containing newlines correctly.

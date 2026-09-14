@@ -230,6 +230,8 @@ These are examples rather than a fixed sequence: the agent should start from
 the user's current files and intended outcome.
 
 For drafting, substantive revision, and content review, the skill reads the canonical template's instructional comments and the shared report policy above.
+Before authoring or changing report LaTeX, it first checks the packages and configuration in `weekly-report.sty` and uses the available functionality where appropriate.
+The template includes commented examples for cross-references (`\cref`), units (`\si`, `\SI`), and chemical notation (`\ce`); these illustrate usage without restricting other supported commands, argument forms, or options.
 It applies relevant prompts with judgment and preserves useful author choices; matching the example's organization is not a review requirement.
 Its references provide task-specific procedures for source conventions, editorial judgment and evidence, and LaTeX and build validation.
 It checks the rendered page count and revises overlength drafts within the authorized scope; any unavoidable exception must be explained in the handoff.
