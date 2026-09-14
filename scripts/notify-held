@@ -47,7 +47,7 @@ def configure(directory):
 
 def notice(manifest):
     with manifest.open(encoding="utf-8", newline="") as source:
-        rows = list(csv.reader(source, delimiter="\t"))
+        rows = list(csv.reader(source, delimiter="\t", quoting=csv.QUOTE_NONE))
     schemas = [r for r in rows if r and r[0] == "schema"]
     bundles = [r for r in rows if r and r[0] == "bundle"]
     if schemas != [["schema", "admin-wr-bundle/v1"]] or len(bundles) != 1:

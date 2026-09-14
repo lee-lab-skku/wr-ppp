@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [skill] preserve literal quotes in missing-member notification names.
 - [setup] reject invalid options and paths before installation, and preserve configuration and restore changed links when setup fails.
 - [build] preserve existing PDFs until validated replacements are ready, refresh viewers after atomic replacement, and serialize administrator publication.
 - [build] automatic report serial numbers exclude hidden, metadata, lock, temporary, and backup PDFs from the output-directory count, recognize uppercase PDF extensions, and count filenames containing newlines correctly.

@@ -371,7 +371,6 @@ class LiteralManifestTests(unittest.TestCase):
     setUp = admin.BundleTests.setUp
     build = admin.BundleTests.build
 
-    @unittest.expectedFailure
     def test_builder_and_notification_preserve_literal_quotes(self):
         name = '"Alice"'
         self.plan.write_text('schema\tadmin-wr-plan/v1\n'

@@ -49,6 +49,14 @@ class SlackTests(unittest.TestCase):
         self.assertEqual(payload["blocks"][0]["text"]["type"], "plain_text")
         self.assertFalse(payload["mrkdwn"])
 
+    def test_literal_quotes_do_not_strip_or_join_manifest_fields(self):
+        for name in ('"Alice"', '"Alice', 'A "quoted" name'):
+            with self.subTest(name=name):
+                self.rows[2][3] = name
+                self.write_manifest()
+                payload, _ = NOTICE(self.manifest)
+                self.assertIn('• ' + name, payload['blocks'][0]['text']['text'])
+
     def test_final_or_no_missing_records_cannot_notify(self):
         self.rows[1][5:7] = ["approved-with-issues", "user-confirmed"]
         self.write_manifest()
