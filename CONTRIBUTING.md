@@ -50,6 +50,7 @@ A completed PDF should replace its target only after a successful build and vali
 
 Windows automation uses PowerShell 5.1 or newer, with PowerShell 7 compatibility as a design target.
 Use script-relative resource paths, literal filesystem operations, explicit native-process exit checks, and argument arrays without shell command construction.
+Use `Get-Command -CommandType Application -TotalCount 1` when selecting an executable from PATH; multiple application matches otherwise become an invalid space-joined filename when passed to a scalar parameter.
 Setup must be repeatable without prompts, preserve incompatible environments, and validate destinations before changing saved configuration or links.
 Preserve caller environment variables and restore any temporary working-directory or environment changes.
 Python owns the native GUI, LaTeX generation, PDF operations, and administrator rules; PowerShell must not duplicate those implementations.

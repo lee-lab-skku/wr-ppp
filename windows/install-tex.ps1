@@ -9,7 +9,7 @@ if (-not (Test-Path -LiteralPath $tlmgr)) {
     if (Test-Path -LiteralPath $texRoot) { throw "Existing incomplete installation preserved: $texRoot" }
     [IO.Directory]::CreateDirectory($InstallRoot) | Out-Null
     $archive = Join-Path $InstallRoot 'TinyTeX-1-windows.exe'
-    Invoke-WrChecked (Get-Command curl.exe -CommandType Application).Source @('-fL', '--retry', '2', '-o', $archive, 'https://github.com/rstudio/tinytex-releases/releases/download/daily/TinyTeX-1-windows.exe')
+    Invoke-WrChecked (Get-Command curl.exe -CommandType Application -TotalCount 1 -ErrorAction Stop).Source @('-fL', '--retry', '2', '-o', $archive, 'https://github.com/rstudio/tinytex-releases/releases/download/daily/TinyTeX-1-windows.exe')
     $extraction = Start-Process -FilePath $archive -ArgumentList '-y' -WorkingDirectory $InstallRoot -WindowStyle Hidden -Wait -PassThru
     if ($extraction.ExitCode -ne 0) { throw 'TinyTeX extraction failed.' }
 }

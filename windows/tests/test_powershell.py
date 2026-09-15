@@ -71,6 +71,41 @@ class PowerShellTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn('Windows-Setup.ps1', result.stderr)
 
+    def test_dependency_tools_select_one_executable_from_duplicate_path_entries(self):
+        curl = Path(os.environ['SystemRoot']) / 'System32/curl.exe'
+        python = Path(sys._base_executable)
+        # Repeated entries also trigger Get-Command's multi-application result,
+        # without depending on a second installed curl or Python distribution.
+        self.env['PATH'] = os.pathsep.join([str(curl.parent), str(python.parent)] * 2 + [self.env['PATH']])
+        for name in ('windows/install-tex.ps1', '.github/scripts/prepare-inno.ps1'):
+            target = self.root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, target)
+        common = self.root / 'windows/common.ps1'
+        original = common.read_text(encoding='utf-8')
+        # Stop at the first download boundary; never fetch or install test dependencies.
+        common.write_text(original + '\nfunction Invoke-WrChecked {\n'
+                          'param([string]$FilePath, [string[]]$Arguments)\n'
+                          '[Console]::Out.WriteLine($FilePath)\nexit 0\n}\n', encoding='utf-8')
+        for shell in SHELLS:
+            for name in ('windows/install-tex.ps1', '.github/scripts/prepare-inno.ps1'):
+                with self.subTest(shell=shell, script=name):
+                    result = self.run_ps(shell, self.root / name)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertTrue(Path(result.stdout.strip()).samefile(curl), result.stdout)
+        common.write_text(original, encoding='utf-8')
+        probe = self.root / 'tool-probe.ps1'
+        probe.write_text(". (Join-Path $PSScriptRoot 'windows/common.ps1')\n"
+                         "try {\nResolve-WrPython -Python python.exe\n"
+                         "Invoke-WrChecked (Get-Command curl.exe -CommandType Application -TotalCount 1).Source @('--version')\n"
+                         "} catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 }\n", encoding='ascii')
+        for shell in SHELLS:
+            with self.subTest(shell=shell):
+                result = self.run_ps(shell, probe)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(Path(result.stdout.splitlines()[0]).samefile(python), result.stdout)
+                self.assertIn('curl ', result.stdout)
+
     def test_release_version_uses_triggering_tag_and_rejects_dirty_checkout(self):
         def git(*args):
             return subprocess.check_output(['git', '-C', str(self.root), *args], stderr=subprocess.STDOUT, text=True).strip()

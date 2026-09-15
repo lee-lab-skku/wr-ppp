@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [setup] select the first executable on PATH when Windows runners provide multiple curl or Python installations, allowing dependency preparation to start correctly.
 - [setup] complete setup and preserve configured update channels with macOS's Bash 3.2, including invocations without positional arguments or skill selections.
 - [build] allow automatic release updates when `report-build` runs without arguments on Bash 3.2.
 

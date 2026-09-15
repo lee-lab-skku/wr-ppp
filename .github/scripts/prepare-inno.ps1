@@ -12,7 +12,7 @@ if (Test-Path -LiteralPath $compiler -PathType Leaf) {
 if (Test-Path -LiteralPath $destination) { throw "Incomplete compiler directory preserved: $destination" }
 $archive = Join-Path $script:WrRoot '.windows-deps/innosetup-6.7.3.exe'
 [IO.Directory]::CreateDirectory((Split-Path -Parent $archive)) | Out-Null
-Invoke-WrChecked (Get-Command curl.exe -CommandType Application).Source @(
+Invoke-WrChecked (Get-Command curl.exe -CommandType Application -TotalCount 1 -ErrorAction Stop).Source @(
     '-fL', '--retry', '2', '-o', $archive,
     'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe'
 )

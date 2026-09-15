@@ -7,16 +7,16 @@ function Resolve-WrPython {
     param([string]$Python = '', [switch]$Bootstrap)
     if ($Python) {
         if (Test-Path -LiteralPath $Python -PathType Leaf) { $candidate = (Get-Item -LiteralPath $Python).FullName }
-        else { $candidate = (Get-Command $Python -CommandType Application -ErrorAction Stop).Source }
+        else { $candidate = (Get-Command $Python -CommandType Application -TotalCount 1 -ErrorAction Stop).Source }
     } elseif (Test-Path -LiteralPath (Join-Path $script:WrRoot '.venv\Scripts\python.exe') -PathType Leaf) {
         $candidate = Join-Path $script:WrRoot '.venv\Scripts\python.exe'
     } elseif ($Bootstrap) {
-        $launcher = Get-Command py.exe -ErrorAction SilentlyContinue
+        $launcher = Get-Command py.exe -CommandType Application -TotalCount 1 -ErrorAction SilentlyContinue
         if ($launcher) {
             $candidate = & $launcher.Source -3 -c 'import sys; print(sys.executable)'
             if ($LASTEXITCODE -ne 0) { throw 'Python launcher failed. Pass -Python <python.exe>.' }
         } else {
-            $candidate = (Get-Command python.exe -CommandType Application -ErrorAction Stop).Source
+            $candidate = (Get-Command python.exe -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
         }
     } else {
         throw 'Run Windows-Setup.ps1 first, or pass -Python <python.exe>.'
