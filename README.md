@@ -1,9 +1,9 @@
 # Weekly Research Report Template
 
-**Native Windows:** use the GUI/CLI and bundled Python/TinyTeX installer described in the [Windows guide](windows/README.md).
+**Native Windows:** use the GUI/CLI and self-contained offline installer described in the [Windows guide](windows/README.md).
 Source users run `Windows-Setup.ps1`, then `Start-Weekly-Report.ps1` from PowerShell.
 The Bash/Docker instructions below apply to Linux/macOS and WSL.
-Pushed release tags run Linux/macOS tests and the Windows build checks; after all pass, GitHub Releases receives the Windows installer with bundled Python/TinyTeX and its SHA256 checksum.
+Validated releases provide a Windows offline installer and its SHA256 checksum through GitHub Releases.
 
 Latest version: [![Latest repository version](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=release)](https://github.com/lee-lab-skku/wr-ppp/tags)
 
@@ -22,7 +22,7 @@ Exceed that limit only when essential research content cannot fit after all reas
 ## Requirements
 
 Linux/macOS use Bash and Docker; macOS compatibility is a source-level design target rather than a tested-platform guarantee.
-Native Windows uses PowerShell 5.1 or newer and local TeX, with Python and TinyTeX included in the offline installer.
+The native Windows offline installer includes the tools needed to generate reports without separate dependency installation.
 See the [Windows guide](windows/README.md) for source prerequisites and installation.
 For the Bash/Docker workflow, make sure that:
 

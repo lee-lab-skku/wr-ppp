@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- [setup] select the first executable on PATH when Windows runners provide multiple curl or Python installations, allowing dependency preparation to start correctly.
+- [setup] fix Windows dependency preparation failures on runners with multiple tool installations.
 - [setup] complete setup and preserve configured update channels with macOS's Bash 3.2, including invocations without positional arguments or skill selections.
 - [build] allow automatic release updates when `report-build` runs without arguments on Bash 3.2.
 
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [build] tag-driven GitHub Actions tests on Linux/macOS and full Windows offline installer validation, with automatic EXE/checksum publication and changelog release notes after all platforms pass.
-- [setup] native Windows GUI/CLI, PowerShell setup and automation, optional project-local TinyTeX, and per-user EXE installers bundling Python and TeX.
+- [setup] native Windows GUI/CLI, source setup and automation, optional local report-building tools, and self-contained per-user offline installers.
 - [build] native report compilation, explicit administrator bundles with reviewed promotion, and canonical Slack notifications without Bash, WSL, or Docker.
 - [latex] form/Markdown headings and strike-through formatting, with consistent report headers and footers.
 - [skill] native Windows command routing and canonical skill links for agents, Claude, and Antigravity, including shared destination aliases.

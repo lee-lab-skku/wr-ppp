@@ -11,7 +11,7 @@ A deliberate breaking change should explain its rationale and impact, update the
 Use the repository sources according to their roles:
 
 - `README.md` defines shared report policy and describes the user workflow.
-- The files under `scripts/` implement Linux/macOS setup and build behavior; Windows PowerShell entry points implement native automation and delegate GUI and report operations to the Python implementation.
+- The files under `scripts/` implement Linux/macOS setup and build behavior; the [Windows guide](windows/README.md) defines the native Windows entry points and workflow.
 - The files under `skills/` define agent workflows and safeguards, with task-specific procedures in selectively loaded references.
 - `weekly-report.sty` defines the shared LaTeX interfaces and presentation.
 - `template.tex` provides contextual writing prompts and an adaptable worked example.
@@ -48,20 +48,12 @@ Preserve the builds' isolation and output-safety properties.
 Linux/macOS TeX containers run without network access and compile in temporary storage.
 A completed PDF should replace its target only after a successful build and validation, and containers must not modify source files.
 
-Windows automation uses PowerShell 5.1 or newer, with PowerShell 7 compatibility as a design target.
-Use script-relative resource paths, literal filesystem operations, explicit native-process exit checks, and argument arrays without shell command construction.
-Use `Get-Command -CommandType Application -TotalCount 1` when selecting an executable from PATH; multiple application matches otherwise become an invalid space-joined filename when passed to a scalar parameter.
-Setup must be repeatable without prompts, preserve incompatible environments, and validate destinations before changing saved configuration or links.
-Preserve caller environment variables and restore any temporary working-directory or environment changes.
-Python owns the native GUI, LaTeX generation, PDF operations, and administrator rules; PowerShell must not duplicate those implementations.
-The native backend uses temporary source copies and disables TeX shell escape, but does not provide container OS/network isolation.
-Keep the shared report policy, plan/manifest formats, publication safety, and skill destination aliases consistent across platforms.
-Directory publication locks cover both PDF and history destinations and revalidate source fingerprints after acquisition; never automatically steal a NAS lock.
-The Git release updater remains specific to Bash; native Windows updates are manual.
+Windows must preserve the shared report policy, plan/manifest formats, publication safety, and skill destination aliases.
+Native Windows builds do not provide container OS/network isolation, and Windows updates remain manual.
+Follow the [Windows development guide](windows/DEVELOPMENT.md) for implementation constraints and platform-specific validation.
 
 Keep POSIX scripts as LF text through `.gitattributes` so Windows checkouts remain usable from WSL.
 When Windows Git materializes repository symlinks as plain files (`core.symlinks=false`), run POSIX checks in a Linux checkout that preserves the Git symlink modes; line-ending normalization alone cannot restore links.
-PowerShell scripts containing non-ASCII literals require UTF-8 with BOM for Windows PowerShell 5.1; otherwise keep their source ASCII.
 Validate report readability and a positive page count with container-provided `pdfinfo`; keep PDF tooling off the host.
 Use the shared PDF publisher for user-facing PDFs: stage and verify bytes in the destination directory, atomically replace without a deletion gap, and update mtime for file watchers.
 A timestamp-update error occurs after replacement and must be reported as such; bundle publication must still complete its matching execution record.
@@ -198,7 +190,7 @@ Skill changes should cover representative activation, reference routing, all sha
 
 Run the administrator workflow regression checks with `python3 -B -m unittest discover -s tests -v` (Python 3 standard library only).
 On native Windows, use `windows/test.ps1` for native tests and common checks; POSIX-only checks must run separately in WSL/Linux.
-Use `-RealBuild`, `-Gui`, and `-Package` for the opt-in native TeX, hidden GUI, and offline EXE checks described in `windows/README.md`.
+Use the [Windows validation guidance](windows/DEVELOPMENT.md#validation) for additional platform checks.
 These checks use isolated repositories and substitute Docker and desktop openers to exercise artifact placement, failure handling, and platform command routing without publishing reports or opening windows.
 Also exercise a real Docker build when available; substituted commands do not validate TeX rendering or a desktop viewer.
 
@@ -207,6 +199,12 @@ Do not claim macOS compatibility was verified unless the affected workflow was a
 An unavailable macOS or agent environment does not by itself block a contribution.
 
 ## Documentation and Scope
+
+When editing root documents, treat the Windows implementation as a black box by default.
+Describe its supported capabilities, inputs and outputs, observable behavior, compatibility, and repository-wide contracts without requiring readers to understand its internal components.
+Keep Windows-specific architecture, implementation rules, and dependency or packaging procedures in the [Windows development guide](windows/DEVELOPMENT.md), and link there when detail is needed.
+This perspective does not prohibit describing changes that are entirely internal: explain relevant improvements, their purpose, evidence, and limitations at the level appropriate to the root document, even when the public interface is unchanged.
+For example, root documentation may describe faster CI dependency preparation or more reliable installation; the implementation and cache maintenance steps belong in the Windows guide.
 
 Update `README.md` when setup arguments, generated command behavior, required software, report-writing instructions, or user-visible skill capabilities change.
 Keep administrator development contracts in this document and operating procedures in the administrator references.
@@ -265,14 +263,14 @@ Complete the normal release preparation before pushing the tag; CI does not crea
 
 Linux and macOS run the common/POSIX regression suite on their own hosted runners, using the operating system's `/bin/bash`.
 These jobs substitute Docker and desktop viewers and do not build release artifacts or install TeX.
-Windows uses PowerShell 5.1 for orchestration, runs the native/common tests (including PowerShell 7 checks when available), prepares project-local TinyTeX and the checksum-pinned Inno Setup compiler, tests native PDF generation, then builds the offline installer.
-The sanitized portable bundle and the installed application must pass checks with development Python/TeX excluded from PATH; the installer check also verifies uninstallation preserves user configuration and PDFs.
-Run the installer check only on a clean machine; it refuses an existing Weekly Report installation.
+Windows must pass native/common regression checks, actual PDF generation, and portable and installed application checks before publication.
+Validate the offline distribution without relying on development tools, and verify that uninstallation preserves user configuration and PDFs.
+See the [Windows development guide](windows/DEVELOPMENT.md#ci-and-packaging) for build dependencies and packaging procedures.
 
 Only the publication job has `contents: write`, and it runs after every platform succeeds.
 Use the repository's automatic `GITHUB_TOKEN`; no personal access token is required.
 Organization/repository Actions policies must allow the pinned official actions and release-writing job permission.
-Keep third-party action revisions pinned to full commit IDs and verify the official Inno Setup checksum when updating the compiler version.
+Keep third-party action revisions pinned to full commit IDs; follow the Windows development guide when updating installer build dependencies.
 
 CI packages the exact triggering tag even if multiple tags refer to the same commit.
 The release contains only `WeeklyReport-<tag>-Setup.exe` and its `.exe.sha256` file; the publication job revalidates both after artifact transfer and uses the matching changelog section as release notes.
@@ -282,15 +280,9 @@ Retry a failed run using GitHub Actions' rerun controls: unpublished drafts for 
 An existing complete published release is left unchanged; a published release missing expected assets or a draft targeting a different commit fails for maintainer review.
 Preserve published tags and use a new allowed version when source fixes are needed.
 
-CI caches the complete prepared `.runtime/TinyTeX` tree, including installed packages and generated TeX formats.
-An exact cache hit skips `install-tex.ps1`; a miss uses the existing daily bootstrap and current TeX package repository.
-The cache key includes the Windows runner image label, architecture, installation script and shared PowerShell helper hashes, and `TINYTEX_CACHE_REVISION` in the workflow.
-Do not add release tags or source commit IDs to this dependency key, or use partial restore keys that could mix incompatible TeX installations.
-Increment `TINYTEX_CACHE_REVISION` to refresh upstream TeX packages or replace an unusable cache; dependency changes must update `install-tex.ps1` so its hash invalidates the cache automatically.
-Every run validates actual native TeX and administrator builds, including cache hits; a new cache is saved only after those checks pass, before Inno Setup preparation and packaging.
-Installer packaging, portable tests, installation tests, and release artifact verification still run each time; no finished installer or previous test result is reused.
-GitHub scopes caches by ref and permits fallback to the default branch's cache; a `dev` cache is not directly shared with tag runs.
-To seed a shared cache, run this workflow manually on the default branch with the matching cache key inputs before subsequent branch or tag runs; the workflow and its build dependencies must already be present there.
-Cache eviction or an unavailable cache causes fresh preparation, and caching does not make release builds byte-reproducible.
+CI reuses prepared Windows build dependencies to reduce setup time while retaining all build and distribution checks.
+Cache misses trigger fresh preparation; finished installers and previous test results are not reused.
+See [dependency cache maintenance](windows/DEVELOPMENT.md#tinytex-cache) for refresh and sharing procedures.
+Release builds are tested artifacts rather than byte-reproducible rebuilds.
 Failures in dependency preparation, any test, checksum verification, or asset upload prevent publication.
-Windows artifacts are retained in Actions for seven days; on failure, available installer/uninstaller logs from `.runtime/qa` are retained as a separate diagnostics artifact for the same period.
+Windows installers and available failure diagnostics are retained as separate Actions artifacts for seven days.
