@@ -116,6 +116,12 @@ PyInstaller는 Python과 GUI 의존성을 포함한 `windows/dist/WeeklyReport/W
 
 ## 설치 파일 만들기
 
+정식 배포는 릴리스 준비가 끝난 `vMAJOR.MINOR.PATCH` 태그를 푸시하면 GitHub Actions에서 자동으로 수행합니다.
+Linux/macOS 테스트와 Windows의 실제 PDF·포터블 EXE·설치·제거 검사가 모두 성공해야 GitHub Release에 설치 EXE와 SHA256이 게시됩니다.
+`-beta`와 `-rc` 태그는 사전 릴리스로 게시하며, 이미 공개된 자산은 덮어쓰지 않습니다.
+태그 준비와 실패 후 재실행 절차는 [기여 가이드](../CONTRIBUTING.md#tag-driven-ci-and-windows-releases)를 따르세요.
+아래 명령은 같은 패키징 경로를 로컬에서 실행할 때 사용합니다.
+
 Inno Setup 6과 Python 빌드 환경, `.runtime/TinyTeX`가 필요합니다.
 
 ```powershell

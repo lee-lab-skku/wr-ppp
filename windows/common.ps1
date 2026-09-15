@@ -95,6 +95,21 @@ function Invoke-WrChecked {
 function Get-WrVersion {
     Push-Location -LiteralPath $script:WrRoot
     try {
+        if ($env:GITHUB_ACTIONS -eq 'true' -and $env:GITHUB_REF_TYPE -eq 'tag') {
+            # Several tags can refer to the same commit. CI must package the
+            # triggering tag, not whichever tag git describe happens to choose.
+            $tag = $env:GITHUB_REF_NAME
+            if ($tag -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(beta|rc))?$') {
+                throw 'Invalid release tag.'
+            }
+            $tagCommit = & git rev-parse --verify "refs/tags/${tag}^{commit}"
+            if ($LASTEXITCODE -ne 0) { throw 'Release tag is missing from the checkout.' }
+            $headCommit = & git rev-parse HEAD
+            if ($LASTEXITCODE -ne 0 -or $tagCommit -ne $headCommit) { throw 'Release tag does not match HEAD.' }
+            $dirty = & git status --porcelain --untracked-files=no
+            if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Release packaging requires a clean tracked checkout.' }
+            return $tag
+        }
         $version = & git describe --tags --match 'v[0-9]*' --dirty --always
         if ($LASTEXITCODE -ne 0 -or -not $version) { throw 'Cannot determine checkout version; build from a Git checkout.' }
         return $version

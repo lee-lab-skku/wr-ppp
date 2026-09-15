@@ -1,0 +1,146 @@
+"""Validate release metadata and publish only verified, tested Windows artifacts."""
+import argparse
+import datetime as dt
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+import tempfile
+
+ROOT = Path(__file__).resolve().parents[2]
+TAG = re.compile(r'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(beta|rc))?')
+
+
+def validate_tag(tag):
+    if not TAG.fullmatch(tag):
+        raise ValueError('Expected vMAJOR.MINOR.PATCH, optionally followed by -beta or -rc (no leading zeroes).')
+    return tag.endswith(('-beta', '-rc'))
+
+
+def release_notes(root, tag):
+    """Require the maintainer's release preparation; CI never edits versions or tags."""
+    validate_tag(tag)
+    first = (root / 'template.tex').read_text(encoding='utf-8').splitlines()[0]
+    if first != f'% Repository version: {tag}':
+        raise ValueError(f'template.tex must start with "% Repository version: {tag}".')
+    changelog = (root / 'CHANGELOG.md').read_text(encoding='utf-8')
+    heading = re.compile(r'^## \[' + re.escape(tag[1:]) + r'\] &mdash; (\d{4}-\d{2}-\d{2})$', re.M)
+    matches = list(heading.finditer(changelog))
+    if len(matches) != 1:
+        raise ValueError(f'CHANGELOG.md must contain one dated [{tag[1:]}] release section.')
+    dt.date.fromisoformat(matches[0][1])
+    body = re.split(r'^## ', changelog[matches[0].end():], maxsplit=1, flags=re.M)[0].strip()
+    if not re.search(r'^- ', body, re.M):
+        raise ValueError('The release changelog must describe at least one change.')
+    return body + '\n'
+
+
+def validate_checkout(root, tag, expected_commit):
+    validate_tag(tag)
+    if not re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', expected_commit):
+        raise ValueError('Expected the full triggering Git object ID.')
+    def git(*arguments):
+        return subprocess.check_output(['git', '-C', str(root), *arguments], text=True).strip()
+    head = git('rev-parse', 'HEAD')
+    if git('rev-parse', '--verify', f'refs/tags/{tag}^{{commit}}') != head:
+        raise ValueError('The release tag does not point to the checked-out commit.')
+    if git('rev-parse', '--verify', f'{expected_commit}^{{commit}}') != head:
+        raise ValueError('The checkout does not match the triggering commit.')
+    if git('status', '--porcelain', '--untracked-files=no'):
+        raise ValueError('Release builds require a clean tracked checkout.')
+    return head
+
+
+def verify_artifacts(directory, tag):
+    """Reject stale installers, renamed assets, and corrupt transfers before upload."""
+    validate_tag(tag)
+    installer = directory / f'WeeklyReport-{tag}-Setup.exe'
+    checksum = installer.with_suffix('.exe.sha256')
+    if set(directory.iterdir()) != {installer, checksum}:
+        raise ValueError('Release artifacts must contain exactly the tagged installer and its SHA256 file.')
+    if any(p.is_symlink() or not p.is_file() for p in (installer, checksum)):
+        raise ValueError('Release artifacts must be regular files.')
+    with installer.open('rb') as stream:
+        if stream.read(2) != b'MZ':
+            raise ValueError('Installer is not a Windows executable.')
+        stream.seek(0)
+        digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+    if checksum.read_text(encoding='ascii').strip() != f'{digest}  {installer.name}':
+        raise ValueError('Installer SHA256 or filename does not match the checksum file.')
+    return installer, checksum
+
+
+def publish(root, tag, commit, directory, repository, run=subprocess.run):
+    """Upload to a draft first; retries may repair drafts but never published assets."""
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository):
+        raise ValueError('Expected a GitHub owner/repository name.')
+    prerelease = validate_tag(tag)
+    notes = release_notes(root, tag)
+    assets = verify_artifacts(directory, tag)
+    def gh(*arguments, check=True):
+        result = run(['gh', *arguments], capture_output=True, text=True, timeout=300)
+        if check and result.returncode:
+            raise RuntimeError(result.stderr or result.stdout)
+        return result
+    existing = gh('api', f'repos/{repository}/releases/tags/{tag}', check=False)
+    if existing.returncode:
+        if 'HTTP 404' not in existing.stderr:
+            raise RuntimeError(existing.stderr)
+        release = None
+    else:
+        release = json.loads(existing.stdout)
+        if not release['draft']:
+            uploaded = {a['name'] for a in release['assets'] if a['state'] == 'uploaded' and a['size'] > 0}
+            if not {p.name for p in assets}.issubset(uploaded):
+                raise ValueError('Published release has missing assets; preserve it and publish a new version after review.')
+            print(f'{tag} is already published; its assets were preserved.')
+            return
+        if release['target_commitish'] != commit:
+            raise ValueError('Existing draft targets a different commit; inspect it before retrying.')
+    with tempfile.TemporaryDirectory(prefix='wr-release-') as tmp:
+        notes_file = Path(tmp) / 'notes.md'
+        notes_file.write_text(notes, encoding='utf-8')
+        options = ['--repo', repository, '--title', tag, '--notes-file', str(notes_file)]
+        if release is None:
+            gh('release', 'create', tag, '--draft', '--verify-tag', '--target', commit,
+               *options, *(['--prerelease', '--latest=false'] if prerelease else []))
+        else:
+            gh('release', 'edit', tag, *options, f'--prerelease={str(prerelease).lower()}')
+        gh('release', 'upload', tag, '--repo', repository, '--clobber', *(str(p) for p in assets))
+        gh('release', 'edit', tag, '--repo', repository, '--draft=false',
+           *(['--latest=false'] if prerelease else []))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('command', choices=('prepare', 'verify-artifacts', 'publish'))
+    parser.add_argument('--tag', required=True)
+    parser.add_argument('--expected-commit')
+    parser.add_argument('--directory', type=Path)
+    parser.add_argument('--repository')
+    parser.add_argument('--github-output', type=Path)
+    args = parser.parse_args()
+    if args.command == 'verify-artifacts':
+        if not args.directory:
+            parser.error('--directory is required')
+        verify_artifacts(args.directory, args.tag)
+        print('Installer and SHA256 verified.')
+        return
+    if not args.expected_commit:
+        parser.error('--expected-commit is required')
+    commit = validate_checkout(ROOT, args.tag, args.expected_commit)
+    release_notes(ROOT, args.tag)
+    if args.command == 'prepare':
+        if args.github_output:
+            with args.github_output.open('a', encoding='utf-8') as stream:
+                stream.write(f'commit={commit}\n')
+        print(f'Validated {args.tag} at {commit}.')
+    else:
+        if not args.directory or not args.repository:
+            parser.error('--directory and --repository are required')
+        publish(ROOT, args.tag, commit, args.directory, args.repository)
+
+
+if __name__ == '__main__':
+    main()

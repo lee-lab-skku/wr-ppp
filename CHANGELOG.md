@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [build] tag-driven GitHub Actions tests on Linux/macOS and full Windows offline installer validation, with automatic EXE/checksum publication and changelog release notes after all platforms pass.
 - [setup] native Windows GUI/CLI, PowerShell setup and automation, optional project-local TinyTeX, and per-user EXE installers bundling Python and TeX.
 - [build] native report compilation, explicit administrator bundles with reviewed promotion, and canonical Slack notifications without Bash, WSL, or Docker.
 - [latex] form/Markdown headings and strike-through formatting, with consistent report headers and footers.

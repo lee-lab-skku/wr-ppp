@@ -246,3 +246,32 @@ The setup and build scripts report the version derived from the current Git chec
 A tagged release prints its tag, while later development commits may include a commit suffix and a dirty checkout may include `-dirty`.
 By default the build uses the current checkout; the optional automatic updater may advance it to an eligible published release before compilation.
 This channel-based update is the supported exception; do not add arbitrary per-build version selection.
+
+### Tag-driven CI and Windows Releases
+
+`.github/workflows/release.yml` runs on pushed `v*` tags.
+The validation job accepts only the release-tag grammar above, requires the tag and triggering commit to match the checkout, checks the version comment in `template.tex`, and requires exactly one matching dated changelog section with release notes.
+Complete the normal release preparation before pushing the tag; CI does not create tags, increment versions, or edit source files.
+
+Linux and macOS run the common/POSIX regression suite on their own hosted runners, using the operating system's `/bin/bash`.
+These jobs substitute Docker and desktop viewers and do not build release artifacts or install TeX.
+Windows uses PowerShell 5.1 for orchestration, runs the native/common tests (including PowerShell 7 checks when available), prepares project-local TinyTeX and the checksum-pinned Inno Setup compiler, tests native PDF generation, then builds the offline installer.
+The sanitized portable bundle and the installed application must pass checks with development Python/TeX excluded from PATH; the installer check also verifies uninstallation preserves user configuration and PDFs.
+Run the installer check only on a clean machine; it refuses an existing Weekly Report installation.
+
+Only the publication job has `contents: write`, and it runs after every platform succeeds.
+Use the repository's automatic `GITHUB_TOKEN`; no personal access token is required.
+Organization/repository Actions policies must allow the pinned official actions and release-writing job permission.
+Keep third-party action revisions pinned to full commit IDs and verify the official Inno Setup checksum when updating the compiler version.
+
+CI packages the exact triggering tag even if multiple tags refer to the same commit.
+The release contains only `WeeklyReport-<tag>-Setup.exe` and its `.exe.sha256` file; the publication job revalidates both after artifact transfer and uses the matching changelog section as release notes.
+Tags ending in `-beta` or `-rc` produce prereleases and cannot become Latest; stable releases use GitHub's default Latest selection.
+Publication uploads to a draft before making it public.
+Retry a failed run using GitHub Actions' rerun controls: unpublished drafts for the same commit can resume, but published assets are never overwritten.
+An existing complete published release is left unchanged; a published release missing expected assets or a draft targeting a different commit fails for maintainer review.
+Preserve published tags and use a new allowed version when source fixes are needed.
+
+TinyTeX follows the existing daily bootstrap and current TeX package repository; release builds are tested artifacts rather than byte-reproducible rebuilds.
+Failures in dependency preparation, any test, checksum verification, or asset upload prevent publication.
+Windows artifacts are retained in Actions for seven days; on failure, available installer/uninstaller logs from `.runtime/qa` are retained as a separate diagnostics artifact for the same period.

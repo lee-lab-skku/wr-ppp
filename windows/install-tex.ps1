@@ -16,7 +16,8 @@ if (-not (Test-Path -LiteralPath $tlmgr)) {
 # Do not change machine/user PATH or touch another TeX installation.
 & $tlmgr option repository 'https://mirror.ctan.org/systems/texlive/tlnet'
 if ($LASTEXITCODE -ne 0) { throw 'Unable to set TeX repository.' }
-& $tlmgr install collection-latexrecommended collection-latexextra collection-langcjk collection-langkorean collection-fontsrecommended collection-xetex
+# weekly-report.sty also requires mhchem, which is outside these collections.
+& $tlmgr install collection-latexrecommended collection-latexextra collection-langcjk collection-langkorean collection-fontsrecommended collection-xetex mhchem
 if ($LASTEXITCODE -ne 0) { throw 'TeX packages could not be installed.' }
 & $tlmgr postaction install script xetex
 if ($LASTEXITCODE -ne 0) { throw 'XeTeX configuration failed.' }

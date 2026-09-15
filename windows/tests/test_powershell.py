@@ -70,3 +70,26 @@ class PowerShellTests(unittest.TestCase):
             result = self.run_ps(shell, self.root / 'Start-Weekly-Report.ps1', 'preflight')
             self.assertNotEqual(result.returncode, 0)
             self.assertIn('Windows-Setup.ps1', result.stderr)
+
+    def test_release_version_uses_triggering_tag_and_rejects_dirty_checkout(self):
+        def git(*args):
+            return subprocess.check_output(['git', '-C', str(self.root), *args], stderr=subprocess.STDOUT, text=True).strip()
+        git('init', '-q')
+        git('config', 'user.name', 'PowerShell release test')
+        git('config', 'user.email', 'test@example.invalid')
+        git('add', '.')
+        git('commit', '-qm', 'fixture')
+        git('tag', 'v2.3.4-beta')
+        git('tag', 'v2.3.4-rc')
+        script = self.root / 'version.ps1'
+        script.write_text(". (Join-Path $PSScriptRoot 'windows/common.ps1')\n"
+                          "try { Get-WrVersion } catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 }\n",
+                          encoding='ascii')
+        self.env.update(GITHUB_ACTIONS='true', GITHUB_REF_TYPE='tag', GITHUB_REF_NAME='v2.3.4-beta')
+        for shell in SHELLS:
+            result = self.run_ps(shell, script)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), 'v2.3.4-beta')
+        (self.root / 'windows/requirements.txt').write_text('changed', encoding='utf-8')
+        for shell in SHELLS:
+            self.assertNotEqual(self.run_ps(shell, script).returncode, 0)

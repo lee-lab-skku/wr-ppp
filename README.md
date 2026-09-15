@@ -3,6 +3,7 @@
 **Native Windows:** use the GUI/CLI and bundled Python/TinyTeX installer described in the [Windows guide](windows/README.md).
 Source users run `Windows-Setup.ps1`, then `Start-Weekly-Report.ps1` from PowerShell.
 The Bash/Docker instructions below apply to Linux/macOS and WSL.
+Pushed release tags run Linux/macOS tests and the Windows build checks; after all pass, GitHub Releases receives the Windows installer with bundled Python/TinyTeX and its SHA256 checksum.
 
 Latest version: [![Latest repository version](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=release)](https://github.com/lee-lab-skku/wr-ppp/tags)
 

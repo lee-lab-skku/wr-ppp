@@ -2,7 +2,8 @@
 
 The records below describe the earlier Windows implementation and its distribution.
 For the current PowerShell refactor, see [VALIDATION.md](VALIDATION.md); previous installer checks do not certify a newly built installer.
-Before publishing, prepare TinyTeX, build the offline bundle and installer, rerun the portable and installation checks, and attach the installer and SHA256 as release assets.
+Tag-driven [release CI](../.github/workflows/release.yml) prepares TinyTeX and Inno Setup, builds the offline installer, runs the portable and installation/uninstallation checks, and publishes the installer and SHA256 after Linux/macOS tests also pass.
+See [the release procedure](../CONTRIBUTING.md#tag-driven-ci-and-windows-releases) for tag preparation and retry behavior.
 
 ## Privacy and Git contents (2026-09-15)
 
