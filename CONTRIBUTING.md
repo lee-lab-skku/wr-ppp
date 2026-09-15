@@ -166,7 +166,7 @@ Changes to the plan or execution-manifest formats must update the workflow refer
 
 Do not duplicate the repository's full interfaces in a skill.
 Refer to the canonical sources when exact behavior matters so that skill guidance does not become a stale parallel manual.
-Both skills should remain usable through the supported Codex and Claude links; avoid provider-specific instructions unless they are necessary and clearly scoped.
+Both skills should remain usable through all supported installation destinations; avoid provider-specific instructions unless they are necessary and clearly scoped.
 
 Keep skill behavior adaptive, evidence-grounded, protective of existing user work, and limited to authorized actions.
 When its capabilities or expectations change, update the entry point, affected references, and the user-facing AI workflow documentation together as applicable.

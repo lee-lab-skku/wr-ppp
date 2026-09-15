@@ -24,11 +24,11 @@ usage() {
     echo "       $0 <absolute-pdf-output-directory>" >&2
     echo "       $0 <docker-image>" >&2
     echo "       $0 <absolute-pdf-output-directory> <docker-image>" >&2
-    echo "       $0 [setup-arguments] [--skills=<agents|claude>[,...]] [--admin]" >&2
+    echo "       $0 [setup-arguments] [--skills=<agents|claude|antigravity>[,...]] [--admin]" >&2
     echo "          [--admin-output=<absolute-directory>] [--replace-existing]" >&2
     echo "          [--admin-data=<absolute-directory>]" >&2
     echo "          [--auto-update[=stable|prerelease|off]]" >&2
-    echo "Skill service codex is an alias for agents." >&2
+    echo "Skill services codex, gemini, and copilot are aliases for agents." >&2
     echo "Output directories must start with '/' or '~/'." >&2
 }
 
@@ -39,6 +39,9 @@ skill_link_for_service() {
     case $service in
         agents)
             echo "${HOME:?HOME is not set}/.agents/skills/$skill_name"
+            ;;
+        antigravity)
+            echo "${HOME:?HOME is not set}/.gemini/config/skills/$skill_name"
             ;;
         claude)
             echo "${HOME:?HOME is not set}/.claude/skills/$skill_name"
@@ -313,7 +316,7 @@ while [[ $# -gt 0 ]]; do
             SKILLS_SET=1
             ;;
         --skills)
-            echo "Use --skills=<agents|claude>[,...]." >&2
+            echo "Use --skills=<agents|claude|antigravity>[,...]." >&2
             usage
             exit 2
             ;;
@@ -394,7 +397,7 @@ if [[ $# -gt 2 ]]; then
 fi
 
 if [[ $ADMIN -eq 1 && $SKILLS_SET -eq 0 ]]; then
-    echo "--admin requires --skills=<agents|claude>[,...]." >&2
+    echo "--admin requires --skills=<agents|claude|antigravity>[,...]." >&2
     usage
     exit 2
 fi
@@ -408,10 +411,10 @@ fi
 VALIDATED_SERVICES=()
 for service in "${SKILL_SERVICES[@]}"; do
     case $service in
-        codex)
+        codex|gemini|copilot)
             service=agents
             ;;
-        agents|claude)
+        agents|claude|antigravity)
             ;;
         *)
             echo "Unsupported skill service: $service" >&2

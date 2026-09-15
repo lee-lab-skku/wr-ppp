@@ -49,9 +49,21 @@ directory, pass the supported services as a comma-separated `--skills` option:
 ./scripts/setup.sh ~/report-output danteev/texlive:latest --skills=agents,claude
 ```
 
-The `agents` value links the repository's canonical skill into `~/.agents/skills`; `claude` uses `~/.claude/skills`.
-The previous `codex` value remains an alias for `agents`, so existing commands continue to work.
-Specifying both `agents` and `codex` in one list is rejected as a duplicate destination.
+Each value links the repository's canonical skill into the following user-level directory:
+
+| Value | Skill directory | Aliases |
+| --- | --- | --- |
+| `agents` | `~/.agents/skills` | `codex`, `gemini`, `copilot` |
+| `claude` | `~/.claude/skills` | |
+| `antigravity` | `~/.gemini/config/skills` | |
+
+[Gemini CLI](https://geminicli.com/docs/cli/skills/) supports `~/.agents/skills` and gives it precedence over `~/.gemini/skills`, so `gemini` uses the shared `agents` destination.
+[GitHub Copilot](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) also supports `~/.agents/skills` for personal skills, so `copilot` is another alias for `agents`.
+The previous `codex` alias remains supported.
+The `antigravity` destination follows the current [Antigravity global skill directory](https://antigravity.google/docs/skills).
+For example, `--skills=gemini,antigravity` installs links in both the shared and Antigravity directories.
+Any combination of `agents`, `codex`, `gemini`, and `copilot` in one list is rejected as a duplicate destination; repeated service names are also rejected.
+When setup runs in WSL, these paths are under the WSL home directory; this does not install skills into a Windows-native agent's separate home directory.
 Omitting `--skills` leaves user-level skill directories unchanged.
 
 Setup applies the same destination policy to `/usr/local/bin/report-build` and
