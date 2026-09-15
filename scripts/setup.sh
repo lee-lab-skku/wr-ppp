@@ -423,11 +423,10 @@ for service in "${SKILL_SERVICES[@]}"; do
             ;;
     esac
 
+    # Keep the first occurrence of each destination after alias normalization.
     for existing_service in "${VALIDATED_SERVICES[@]}"; do
         if [[ $service == "$existing_service" ]]; then
-            echo "Skill service specified more than once: $service" >&2
-            usage
-            exit 2
+            continue 2
         fi
     done
     VALIDATED_SERVICES+=("$service")

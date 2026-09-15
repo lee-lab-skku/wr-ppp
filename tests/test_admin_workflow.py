@@ -319,24 +319,36 @@ class AdminPathTests(unittest.TestCase):
         self.assertFalse((self.root / "skill-links/.copilot").exists())
         self.assertFalse(list((self.root / "skill-links").rglob("*.backup*")))
 
-    def test_alias_and_canonical_duplicates_fail_before_mutation(self):
-        before = self.config.read_bytes()
+    def test_alias_and_canonical_duplicates_install_once(self):
         for services in (f"{first},{second}" for first in ("agents", "codex", "gemini", "copilot")
                          for second in ("agents", "codex", "gemini", "copilot")):
             with self.subTest(services=services):
-                result = self.setup(f"--skills={services}", "--admin", status=2)
-                self.assertIn("specified more than once: agents", result.stderr)
-                self.assertEqual(self.config.read_bytes(), before)
-                self.assertFalse((self.root / "skill-links").exists())
+                result = self.setup(f"--skills={services}", "--admin")
+                for skill in ("wr-wr", "admin-wr"):
+                    self.assertEqual(result.stdout.count(f"agents {skill} skill:"), 1)
+                    link = self.root / "skill-links/.agents/skills" / skill
+                    self.assertTrue(link.samefile(self.repo / "skills" / skill))
 
-    def test_antigravity_duplicates_and_parent_conflicts_fail_before_mutation(self):
+    def test_mixed_duplicate_destinations_preserve_first_occurrence(self):
+        result = self.setup(
+            "--skills=antigravity,copilot,agents,claude,gemini,antigravity,codex,claude",
+            "--admin")
+        messages = [line for line in result.stdout.splitlines() if " skill:" in line]
+        self.assertEqual(len(messages), 6)
+        for skill in ("wr-wr", "admin-wr"):
+            services = [line.split(": ", 1)[1].split()[0]
+                        for line in messages if f" {skill} skill:" in line]
+            self.assertEqual(services, ["antigravity", "agents", "claude"])
+
+    def test_duplicates_do_not_skip_invalid_services_or_parent_preflight(self):
         before = self.config.read_bytes()
-        self.setup("--skills=antigravity,antigravity", status=2)
+        self.setup("--skills=agents,copilot,unknown", status=2)
         self.assertFalse((self.root / "commands").exists())
+        self.assertFalse((self.root / "skill-links").exists())
         parent = self.root / "skill-links/.gemini"
         parent.mkdir(parents=True)
         (parent / "config").write_text("existing file")
-        self.setup("--skills=gemini,antigravity", "--admin", status=1)
+        self.setup("--skills=gemini,copilot,antigravity,antigravity", "--admin", status=1)
         self.assertEqual(self.config.read_bytes(), before)
         self.assertEqual((parent / "config").read_text(), "existing file")
         self.assertFalse((self.root / "commands").exists())

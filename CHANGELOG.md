@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [setup] `--skills=antigravity` links skills into `~/.gemini/config/skills`; `gemini` and `copilot` are aliases for the shared `agents` destination.
 
+### Changed
+
+- [setup] repeated skill service names and aliases for the same destination are accepted and installed once per destination.
+
 ## [1.3.0] &mdash; 2026-09-14
 
 ### Added

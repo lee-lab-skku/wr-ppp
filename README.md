@@ -62,7 +62,8 @@ Each value links the repository's canonical skill into the following user-level 
 The previous `codex` alias remains supported.
 The `antigravity` destination follows the current [Antigravity global skill directory](https://antigravity.google/docs/skills).
 For example, `--skills=gemini,antigravity` installs links in both the shared and Antigravity directories.
-Any combination of `agents`, `codex`, `gemini`, and `copilot` in one list is rejected as a duplicate destination; repeated service names are also rejected.
+Repeated service names and aliases for the same destination are automatically deduplicated, preserving the first occurrence.
+For example, `--skills=agents,codex,gemini,copilot,claude,claude` installs each skill once into `~/.agents/skills` and once into `~/.claude/skills`.
 When setup runs in WSL, these paths are under the WSL home directory; this does not install skills into a Windows-native agent's separate home directory.
 Omitting `--skills` leaves user-level skill directories unchanged.
 
