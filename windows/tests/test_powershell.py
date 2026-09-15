@@ -22,11 +22,12 @@ class PowerShellTests(unittest.TestCase):
         for name in ('Windows-Setup.ps1', 'Start-Weekly-Report.ps1', 'windows/common.ps1'):
             shutil.copyfile(ROOT / name, self.root / name)
         (self.root / 'windows/requirements.txt').write_text('', encoding='utf-8')
-        self.env = dict(os.environ, PYTHONUTF8='1', PIP_DISABLE_PIP_VERSION_CHECK='1', PIP_NO_INDEX='1')
+        self.env = dict(os.environ, PYTHONUTF8='1', PIP_DISABLE_PIP_VERSION_CHECK='1', PIP_NO_INDEX='1', WR_TEST_EXIT='0')
 
-    def run_ps(self, shell, script, *args):
+    def run_ps(self, shell, script, *args, extra_env=None):
         return subprocess.run([shell, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(script), *args],
-                              cwd=self.root.parent, env=self.env, capture_output=True, encoding='utf-8', timeout=90)
+                              cwd=self.root.parent, env={**self.env, **(extra_env or {})},
+                              capture_output=True, encoding='utf-8', timeout=90)
 
     def test_setup_repeat_launch_arguments_and_config(self):
         for shell in SHELLS:
@@ -49,14 +50,13 @@ class PowerShellTests(unittest.TestCase):
                                   "$captured = & (Join-Path $PSScriptRoot 'Start-Weekly-Report.ps1') @forward\n"
                                   "$code = $LASTEXITCODE\nif ($null -eq $captured) { exit 98 }\n"
                                   "Write-Output $captured\nexit $code\n", encoding='utf-8-sig')
-                self.env['WR_TEST_EXIT'] = '7'
-                result = self.run_ps(shell, caller)
+                result = self.run_ps(shell, caller, extra_env={'WR_TEST_EXIT': '7'})
                 self.assertEqual(result.returncode, 7, result.stdout + result.stderr)
                 received, config, cwd = json.loads(result.stdout)
                 self.assertEqual(received, arguments)
                 self.assertEqual(config, self.env['WR_CONFIG'])
-                self.assertEqual(Path(cwd), self.root.parent)
-                self.env.pop('WR_TEST_EXIT')
+                # Hosted Windows TEMP may use an 8.3 alias that os.getcwd expands.
+                self.assertTrue(Path(cwd).samefile(self.root.parent), (cwd, self.root.parent))
 
     def test_incompatible_environment_and_missing_runtime_are_preserved(self):
         environment = self.root / '.venv'
