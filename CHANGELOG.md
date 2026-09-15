@@ -9,8 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0-rc] &mdash; 2026-09-15
+
+### Added
+
+- [build] manual CI runs validate and package a selected branch or tag, retaining Windows installers for download without publishing a release.
+
+### Changed
+
+- [build] reuse prepared Windows build dependencies to reduce CI setup time while retaining PDF, packaging, and installation checks.
+- [docs] root documents describe Windows capabilities and effects by default, with implementation and maintenance guidance in the Windows development guide; internal improvements may still be described at the root level.
+
 ### Fixed
 
+- [build] prevent false CI test failures caused by platform-specific temporary paths and leaked test exit codes.
 - [setup] fix Windows dependency preparation failures on runners with multiple tool installations.
 - [setup] complete setup and preserve configured update channels with macOS's Bash 3.2, including invocations without positional arguments or skill selections.
 - [build] allow automatic release updates when `report-build` runs without arguments on Bash 3.2.
@@ -147,7 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-beta...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-rc...HEAD
+[1.4.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-beta...v1.4.0-rc
 [1.4.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.1...v1.4.0-beta
 [1.3.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0-beta...v1.3.0
