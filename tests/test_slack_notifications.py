@@ -3,6 +3,7 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import runpy
 import tempfile
@@ -37,7 +38,7 @@ class SlackTests(unittest.TestCase):
         (self.root / "slack-webhook.url").write_text(FAKE_URL)
 
     def write_manifest(self):
-        self.manifest.write_text("\n".join("\t".join(r) for r in self.rows) + "\n")
+        self.manifest.write_text("\n".join("\t".join(r) for r in self.rows) + "\n", encoding="utf-8")
 
     def test_payload_only_contains_required_missing_names_and_week(self):
         payload, _ = NOTICE(self.manifest)
@@ -129,7 +130,8 @@ class SlackTests(unittest.TestCase):
         with patch("sys.stdin.isatty", return_value=True), patch("getpass.getpass", return_value=FAKE_URL), contextlib.redirect_stdout(io.StringIO()):
             CONFIGURE(self.root)
         self.assertEqual((self.root / "slack-webhook.url").read_text(), FAKE_URL + "\n")
-        self.assertEqual((self.root / "slack-webhook.url").stat().st_mode & 0o777, 0o600)
+        if os.name != 'nt':  # Windows uses ACLs, not POSIX mode bits.
+            self.assertEqual((self.root / "slack-webhook.url").stat().st_mode & 0o777, 0o600)
         self.assertFalse((self.root / "notifications").exists())
 
     def test_non_slack_urls_rejected_without_printing_secret(self):

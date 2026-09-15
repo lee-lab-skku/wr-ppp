@@ -45,13 +45,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- [setup] Windows installer with bundled Python/TinyTeX, desktop and Start menu shortcuts, per-user installation, uninstaller, and SHA256 release checksum.
+
+- [build] additive Windows-native Python tools for report builds, metadata, PDF inspection, explicit administrator selections, cumulative-history bundles, reviewed promotion, and canonical Slack notifications without Bash, WSL, or Docker.
+- [setup] Windows desktop form/source editor, settings and administrator review screens, launch/setup scripts, optional local TinyTeX preparation, canonical skill registration, and a PyInstaller packaging script.
+- [skill] native Windows command routing for the existing writing and administrator skills, retaining evidence and approval policies.
+
 - [skill] optional Slack Incoming Webhook notices for administrator-decided holds caused by missing required reports, with message preview, hidden credential setup, and duplicate-send protection.
 
 ### Changed
 
+- [docs] document Windows setup, data compatibility, testing, and differences: local builds lack Docker's OS/network sandbox; failed native builds retain existing local PDFs; forms retain arbitrary LaTeX through a separate source editor.
+
 - [docs] contributor guidance focuses on durable contracts and design constraints, links to canonical operating procedures instead of duplicating them, and uses sentence-based line breaks.
 
 ### Fixed
+
+- [release] exclude executables and local credentials from Git; remove development-machine TeX logs, font caches and generated configuration paths from Windows installers.
+- [test] write Slack manifest fixtures as UTF-8 on Windows.
 
 - [setup] administrator manifest creation no longer fails on NAS filesystems that reject `chmod`; restrictive permissions are requested at file creation with `umask 077`.
 

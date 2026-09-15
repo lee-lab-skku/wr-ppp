@@ -21,6 +21,7 @@ def executable(path, code):
     path.chmod(0o755)
 
 
+@unittest.skipIf(os.name == 'nt', 'POSIX shell workflow; Windows-native coverage is in windows/tests')
 class BundleTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="admin-wr-test ")
@@ -269,6 +270,7 @@ Path({str(log)!r}).write_text(json.dumps(sys.argv[1:]))
         self.assertEqual(list(self.output.iterdir()), [])
 
 
+@unittest.skipIf(os.name == 'nt', 'POSIX shell workflow; Windows-native coverage is in windows/tests')
 class AdminPathTests(unittest.TestCase):
     def setUp(self):
         BundleTests.setUp(self)
@@ -458,6 +460,7 @@ os.execv({chmod!r}, [{chmod!r}, *sys.argv[1:]])
         self.assertFalse((self.data / "manager-manifest.toml").exists())
 
 
+@unittest.skipIf(os.name == 'nt', 'POSIX shell workflow; Windows-native coverage is in windows/tests')
 class PreviewTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="admin-wr-preview ")

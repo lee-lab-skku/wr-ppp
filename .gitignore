@@ -4,3 +4,27 @@ template.pdf
 .manager-manifest.toml
 .admin-wr/
 .report-update/
+.windows-config.json
+.venv/
+.windows-deps/
+.runtime/
+__pycache__/
+windows/build/
+windows/dist/
+*.spec
+!windows/WeeklyReport.spec
+report-output/
+tmp/
+# Executables and local credentials must never enter source commits.
+*.exe
+*.msi
+*.msix
+*.dll
+*.pfx
+*.p12
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+slack-webhook.url

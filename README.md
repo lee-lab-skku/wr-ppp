@@ -1,5 +1,7 @@
 # Weekly Research Report Template
 
+**Windows native edition:** Docker/WSL 없이 사용할 수 있는 GUI와 명령 도구는 [Windows 안내](windows/README.md)를 참고하세요. 일반 사용자는 GitHub Releases의 `WeeklyReport-0.1.0-Setup.exe`를 설치하고 바탕화면 아이콘으로 실행합니다. 소스 실행은 `Windows-Setup.cmd`로 준비한 뒤 `Start-Weekly-Report.cmd`를 실행합니다. 기존 Bash/Docker 실행 경로는 아래와 같이 유지됩니다.
+
 Latest version: [![Latest repository version](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=release)](https://github.com/lee-lab-skku/wr-ppp/tags)
 
 A LaTeX template for concise weekly research reports using **Progress, Problems, and Plans (PPP)** as a communication framework.
