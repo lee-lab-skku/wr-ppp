@@ -1,6 +1,8 @@
 # Weekly Research Report Template
 
-**Windows native edition:** Docker/WSL 없이 사용할 수 있는 GUI와 명령 도구는 [Windows 안내](windows/README.md)를 참고하세요. 일반 사용자는 GitHub Releases의 `WeeklyReport-0.1.0-Setup.exe`를 설치하고 바탕화면 아이콘으로 실행합니다. 소스 실행은 `Windows-Setup.cmd`로 준비한 뒤 `Start-Weekly-Report.cmd`를 실행합니다. 기존 Bash/Docker 실행 경로는 아래와 같이 유지됩니다.
+**Native Windows:** use the GUI/CLI and bundled Python/TinyTeX installer described in the [Windows guide](windows/README.md).
+Source users run `Windows-Setup.ps1`, then `Start-Weekly-Report.ps1` from PowerShell.
+The Bash/Docker instructions below apply to Linux/macOS and WSL.
 
 Latest version: [![Latest repository version](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=release)](https://github.com/lee-lab-skku/wr-ppp/tags)
 
@@ -18,10 +20,10 @@ Exceed that limit only when essential research content cannot fit after all reas
 
 ## Requirements
 
-The provided scripts are intended for Linux systems &mdash; macOS compatibility
-is best-effort, not always ensured; Windows users are expected to take advantage
-from the WSL magic, as that's a Docker's dependency anyway. Before starting, make
-sure that:
+Linux/macOS use Bash and Docker; macOS compatibility is a source-level design target rather than a tested-platform guarantee.
+Native Windows uses PowerShell 5.1 or newer and local TeX, with Python and TinyTeX included in the offline installer.
+See the [Windows guide](windows/README.md) for source prerequisites and installation.
+For the Bash/Docker workflow, make sure that:
 
 - Bash and Docker are installed.
 - The Docker daemon is running and your account can run Docker containers.
@@ -129,6 +131,9 @@ A successful test writes `template.pdf` in the repository.
 The same command is also used after editing `weekly-report.sty` to check that the example report still builds.
 
 ### Automatic Release Updates
+
+This Git updater applies to the Linux/macOS Bash workflow, including WSL.
+Native Windows source checkouts and EXE installations are updated manually.
 
 Automatic updates are optional and require Git and access to the installation's existing `origin` remote.
 Enable them during setup or when changing an existing setup:

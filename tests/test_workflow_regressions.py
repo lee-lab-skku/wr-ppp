@@ -13,6 +13,9 @@ import tarfile
 import time
 import unittest
 
+if os.name == 'nt':
+    raise unittest.SkipTest('POSIX shell workflow; run in WSL. Native coverage is in windows/tests.')
+
 import test_admin_workflow as admin
 import test_report_build as report
 

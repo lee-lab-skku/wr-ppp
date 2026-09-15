@@ -8,6 +8,9 @@ import subprocess
 import tempfile
 import unittest
 
+if os.name == 'nt':
+    raise unittest.SkipTest('POSIX shell workflow; run in WSL. Native coverage is in windows/tests.')
+
 
 REPO = Path(__file__).resolve().parents[1]
 

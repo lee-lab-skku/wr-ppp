@@ -4,7 +4,7 @@ Docker, WSL, Bash 없이 실행하는 추가 구현입니다. 기존 Linux/macOS
 
 ## 일반 사용자 설치
 
-GitHub Releases에서 `WeeklyReport-0.1.0-Setup.exe`를 다운로드하여 실행합니다.
+GitHub Releases에 Windows 설치 파일이 첨부된 릴리스에서 `WeeklyReport-<버전>-Setup.exe`를 다운로드하여 실행합니다.
 바탕화면 바로가기 옵션을 유지하고 설치한 뒤 **Weekly Report** 아이콘으로 실행합니다.
 Python과 TinyTeX가 포함되어 별도 설치가 필요 없습니다. Windows 10/11 x64용이며 현재 사용자 계정에 설치됩니다.
 Windows 설정의 설치된 앱에서 제거할 수 있습니다. 사용자 설정과 작성한 보고서는 보존됩니다.
@@ -12,13 +12,31 @@ Windows 설정의 설치된 앱에서 제거할 수 있습니다. 사용자 설�
 
 ## 소스 코드에서 실행
 
-1. Windows용 Python 3.11 이상을 설치합니다. Tcl/Tk, pip, Python launcher를 포함하세요.
-2. 저장소의 `Windows-Setup.cmd`를 실행합니다. 프로젝트 안에 가상환경과 PDF 처리 패키지를 설치합니다.
-3. Windows용 TeX Live를 설치하거나, 앱 설정의 **LaTeX 도구 준비** 버튼으로 프로젝트 전용 TinyTeX를 준비합니다. 기존 설치나 시스템 PATH는 변경하지 않습니다.
-4. `Start-Weekly-Report.cmd`를 더블클릭합니다.
-5. 설정에서 개인 PDF 출력 폴더와 TeX Live `bin/windows` 폴더를 선택하고 저장합니다.
+Windows PowerShell 5.1 이상 또는 PowerShell 7, Windows용 Python 3.11 이상(Tcl/Tk, pip, venv 포함)이 필요합니다.
+저장소 루트에서 다음을 실행합니다.
 
-현재 개발 PC의 MSYS Python 가상환경도 런처가 지원합니다. 일반 배포 패키지는 python.org CPython으로 만드세요.
+```powershell
+.\Windows-Setup.ps1
+.\windows\install-tex.ps1
+.\Start-Weekly-Report.ps1
+```
+
+Python launcher를 사용할 수 없으면 `Windows-Setup.ps1 -Python 'C:\Python313\python.exe'`처럼 지정합니다.
+설치는 저장소 `.venv`를 만들거나 재사용하며 입력 대기 없이 종료합니다.
+기존 비 Windows 가상환경은 보존하고 오류를 내므로 먼저 이름을 바꾸고 다시 실행하세요.
+TinyTeX는 Python에 포함되는 패키지가 아니라 별도로 준비하는 TeX 배포판입니다.
+`install-tex.ps1`은 프로젝트 `.runtime/TinyTeX`에 설치하며, 기존 Windows TeX Live가 있다면 이 단계를 생략하고 앱 설정에 `bin/windows` 경로를 지정할 수 있습니다.
+시스템 PATH와 다른 TeX 설치는 변경하지 않습니다.
+
+기존 `Windows-Setup.cmd`와 `Start-Weekly-Report.cmd`는 제거되었습니다.
+소스 사용자는 같은 이름의 `.ps1`로 전환하세요.
+설치 EXE와 바탕화면 바로가기는 PowerShell 런처 없이 직접 실행됩니다.
+실행 정책이 스크립트를 차단하면 해당 호출에만 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Windows-Setup.ps1` 형식을 사용하세요.
+
+`Start-Weekly-Report.ps1`은 저장소 가상환경을 사용하며, 인수가 없으면 GUI를 엽니다.
+인수를 주면 기존 Python CLI로 그대로 전달하고 종료 코드와 stdout/stderr를 보존합니다.
+다른 작업 폴더에서 절대 경로로 호출해도 동작하며 상대 입력 경로는 호출한 폴더 기준입니다.
+기존 `WR_CONFIG` 환경 변수는 덮어쓰지 않습니다.
 
 ## 작성
 
@@ -26,13 +44,13 @@ Windows 설정의 설치된 앱에서 제거할 수 있습니다. 사용자 설�
 
 일반 문장 안의 수식은 `$a+b$`, 별도 줄의 수식은 `$$E=mc^2$$`처럼 입력합니다. 수식 밖의 `%`, `&`, `_` 같은 문자는 자동 처리됩니다. 닫히지 않은 수식과 파일·문서 조작 명령은 저장 단계에서 거절됩니다.
 
-요약·Progress·Problems·Plans 입력창은 Markdown을 지원합니다. `## 소제목`은 기존 양식의 번호 있는 소제목, `- 항목`은 글머리표, `1. 항목`은 번호 목록, `**굵게**`, `*기울임*`, `` `코드` ``, `[이름](https://주소)`는 해당 LaTeX 표현으로 바뀝니다. **Markdown → LaTeX** 버튼을 누르면 결과를 LaTeX 탭에서 확인할 수 있습니다. 저장과 PDF 생성 때도 같은 변환을 자동 적용합니다. 원본 LaTeX 명령을 Markdown 입력창에 직접 넣으면 문자로 처리됩니다.
+요약·Progress·Problems·Plans 입력창은 Markdown을 지원합니다. `## 소제목`은 번호 없는 소제목, `- 항목`은 글머리표, `1. 항목`은 번호 목록, `**굵게**`, `*기울임*`, `` `코드` ``, `[이름](https://주소)`는 해당 LaTeX 표현으로 바뀝니다. **Markdown → LaTeX** 버튼을 누르면 결과를 LaTeX 탭에서 확인할 수 있습니다. 저장과 PDF 생성 때도 같은 변환을 자동 적용합니다. 원본 LaTeX 명령을 Markdown 입력창에 직접 넣으면 문자로 처리됩니다.
 
 Markdown 제목의 숫자는 자동으로 생성하지 않습니다. `# 1.1 제목`처럼 사용자가 입력한 번호만 표시됩니다. `<style>...</style>`은 기본적으로 제거하고 기존 LaTeX 템플릿 서식을 적용합니다. 나중에 설정의 **사용자 Markdown 스타일 허용 (잠금 해제)**을 켜면 제한된 CSS를 LaTeX 설정으로 변환합니다. 잠금 해제 시 `@page`의 A4 여백, `body`의 글자 크기·줄 간격, `h1`~`h3`의 크기·줄 간격·여백, `p`의 문단 간격, `table`과 `th, td`의 크기·여백·셀 간격을 지원합니다. 파이프 표는 스타일 잠금 상태와 관계없이 LaTeX 표로 변환합니다. Markdown 이미지 경로는 자동으로 파일을 가져오지 못하므로 변환 결과에 첨부 필요 표시를 남기며, 실제 파일은 **그림 추가**로 선택합니다.
 
 입력창 위의 서식 도구막대에서 글꼴(기본·명조·고딕·고정폭), 8–16pt 크기, 굵게, 기울임, 밑줄, 취소선, 코드, 링크, 불릿, 번호 목록과 3단계 소제목을 적용할 수 있습니다. 글자 서식은 한 문단 안의 텍스트를 선택한 뒤 적용합니다. 서식 표시는 작성 데이터에 함께 저장되고 기존 LaTeX 템플릿 안에서 변환됩니다.
 
-기존 `.tex`는 원본 편집 모드로 열 수 있습니다. 주석과 사용자 정의 코드를 유지합니다. 임의의 LaTeX를 폼으로 역변환하지 않으며, 원본 편집 모드에서는 폼 값이 적용되지 않습니다. 그림·표는 폼에서 PPP 뒤에 배치되므로 자유로운 배치는 원본 모드를 사용하세요.
+기존 `.tex`는 원본 편집 모드로 열 수 있습니다. 주석과 사용자 정의 코드를 유지합니다. 임의의 LaTeX를 폼으로 역변환하지 않으며, 원본 편집 모드에서는 폼 값이 적용되지 않습니다. 그림은 폼에서 삽입 위치를 고를 수 있고 표는 PPP 뒤에 배치됩니다. 더 자유로운 배치는 원본 모드를 사용하세요.
 
 날짜·일련번호·현재 폴더 저장 옵션을 지원합니다. 2페이지 초과는 경고하며 페이지나 내용을 자르지 않습니다. Windows 환경에서 생성하는 폼 소스에는 `kotex`를 추가합니다. 기존 소스에는 자동으로 패키지를 삽입하지 않습니다.
 
@@ -51,43 +69,45 @@ Slack 기능은 기존 Python 구현을 재사용합니다. 설정은 발송하�
 ## CLI / 기존 AI 워크플로 연결
 
 ```powershell
-.\.venv\Scripts\python.exe windows\weekly_report.py setup --pdf-output C:\Reports --tex-bin C:\texlive\2026\bin\windows
-.\.venv\Scripts\python.exe windows\weekly_report.py preflight
-.\.venv\Scripts\python.exe windows\weekly_report.py report-build C:\Sources\W1\main.tex --date 2026-09-04 --serial 17 --here
-.\.venv\Scripts\python.exe windows\weekly_report.py test
-.\.venv\Scripts\python.exe windows\weekly_report.py report-metadata --date 2026-09-04
-.\.venv\Scripts\python.exe windows\weekly_report.py admin-paths
-.\.venv\Scripts\python.exe windows\weekly_report.py discover
-.\.venv\Scripts\python.exe windows\weekly_report.py probe-report --storage-root C:\Reports --file C:\Reports\member-a\report.pdf
-.\.venv\Scripts\python.exe windows\weekly_report.py build-bundle --storage-root C:\Reports --plan C:\Review\plan.tsv --date 2026-09-04 --draft --output-dir C:\Review\draft
-.\.venv\Scripts\python.exe windows\weekly_report.py build-bundle --storage-root C:\Reports --plan C:\Review\plan.tsv --date 2026-09-04 --approved-with-issues --review C:\Review\draft\2026-09-W1.review.json
-.\.venv\Scripts\python.exe windows\weekly_report.py notify-held --manifest C:\Review\draft\.manifests\2026-09-W1.manifest.tsv
+.\Start-Weekly-Report.ps1 setup --pdf-output C:\Reports --tex-bin C:\texlive\2026\bin\windows
+.\Start-Weekly-Report.ps1 preflight
+.\Start-Weekly-Report.ps1 report-build C:\Sources\W1\main.tex --date 2026-09-04 --serial 17 --here
+.\Start-Weekly-Report.ps1 test
+.\Start-Weekly-Report.ps1 report-metadata --date 2026-09-04
+.\Start-Weekly-Report.ps1 admin-paths
+.\Start-Weekly-Report.ps1 discover
+.\Start-Weekly-Report.ps1 probe-report --storage-root C:\Reports --file C:\Reports\member-a\report.pdf
+.\Start-Weekly-Report.ps1 build-bundle --storage-root C:\Reports --plan C:\Review\plan.tsv --date 2026-09-04 --draft --output-dir C:\Review\draft
+.\Start-Weekly-Report.ps1 build-bundle --storage-root C:\Reports --plan C:\Review\plan.tsv --date 2026-09-04 --approved-with-issues --review C:\Review\draft\2026-09-W1.review.json
+.\Start-Weekly-Report.ps1 notify-held --manifest C:\Review\draft\.manifests\2026-09-W1.manifest.tsv
 ```
 
-Windows에서는 기존 스킬의 셸 명령을 위의 동명 하위 명령으로 대체하여 사용합니다. 작성·근거 검토·후보 판단은 기존 스킬의 정책대로 외부 AI 에이전트가 수행하며 앱 내부 AI API는 추가하지 않았습니다. 설정의 **AI 스킬 등록** 또는 `install-skills --services agents,claude --admin`으로 기존 스킬의 링크를 등록합니다. Windows 개발자 모드 또는 심볼릭 링크 권한이 필요합니다. 충돌 항목은 기본적으로 보존하며, `--replace-existing`은 파일/링크만 인접 백업 후 교체합니다. 디렉터리는 교체하지 않습니다. 등록 중 실패하면 링크 변경을 되돌립니다.
+Windows에서는 기존 스킬의 셸 명령을 위의 동명 하위 명령으로 대체하여 사용합니다. 작성·근거 검토·후보 판단은 기존 스킬의 정책대로 외부 AI 에이전트가 수행하며 앱 내부 AI API는 추가하지 않았습니다. 설정의 **AI 스킬 등록** 또는 `install-skills --services agents,claude,antigravity --admin`으로 기존 스킬의 링크를 등록합니다. Windows 개발자 모드 또는 심볼릭 링크 권한이 필요합니다. 충돌 항목은 기본적으로 보존하며, `--replace-existing`은 파일/링크만 인접 백업 후 교체합니다. 디렉터리는 교체하지 않습니다. 등록 중 실패하면 링크 변경을 되돌립니다.
 
-## 일반 사용자 설치
-
-GitHub Releases에서 `WeeklyReport-0.1.0-Setup.exe`를 다운로드하여 실행합니다.
-바탕화면 바로가기 옵션을 유지하고 설치한 뒤 **Weekly Report** 아이콘으로 실행합니다.
-Python과 TinyTeX가 포함되어 별도 설치가 필요 없습니다. Windows 10/11 x64용이며 현재 사용자 계정에 설치됩니다.
-Windows 설정의 설치된 앱에서 제거할 수 있습니다. 사용자 설정과 작성한 보고서는 보존됩니다.
-설치 파일에는 아직 코드 서명이 없습니다.
+`codex`, `gemini`, `copilot`은 `agents`의 별칭이며 동일 대상은 한 번만 설치합니다.
+등록 도중 사용자가 바꾼 항목은 롤백에서 보존하고, 복원하지 못한 백업의 경로를 표시합니다.
 
 ## 소스 코드에서 실행·저장 차이
 
 - `.windows-config.json`을 사용하며 Bash `.local-config`는 실행하거나 덮어쓰지 않습니다. 패키징된 앱 설정은 `%LOCALAPPDATA%/WeeklyReport/config.json`에 저장합니다. `WR_CONFIG`로 테스트용 경로를 지정할 수 있습니다.
 - `latexmk` 대신 XeLaTeX를 참조 정보가 안정될 때까지 최대 5회 실행합니다. Perl은 필요하지 않습니다. BibTeX/Biber 등 별도 사용자 빌드 단계는 자동 실행하지 않습니다.
 - 임시 사본에서 실행하고 shell escape를 끕니다. 이것은 Docker의 OS/네트워크 격리와 동등하지 않습니다. 기존의 격리 보장이 필요한 신뢰할 수 없는 소스는 기존 Docker 실행 경로를 사용하세요.
-- 빌드 실패 시 기존 PDF를 유지합니다. 기존 스크립트의 빌드 전 로컬 PDF 삭제를 성공 후 정리로 변경하여 실패 시 원본 결과도 보존합니다.
-- PDF와 이력 파일은 각각 원자적으로 교체하지만 한 트랜잭션은 아닙니다. 중간 중단은 다음 이력 조회의 해시 검증으로 확인합니다.
+- 빌드 실패 시 기존 PDF를 유지합니다. 로컬 PDF는 새 출력이 검증되고 저장된 후 정리합니다.
+- PDF와 이력 파일의 대상 경로를 모두 잠근 뒤 원본을 재검증하고 각각 원자적으로 교체하지만 한 트랜잭션은 아닙니다. 중간 중단은 다음 이력 조회의 해시 검증으로 확인합니다.
 - GUI는 항상 초안을 먼저 검토합니다. CLI는 문제가 없는 명시적 계획에 대해 기존처럼 바로 최종 생성도 가능합니다.
+
+Git 릴리스 자동 업데이트는 Linux/macOS Bash 실행 경로에서만 지원합니다.
+Windows 소스는 사용자가 Git 체크아웃을 갱신하고, 설치본은 새 설치 파일로 갱신합니다.
+발행 잠금이 남으면 오류에 나온 `.publish.lock/owner`의 호스트와 PID를 확인하고 해당 프로세스가 종료된 경우에만 잠금 디렉터리를 제거하세요.
+다른 NAS 사용자의 활성 잠금을 지우지 마세요.
 
 ## 테스트 / 배포
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s windows\tests -v
-powershell -File windows\package.ps1
+.\windows\test.ps1
+.\windows\test.ps1 -RealBuild -Gui
+.\windows\package.ps1 -IncludeTeX
+.\windows\test.ps1 -Package
 ```
 
 PyInstaller는 Python과 GUI 의존성을 포함한 `windows/dist/WeeklyReport/WeeklyReport.exe`와 명령용 `WeeklyReportCLI.exe`를 만듭니다. **전체 폴더**를 배포해야 합니다. `package.ps1 -IncludeTeX`는 준비된 `.runtime/TinyTeX`까지 `tex` 폴더에 포함하여 오프라인 실행이 가능한 배포 폴더를 만듭니다. 앱은 이 폴더의 도구를 자동 탐색합니다. 기본 패키지는 앱에서 LaTeX 도구 준비 버튼을 사용하거나 별도 설치가 필요합니다. 설치 마법사는 아래 명령으로 별도 생성합니다.
@@ -99,11 +119,18 @@ PyInstaller는 Python과 GUI 의존성을 포함한 `windows/dist/WeeklyReport/W
 Inno Setup 6과 Python 빌드 환경, `.runtime/TinyTeX`가 필요합니다.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File windows/build-installer.ps1 -Version 0.1.0
+.\windows\build-installer.ps1
 ```
 
 `-Compiler`로 ISCC.exe 경로를 지정할 수 있습니다. 검증된 최신 오프라인 배포 폴더가 이미 있으면 `-SkipPackage`로 포장만 수행합니다.
-결과는 `windows/dist/installer/WeeklyReport-0.1.0-Setup.exe`와 SHA256 파일입니다.
+결과는 `windows/dist/installer/WeeklyReport-<버전>-Setup.exe`와 SHA256 파일입니다.
 소스 코드는 Git에 커밋하고, 설치 파일과 SHA256 파일은 GitHub Releases에 첨부합니다. `windows/dist`는 Git 추적에서 제외됩니다.
 
 설치 파일 생성 전 `sanitize-bundle.py`가 배포 폴더에서 개발 PC의 TeX 로그·글꼴 캐시를 제거하고, 생성된 설정의 경로를 정리합니다. `-SkipPackage` 사용 시에도 `-Python`에 빌드용 Python 경로를 지정할 수 있습니다.
+
+패키징 시 버전은 저장소 Git 태그와 체크아웃 상태에서 파생되어 번들의 `_internal/VERSION`에 저장됩니다.
+개발 커밋과 미커밋 변경은 버전 접미사로 구분되며 설치 프로그램도 같은 버전을 사용합니다.
+`-Version`으로 별도 앱 버전을 지정하지 않습니다.
+`-SkipPackage`는 현재 소스가 아니라 기존 번들의 버전을 사용하므로 해당 번들을 먼저 검증하세요.
+테스트·패키징·설치 프로그램 빌드에는 `-Python`으로 Windows Python 실행 파일을 지정할 수 있습니다.
+`-Package` 검증은 개발 Python/TeX를 PATH에서 제외하고 번들 템플릿을 실제 빌드하며 환경 변수는 종료 시 복원합니다.

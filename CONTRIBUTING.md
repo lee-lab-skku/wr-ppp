@@ -11,7 +11,7 @@ A deliberate breaking change should explain its rationale and impact, update the
 Use the repository sources according to their roles:
 
 - `README.md` defines shared report policy and describes the user workflow.
-- The files under `scripts/` implement setup and build behavior.
+- The files under `scripts/` implement Linux/macOS setup and build behavior; Windows PowerShell entry points implement native automation and delegate GUI and report operations to the Python implementation.
 - The files under `skills/` define agent workflows and safeguards, with task-specific procedures in selectively loaded references.
 - `weekly-report.sty` defines the shared LaTeX interfaces and presentation.
 - `template.tex` provides contextual writing prompts and an adaptable worked example.
@@ -29,7 +29,7 @@ If restoration fails, report the backup path and remaining partial changes.
 ## Shell and Build Safety
 
 Write shell scripts for both Linux and macOS whenever practical.
-Bash is the project shell, and scripts should remain compatible with the Bash version shipped with macOS.
+Bash is the Linux/macOS automation shell, and those scripts should remain compatible with the Bash version shipped with macOS.
 Avoid features that require newer Bash releases unless the project requirements are updated explicitly.
 
 Linux commonly provides GNU command-line utilities, while macOS provides BSD variants.
@@ -44,8 +44,22 @@ State any known limitation that remains after a change.
 Quote path and variable expansions, preserve `set -euo pipefail` where it is already used, and resolve script-relative paths without assuming the caller's working directory.
 
 Preserve the builds' isolation and output-safety properties.
-TeX containers run without network access and compile in temporary storage.
+Linux/macOS TeX containers run without network access and compile in temporary storage.
 A completed PDF should replace its target only after a successful build and validation, and containers must not modify source files.
+
+Windows automation uses PowerShell 5.1 or newer, with PowerShell 7 compatibility as a design target.
+Use script-relative resource paths, literal filesystem operations, explicit native-process exit checks, and argument arrays without shell command construction.
+Setup must be repeatable without prompts, preserve incompatible environments, and validate destinations before changing saved configuration or links.
+Preserve caller environment variables and restore any temporary working-directory or environment changes.
+Python owns the native GUI, LaTeX generation, PDF operations, and administrator rules; PowerShell must not duplicate those implementations.
+The native backend uses temporary source copies and disables TeX shell escape, but does not provide container OS/network isolation.
+Keep the shared report policy, plan/manifest formats, publication safety, and skill destination aliases consistent across platforms.
+Directory publication locks cover both PDF and history destinations and revalidate source fingerprints after acquisition; never automatically steal a NAS lock.
+The Git release updater remains specific to Bash; native Windows updates are manual.
+
+Keep POSIX scripts as LF text through `.gitattributes` so Windows checkouts remain usable from WSL.
+When Windows Git materializes repository symlinks as plain files (`core.symlinks=false`), run POSIX checks in a Linux checkout that preserves the Git symlink modes; line-ending normalization alone cannot restore links.
+PowerShell scripts containing non-ASCII literals require UTF-8 with BOM for Windows PowerShell 5.1; otherwise keep their source ASCII.
 Validate report readability and a positive page count with container-provided `pdfinfo`; keep PDF tooling off the host.
 Use the shared PDF publisher for user-facing PDFs: stage and verify bytes in the destination directory, atomically replace without a deletion gap, and update mtime for file watchers.
 A timestamp-update error occurs after replacement and must be reported as such; bundle publication must still complete its matching execution record.
@@ -181,6 +195,8 @@ Exercise the affected workflow and relevant error behavior, confirm documentatio
 Skill changes should cover representative activation, reference routing, all shared repository-resolver entry points, and affected report tasks.
 
 Run the administrator workflow regression checks with `python3 -B -m unittest discover -s tests -v` (Python 3 standard library only).
+On native Windows, use `windows/test.ps1` for native tests and common checks; POSIX-only checks must run separately in WSL/Linux.
+Use `-RealBuild`, `-Gui`, and `-Package` for the opt-in native TeX, hidden GUI, and offline EXE checks described in `windows/README.md`.
 These checks use isolated repositories and substitute Docker and desktop openers to exercise artifact placement, failure handling, and platform command routing without publishing reports or opening windows.
 Also exercise a real Docker build when available; substituted commands do not validate TeX rendering or a desktop viewer.
 

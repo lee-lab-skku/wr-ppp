@@ -4,6 +4,9 @@
 
 Use this workflow to select source PDFs, prepare a deterministic bundle plan, classify issues, and decide whether promotion requires approval.
 
+On native Windows, use the PowerShell/EXE command substitutions described in the skill entry point and `windows/README.md`; the Bash examples below apply to Linux/macOS.
+Preserve all review rules, and pass the native draft's generated `--review` record when promoting with approval.
+
 ## Preflight the Administrator Tools
 
 Run the following from this skill directory as its own command before reading report storage:

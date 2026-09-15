@@ -1,0 +1,3 @@
+# POSIX entry points must remain executable text when checked out on Windows.
+/scripts/** text eol=lf
+/skills/**/scripts/** text eol=lf

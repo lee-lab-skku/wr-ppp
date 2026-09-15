@@ -2,6 +2,9 @@
 
 Use this guidance when a report needs formatting, template-specific source work, build diagnosis, or PDF validation. Solve the user's actual problem without turning every request into a general LaTeX lesson.
 
+On native Windows, apply the command substitutions from the skill entry point and use `Start-Weekly-Report.ps1` for source installations or `WeeklyReportCLI.exe` for packaged installations.
+Read the resource root's `windows/README.md` for native prerequisites, configuration, and the differences from Docker builds.
+
 ## Work from the Exact Artifact
 
 - Inspect the relevant source and the complete error context before changing syntax.

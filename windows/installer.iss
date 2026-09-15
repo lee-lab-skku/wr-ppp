@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "0.1.0"
+  #error AppVersion must be supplied by build-installer.ps1
 #endif
 
 [Setup]

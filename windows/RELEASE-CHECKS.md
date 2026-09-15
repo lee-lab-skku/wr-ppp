@@ -1,5 +1,9 @@
 # Windows release checks
 
+The records below describe the earlier Windows implementation and its distribution.
+For the current PowerShell refactor, see [VALIDATION.md](VALIDATION.md); previous installer checks do not certify a newly built installer.
+Before publishing, prepare TinyTeX, build the offline bundle and installer, rerun the portable and installation checks, and attach the installer and SHA256 as release assets.
+
 ## Privacy and Git contents (2026-09-15)
 
 - Reviewed tracked files and new source files for developer profile names, personal email addresses, private keys, common access-token formats and Slack webhook URLs. No real credentials or personal profile data were detected in the source candidate set. Webhook URLs in tests are explicit dummy values.

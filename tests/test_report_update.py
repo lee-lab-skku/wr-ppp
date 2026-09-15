@@ -11,6 +11,9 @@ import tempfile
 import time
 import unittest
 
+if os.name == 'nt':
+    raise unittest.SkipTest('POSIX Git updater; run in WSL.')
+
 
 REPO = Path(__file__).resolve().parents[1]
 

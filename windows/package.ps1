@@ -1,20 +1,23 @@
-param([string]$Python = "", [switch]$IncludeTeX)
-$ErrorActionPreference = 'Stop'
-$repoRoot = Split-Path -Parent $PSScriptRoot
-if (-not $Python) { $Python = Join-Path $repoRoot '.venv\Scripts\python.exe' }
-if (-not (Test-Path -LiteralPath $Python)) { throw 'Run Windows-Setup.cmd using python.org CPython first.' }
-Push-Location $PSScriptRoot
+#Requires -Version 5.1
+param([string]$Python = '', [switch]$IncludeTeX)
+. (Join-Path $PSScriptRoot 'common.ps1')
+$Python = Resolve-WrPython $Python
+$version = Get-WrVersion
+$texSource = Join-Path $script:WrRoot '.runtime\TinyTeX'
+if ($IncludeTeX -and -not (Test-Path -LiteralPath (Join-Path $texSource 'bin\windows\xelatex.exe') -PathType Leaf)) {
+    throw 'Run install-tex.ps1 first.'
+}
+Push-Location -LiteralPath $PSScriptRoot
 try {
-    & $Python -m pip install 'pyinstaller==6.21.0' -r requirements.txt
-    if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed.' }
-    & $Python -m PyInstaller --noconfirm WeeklyReport.spec
-    if ($LASTEXITCODE -ne 0) { throw 'Packaging failed.' }
+    Invoke-WrChecked $Python @('-m', 'pip', 'install', 'pyinstaller==6.21.0', '-r', 'requirements.txt')
+    Invoke-WrChecked $Python @('-m', 'PyInstaller', '--noconfirm', 'WeeklyReport.spec')
+    $version | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'dist\WeeklyReport\_internal\VERSION') -Encoding ASCII
     if ($IncludeTeX) {
-        $texSource = Join-Path $repoRoot '.runtime\TinyTeX'
-        if (-not (Test-Path -LiteralPath (Join-Path $texSource 'bin\windows\xelatex.exe'))) { throw 'Run install-tex.ps1 first.' }
         $texDestination = Join-Path $PSScriptRoot 'dist\WeeklyReport\tex'
-        New-Item -ItemType Directory -Force -Path $texDestination | Out-Null
-        Get-ChildItem -LiteralPath $texSource | Copy-Item -Destination $texDestination -Recurse -Force
+        [IO.Directory]::CreateDirectory($texDestination) | Out-Null
+        foreach ($item in Get-ChildItem -LiteralPath $texSource) {
+            Copy-Item -LiteralPath $item.FullName -Destination $texDestination -Recurse -Force
+        }
     }
     Write-Host 'Distribute the whole windows/dist/WeeklyReport folder. Use -IncludeTeX for an offline bundle.'
 } finally { Pop-Location }

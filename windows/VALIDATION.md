@@ -1,5 +1,26 @@
 # Windows implementation validation
 
+## PowerShell 리팩토링 검증 (2026-09-15)
+
+현재 리팩토링의 검증 결과이며, 아래의 이전 구현 기록과 구분합니다.
+환경: Windows 11 x64, Windows PowerShell 5.1, CPython 3.13.7, pypdf 6.18.0, PyInstaller 6.21.0.
+
+- Windows 테스트 57개 통과: 업무 로직 55개와 실제 PowerShell 프로세스 테스트 2개.
+- 공통 Slack 테스트 9개 통과, POSIX 전용 클래스와 모듈은 Windows에서 명시적으로 건너뜀.
+- WSL Ubuntu 24.04에서 공통/POSIX 테스트 85개 통과. Windows Git의 링크 대체 파일 대신 Git 모드에 맞춘 심볼릭 링크와 실행 권한을 보존한 동일 소스 사본을 사용.
+- PowerShell: 별도 작업 폴더, 한글·공백·대괄호·앰퍼샌드 경로, 반복 설치, 비 Windows 가상환경 보존, 빈 인수·따옴표·끝 백슬래시·UNC 문자열 전달, `WR_CONFIG`와 종료 코드 보존 확인.
+- 설정 사전 검증과 잘못된 저장 경로 복구, 스킬 별칭 중복 제거와 동시 사용자 수정 보호, 발행 잠금·대기 후 원본 재검증·PDF/기록 사이 중단 감지 확인.
+- 기존 `C:\texlive\2026` 설치로 영문 템플릿 2페이지, 한글 폼 1페이지, 관리자 초안/확정 합본 실제 빌드. 템플릿 두 페이지, 한글 폼, 합본 표지를 PNG로 렌더링해 확인.
+- Windows Docker의 `danteev/texlive:latest`에서도 같은 템플릿·스타일과 메타데이터를 사용해 A4 2페이지 빌드 확인. 네트워크 차단, 소스 읽기 전용 마운트와 임시 작업 공간을 사용.
+- 숨김 Tk GUI의 입력·저장 검사, GUI/CLI EXE 패키징과 EXE 자체 검사, 번들 버전 파일 확인.
+
+이번에는 프로젝트용 TinyTeX와 Inno Setup이 준비되지 않아 TinyTeX 신규 설치, `-IncludeTeX` 오프라인 실행, 설치 프로그램 생성·설치·제거를 재검증하지 않았습니다.
+Python 자체에 TinyTeX가 포함되는 것은 아니며, 오프라인 설치본은 별도로 준비한 TinyTeX를 패키징할 때 함께 포함합니다.
+PowerShell 7, 실제 UNC/NAS 접근·ACL, macOS, 외부 AI 서비스의 링크 탐색과 실제 Slack 발송은 검증하지 않았습니다.
+WSL 배포판의 Docker Desktop 통합이 꺼져 있어 해당 배포판에서 실제 Docker 빌드는 실행되지 않았습니다.
+
+## 이전 구현의 검증 기록
+
 검증 환경: Windows 11 x64, Python 3.14.7 (MinGW), PyInstaller 6.21.0, pypdf 6.18.0, Windows TinyTeX/TeX Live 2026.
 
 ## 확인한 범위

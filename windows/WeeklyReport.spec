@@ -5,7 +5,7 @@ from PyInstaller.utils.hooks import collect_all
 repo = Path(SPECPATH).parent
 datas = [(str(repo / name), str(Path(name).parent)) for name in
          ('template.tex', 'weekly-report.sty', 'README.md', 'CONTRIBUTING.md',
-          'windows/README.md', 'windows/install-tex.ps1', 'scripts/notify-held')]
+          'windows/README.md', 'windows/install-tex.ps1', 'windows/common.ps1', 'scripts/notify-held')]
 datas.append((str(repo / 'skills'), 'skills'))
 binaries, hiddenimports = [], ['getpass', 'urllib.request', 'urllib.error']
 for package in ('tzdata', 'pypdf'):

@@ -9,9 +9,9 @@ Help the user reach their intended report outcome at their current level of cont
 
 ## Locate the Template Repository
 
-On native Windows, resolve the real path of this `SKILL.md` (following its installation link); its grandparent directory is `skills`, and that directory's parent is the resource root. Read that root's `windows/README.md` and use `windows/weekly_report.py` subcommands instead of Bash scripts. Use `report-build` for compilation and `preflight` for dependency checks. Keep the writing and evidence policies below unchanged. In a packaged installation the resource root is `_internal`; use `WeeklyReportCLI.exe` beside that directory with the same subcommands.
+On native Windows, resolve the real path of this `SKILL.md` (following its installation link); its grandparent directory is `skills`, and that directory's parent is the resource root. Read that root's `windows/README.md` and use `Start-Weekly-Report.ps1` subcommands instead of Bash scripts. Use `report-build` for compilation and `preflight` for dependency checks. Keep the writing and evidence policies below unchanged. In a packaged installation the resource root is `_internal`; use `WeeklyReportCLI.exe` beside that directory with the same subcommands.
 
-Run `scripts/resolve-repo-root` from this skill directory to locate the repository that provides the template, style, documentation, and build scripts. Use the resolved path instead of assuming that the current working directory is the template repository.
+On Linux/macOS, run `scripts/resolve-repo-root` from this skill directory to locate the repository that provides the template, style, documentation, and build scripts. Use the resolved path instead of assuming that the current working directory is the template repository.
 
 ## Determine What Help Is Needed
 
