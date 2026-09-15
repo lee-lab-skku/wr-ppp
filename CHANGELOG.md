@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] &mdash; 2026-09-15
+
 ### Added
 
 - [setup] `--skills=antigravity` links skills into `~/.gemini/config/skills`; `gemini` and `copilot` are aliases for the shared `agents` destination.
@@ -125,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0-beta...v1.3.0
 [1.3.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.1...v1.3.0-beta
 [1.2.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.2.0...v1.2.1
