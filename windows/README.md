@@ -123,6 +123,9 @@ Linux/macOS 테스트와 Windows의 실제 PDF·포터블 EXE·설치·제거 �
 릴리스 없이 검증하려면 GitHub Actions의 **Test and release &rightarrow; Run workflow**에서 브랜치를 선택하세요.
 수동 실행도 같은 테스트와 설치 파일 빌드를 수행하고, EXE와 SHA256을 실행 페이지의 `windows-installer` 아티팩트로 7일간 보관합니다.
 버전은 기존 Git 태그와 개발 커밋에서 파생되며, GitHub Release는 발행하지 않습니다.
+CI는 패키지 설치와 포맷 생성이 끝난 TinyTeX를 캐시하고, 일치하는 캐시가 있으면 준비 단계를 생략합니다.
+캐시를 복원해도 실제 PDF 생성과 설치 파일 검사는 매번 수행합니다.
+캐시 갱신과 브랜치 간 공유 조건은 [기여 가이드](../CONTRIBUTING.md#tag-driven-ci-and-windows-releases)를 참고하세요.
 아래 명령은 같은 패키징 경로를 로컬에서 실행할 때 사용합니다.
 
 Inno Setup 6과 Python 빌드 환경, `.runtime/TinyTeX`가 필요합니다.

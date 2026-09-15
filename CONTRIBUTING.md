@@ -282,6 +282,15 @@ Retry a failed run using GitHub Actions' rerun controls: unpublished drafts for 
 An existing complete published release is left unchanged; a published release missing expected assets or a draft targeting a different commit fails for maintainer review.
 Preserve published tags and use a new allowed version when source fixes are needed.
 
-TinyTeX follows the existing daily bootstrap and current TeX package repository; release builds are tested artifacts rather than byte-reproducible rebuilds.
+CI caches the complete prepared `.runtime/TinyTeX` tree, including installed packages and generated TeX formats.
+An exact cache hit skips `install-tex.ps1`; a miss uses the existing daily bootstrap and current TeX package repository.
+The cache key includes the Windows runner image label, architecture, installation script and shared PowerShell helper hashes, and `TINYTEX_CACHE_REVISION` in the workflow.
+Do not add release tags or source commit IDs to this dependency key, or use partial restore keys that could mix incompatible TeX installations.
+Increment `TINYTEX_CACHE_REVISION` to refresh upstream TeX packages or replace an unusable cache; dependency changes must update `install-tex.ps1` so its hash invalidates the cache automatically.
+Every run validates actual native TeX and administrator builds, including cache hits; a new cache is saved only after those checks pass, before Inno Setup preparation and packaging.
+Installer packaging, portable tests, installation tests, and release artifact verification still run each time; no finished installer or previous test result is reused.
+GitHub scopes caches by ref and permits fallback to the default branch's cache; a `dev` cache is not directly shared with tag runs.
+To seed a shared cache, run this workflow manually on the default branch with the matching cache key inputs before subsequent branch or tag runs; the workflow and its build dependencies must already be present there.
+Cache eviction or an unavailable cache causes fresh preparation, and caching does not make release builds byte-reproducible.
 Failures in dependency preparation, any test, checksum verification, or asset upload prevent publication.
 Windows artifacts are retained in Actions for seven days; on failure, available installer/uninstaller logs from `.runtime/qa` are retained as a separate diagnostics artifact for the same period.

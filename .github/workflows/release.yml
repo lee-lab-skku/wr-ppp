@@ -85,6 +85,8 @@ jobs:
         shell: powershell
     env:
       WR_CONFIG: ${{ github.workspace }}/.runtime/ci-config.json
+      # Bump to refresh upstream TeX packages without changing the installer script.
+      TINYTEX_CACHE_REVISION: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -99,15 +101,29 @@ jobs:
         run: .\Windows-Setup.ps1 -Python (Join-Path $env:pythonLocation 'python.exe')
       - name: Run native, PowerShell and common tests
         run: .\windows\test.ps1 -Gui
-      - name: Prepare bundled TinyTeX and pinned Inno Setup
-        run: |
-          .\windows\install-tex.ps1
-          .\.github\scripts\prepare-inno.ps1
+      - name: Restore prepared TinyTeX
+        id: tinytex-cache
+        uses: actions/cache/restore@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
+        with:
+          path: .runtime/TinyTeX
+          key: tinytex-windows-2025-${{ runner.arch }}-${{ env.TINYTEX_CACHE_REVISION }}-${{ hashFiles('windows/install-tex.ps1', 'windows/common.ps1') }}
+      - name: Prepare bundled TinyTeX
+        if: steps.tinytex-cache.outputs.cache-hit != 'true'
+        run: .\windows\install-tex.ps1
       - name: Test actual native TeX and administrator builds
         run: |
           . .\windows\common.ps1
           Invoke-WrChecked (Resolve-WrPython) @('windows/weekly_report.py', 'setup', '--tex-bin', (Join-Path $PWD '.runtime/TinyTeX/bin/windows'))
           Invoke-WrChecked (Resolve-WrPython) @('windows/tests/real_build.py')
+      # Save only after real TeX validation, before unrelated packaging can fail.
+      - name: Cache validated TinyTeX
+        if: steps.tinytex-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
+        with:
+          path: .runtime/TinyTeX
+          key: ${{ steps.tinytex-cache.outputs.cache-primary-key }}
+      - name: Prepare pinned Inno Setup
+        run: .\.github\scripts\prepare-inno.ps1
       - name: Package, sanitize and build installer
         run: |
           .\windows\build-installer.ps1 -Compiler (Join-Path $PWD '.windows-deps/inno/ISCC.exe')
