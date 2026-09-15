@@ -52,9 +52,15 @@ def validate_checkout(root, tag, expected_commit):
     return head
 
 
-def verify_artifacts(directory, tag):
+def verify_artifacts(directory, tag, *, development=False):
     """Reject stale installers, renamed assets, and corrupt transfers before upload."""
-    validate_tag(tag)
+    if development:
+        # Manual CI uses the existing git-describe version, without widening
+        # the release-tag policy or accepting dirty builds as CI artifacts.
+        if not re.fullmatch(TAG.pattern + r'(-[0-9]+-g[0-9a-f]+)?', tag):
+            raise ValueError('Expected a release tag or a clean tag-derived development version.')
+    else:
+        validate_tag(tag)
     installer = directory / f'WeeklyReport-{tag}-Setup.exe'
     checksum = installer.with_suffix('.exe.sha256')
     if set(directory.iterdir()) != {installer, checksum}:
@@ -115,7 +121,9 @@ def publish(root, tag, commit, directory, repository, run=subprocess.run):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=('prepare', 'verify-artifacts', 'publish'))
-    parser.add_argument('--tag', required=True)
+    version = parser.add_mutually_exclusive_group(required=True)
+    version.add_argument('--tag')
+    version.add_argument('--version', help='Tag-derived bundle version; only for verify-artifacts.')
     parser.add_argument('--expected-commit')
     parser.add_argument('--directory', type=Path)
     parser.add_argument('--repository')
@@ -124,9 +132,11 @@ def main():
     if args.command == 'verify-artifacts':
         if not args.directory:
             parser.error('--directory is required')
-        verify_artifacts(args.directory, args.tag)
+        verify_artifacts(args.directory, args.version or args.tag, development=args.version is not None)
         print('Installer and SHA256 verified.')
         return
+    if not args.tag:
+        parser.error('--tag is required for release preparation and publication')
     if not args.expected_commit:
         parser.error('--expected-commit is required')
     commit = validate_checkout(ROOT, args.tag, args.expected_commit)

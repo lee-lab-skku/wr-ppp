@@ -1,6 +1,7 @@
 name: Test and release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*'
@@ -9,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -18,11 +19,11 @@ env:
 
 jobs:
   validate:
-    name: Validate release tag
+    name: Validate checkout
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
-      commit: ${{ steps.release.outputs.commit }}
+      commit: ${{ steps.release.outputs.commit || steps.development.outputs.commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,12 +34,20 @@ jobs:
         with:
           python-version: '3.13'
       - id: release
+        if: github.event_name == 'push'
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: >-
           python .github/scripts/release.py prepare
           --tag "$RELEASE_TAG" --expected-commit "$GITHUB_SHA"
           --github-output "$GITHUB_OUTPUT"
+      - id: development
+        if: github.event_name == 'workflow_dispatch'
+        name: Resolve selected checkout
+        run: |
+          commit=$(git rev-parse HEAD)
+          test "$commit" = "$GITHUB_SHA"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
 
   posix:
     name: Test (${{ matrix.os }})
@@ -75,7 +84,6 @@ jobs:
       run:
         shell: powershell
     env:
-      RELEASE_TAG: ${{ github.ref_name }}
       WR_CONFIG: ${{ github.workspace }}/.runtime/ci-config.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -101,18 +109,21 @@ jobs:
           Invoke-WrChecked (Resolve-WrPython) @('windows/weekly_report.py', 'setup', '--tex-bin', (Join-Path $PWD '.runtime/TinyTeX/bin/windows'))
           Invoke-WrChecked (Resolve-WrPython) @('windows/tests/real_build.py')
       - name: Package, sanitize and build installer
-        run: .\windows\build-installer.ps1 -Compiler (Join-Path $PWD '.windows-deps/inno/ISCC.exe')
+        run: |
+          .\windows\build-installer.ps1 -Compiler (Join-Path $PWD '.windows-deps/inno/ISCC.exe')
+          $version = (Get-Content -LiteralPath 'windows/dist/WeeklyReport/_internal/VERSION' -Raw).Trim()
+          "INSTALLER_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Test sanitized portable bundle without development tools
         run: .\windows\tests\portable_smoke.ps1
       - name: Test installed EXE and uninstallation
         run: >-
           .\windows\tests\installer_smoke.ps1
-          -Installer (Join-Path $PWD "windows/dist/installer/WeeklyReport-$env:RELEASE_TAG-Setup.exe")
-          -ExpectedVersion $env:RELEASE_TAG
+          -Installer (Join-Path $PWD "windows/dist/installer/WeeklyReport-$env:INSTALLER_VERSION-Setup.exe")
+          -ExpectedVersion $env:INSTALLER_VERSION
       - name: Verify installer checksum and exact asset set
         run: |
           . .\windows\common.ps1
-          Invoke-WrChecked (Resolve-WrPython) @('.github/scripts/release.py', 'verify-artifacts', '--tag', $env:RELEASE_TAG, '--directory', 'windows/dist/installer')
+          Invoke-WrChecked (Resolve-WrPython) @('.github/scripts/release.py', 'verify-artifacts', '--version', $env:INSTALLER_VERSION, '--directory', 'windows/dist/installer')
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-installer
@@ -135,6 +146,7 @@ jobs:
 
   publish:
     name: Publish GitHub Release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: [validate, posix, windows]
     runs-on: ubuntu-24.04
     timeout-minutes: 15

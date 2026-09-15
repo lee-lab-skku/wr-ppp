@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -88,6 +89,37 @@ class ReleaseTests(unittest.TestCase):
         (self.assets / 'old.exe').write_bytes(b'MZ old')
         with self.assertRaises(ValueError):
             release.verify_artifacts(self.assets, self.tag)
+
+    def test_development_artifacts_are_verified_but_cannot_be_published(self):
+        for file in self.assets.iterdir():
+            file.unlink()
+        self.tag = 'v2.3.4-rc-12-gabcdef0'
+        self.artifacts()
+        self.assertEqual(release.verify_artifacts(self.assets, self.tag, development=True),
+                         (self.installer, self.checksum))
+        with self.assertRaises(ValueError):
+            release.verify_artifacts(self.assets, self.tag)
+        with self.assertRaises(ValueError):
+            self.publish()
+        self.assertEqual(self.calls, [])
+        self.installer.write_bytes(b'MZ corrupt development build')
+        with self.assertRaises(ValueError):
+            release.verify_artifacts(self.assets, self.tag, development=True)
+
+    def test_development_versions_reject_dirty_untagged_and_unsafe_names(self):
+        for version in ('abcdef0', 'v2.3.4-dirty', 'v2.3.4-1-gabcdef0-dirty',
+                        'v2.3.4-beta.1', '../v2.3.4', 'v2.3.4\n'):
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                release.verify_artifacts(self.assets, version, development=True)
+
+    def test_development_version_option_cannot_prepare_or_publish(self):
+        for command in ('prepare', 'publish'):
+            result = subprocess.run(
+                [sys.executable, str(REPO / '.github/scripts/release.py'),
+                 command, '--version', 'v2.3.4-1-gabcdef0'],
+                capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('--tag is required', result.stderr)
 
     def test_checkout_supports_annotated_tag_and_rejects_dirty_or_wrong_commit(self):
         def git(*args):

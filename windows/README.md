@@ -120,6 +120,9 @@ PyInstaller는 Python과 GUI 의존성을 포함한 `windows/dist/WeeklyReport/W
 Linux/macOS 테스트와 Windows의 실제 PDF·포터블 EXE·설치·제거 검사가 모두 성공해야 GitHub Release에 설치 EXE와 SHA256이 게시됩니다.
 `-beta`와 `-rc` 태그는 사전 릴리스로 게시하며, 이미 공개된 자산은 덮어쓰지 않습니다.
 태그 준비와 실패 후 재실행 절차는 [기여 가이드](../CONTRIBUTING.md#tag-driven-ci-and-windows-releases)를 따르세요.
+릴리스 없이 검증하려면 GitHub Actions의 **Test and release &rightarrow; Run workflow**에서 브랜치를 선택하세요.
+수동 실행도 같은 테스트와 설치 파일 빌드를 수행하고, EXE와 SHA256을 실행 페이지의 `windows-installer` 아티팩트로 7일간 보관합니다.
+버전은 기존 Git 태그와 개발 커밋에서 파생되며, GitHub Release는 발행하지 않습니다.
 아래 명령은 같은 패키징 경로를 로컬에서 실행할 때 사용합니다.
 
 Inno Setup 6과 Python 빌드 환경, `.runtime/TinyTeX`가 필요합니다.

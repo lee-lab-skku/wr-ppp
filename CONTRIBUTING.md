@@ -251,7 +251,15 @@ This channel-based update is the supported exception; do not add arbitrary per-b
 ### Tag-driven CI and Windows Releases
 
 `.github/workflows/release.yml` runs on pushed `v*` tags.
-The validation job accepts only the release-tag grammar above, requires the tag and triggering commit to match the checkout, checks the version comment in `template.tex`, and requires exactly one matching dated changelog section with release notes.
+It also supports `workflow_dispatch` for manually testing and packaging a selected branch or tag, without running on branch pushes.
+In GitHub Actions, open **Test and release**, choose **Run workflow**, and select the branch to check.
+The workflow must be present on the default branch for manual dispatch to be available.
+Manual runs pin every job to the selected commit, skip release-note preparation checks, and never publish a GitHub Release, even when a tag is selected.
+They run the same platform tests, Windows packaging, installer smoke tests, and checksum verification as tag pushes, retaining the installer and SHA256 in the `windows-installer` Actions artifact for seven days.
+Manual installer versions use the existing Git-derived bundle version, including a development commit suffix when applicable; the checkout must have a reachable supported version tag and must produce a clean version.
+Use the Actions run and its commit SHA to identify the build; manual runs do not create or increment release tags.
+
+For tag pushes, the validation job accepts only the release-tag grammar above, requires the tag and triggering commit to match the checkout, checks the version comment in `template.tex`, and requires exactly one matching dated changelog section with release notes.
 Complete the normal release preparation before pushing the tag; CI does not create tags, increment versions, or edit source files.
 
 Linux and macOS run the common/POSIX regression suite on their own hosted runners, using the operating system's `/bin/bash`.
