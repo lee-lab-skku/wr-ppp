@@ -204,8 +204,10 @@ The public interface is the union of the documented LaTeX commands and environme
 Determine a release increment from every changed public surface and apply the highest required increment:
 
 - Increment MAJOR for any backward-incompatible public-interface change, such as removing or changing a documented LaTeX interface, command option, default, or output behavior in a way that requires user migration.
-- Increment MINOR for backward-compatible functionality, including a new LaTeX interface, command option, setup capability, or skill capability, and when deprecating public functionality without removing it.
+- Increment MINOR for backward-compatible additions or changes to substantive functionality, including a new LaTeX interface, setup capability, or skill capability, and when deprecating public functionality without removing it.
+  A new command option requires MINOR only when it introduces substantive functionality.
 - Increment PATCH for backward-compatible bug fixes, portability and safety corrections, documentation corrections, and internal changes that do not alter the documented interface.
+  Also use PATCH for new options, accepted values, or aliases that expose existing behavior without adding or changing substantive functionality, such as supporting another agent through the existing skill-link installation mechanism.
 
 Compatibility means that documented usage continues to work with its stated semantics; it does not require byte-identical PDFs or prevent presentation refinements that preserve those semantics.
 

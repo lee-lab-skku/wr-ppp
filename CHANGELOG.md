@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [setup] repeated skill service names and aliases for the same destination are accepted and installed once per destination.
+- [docs] option, value, and alias additions that expose existing behavior without substantive functionality changes qualify for PATCH releases.
 
 ## [1.3.0] &mdash; 2026-09-14
 
