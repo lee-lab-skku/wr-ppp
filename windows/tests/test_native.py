@@ -264,6 +264,25 @@ class NativeTests(unittest.TestCase):
             core.build_report(tex, self.config, serial=17, date='2026-09-04')
         self.assertEqual(before, tex.read_bytes())
 
+    def test_report_stages_only_source_and_referenced_assets(self):
+        tex = self.storage / 'main.tex'
+        tex.write_text(r'\includegraphics{figures/chart.png}', encoding='utf-8')
+        figure = self.storage / 'figures' / 'chart.png'
+        figure.parent.mkdir()
+        figure.write_bytes(b'image')
+        unrelated = self.storage / 'large-unrelated.bin'
+        unrelated.write_bytes(b'x' * 1024)
+        observed = {}
+
+        def compile_report(directory, source, config, definitions=''):
+            observed['files'] = sorted(str(path.relative_to(directory)).replace('\\', '/')
+                                       for path in Path(directory).rglob('*') if path.is_file())
+            return pdf()
+
+        with patch.object(core, 'compile_tex', compile_report):
+            core.build_report(tex, self.config)
+        self.assertEqual(observed['files'], ['figures/chart.png', 'wr-input.tex'])
+
     def test_duplicate_selection_rejected(self):
         self.rows.append(['entry', '2', 'b', 'B', 'required', 'included', str(self.source), 'selected'])
         with self.assertRaises(ValueError):

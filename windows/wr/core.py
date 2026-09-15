@@ -506,7 +506,7 @@ def compile_tex(directory, source, config, definitions=''):
     engine = tool('xelatex', config)
     env = os.environ.copy()
     env['PATH'] = str(Path(engine).parent) + os.pathsep + env.get('PATH', '')
-    env['TEXINPUTS'] = str(ROOT).replace('\\', '/') + '//' + os.pathsep + env.get('TEXINPUTS', '')
+    env['TEXINPUTS'] = str(ROOT).replace('\\', '/') + os.pathsep + env.get('TEXINPUTS', '')
     env['openout_any'] = 'p'
     env['openin_any'] = 'p'
     # Direct XeLaTeX avoids latexmk's external Perl requirement on Windows.
@@ -579,6 +579,52 @@ def report_pdf_name(name):
             and not lower.endswith(('.tmp.pdf', '.temp.pdf', '.bak.pdf')))
 
 
+_TEX_DEPENDENCY = re.compile(
+    r'\\(input|include|includegraphics|addbibresource|bibliography|usepackage|documentclass)'
+    r'(?:\s*\[[^\]]*\])?\s*\{([^{}]+)\}'
+)
+
+
+def stage_tex_dependencies(source, stage):
+    """Copy only local files explicitly referenced by a TeX source tree."""
+    root = Path(source).parent.resolve()
+    pending = [Path(source).resolve()]
+    visited = set()
+    extensions = {
+        'input': ('.tex',), 'include': ('.tex',),
+        'includegraphics': ('.pdf', '.png', '.jpg', '.jpeg', '.eps'),
+        'addbibresource': ('.bib',), 'bibliography': ('.bib',),
+        'usepackage': ('.sty',), 'documentclass': ('.cls',),
+    }
+    while pending:
+        current = pending.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        try:
+            text = current.read_text(encoding='utf-8-sig')
+        except (OSError, UnicodeError):
+            continue
+        for command, argument in _TEX_DEPENDENCY.findall(text):
+            names = argument.split(',') if command in ('bibliography', 'usepackage') else [argument]
+            for name in names:
+                relative = Path(name.strip().replace('\\', '/'))
+                if not name.strip() or relative.is_absolute() or '..' in relative.parts:
+                    continue
+                candidates = [relative] if relative.suffix else [relative.with_suffix(ext) for ext in extensions[command]]
+                dependency = next((root / item for item in candidates if (root / item).is_file()), None)
+                if not dependency or dependency.is_symlink() or getattr(dependency, 'is_junction', lambda: False)():
+                    continue
+                resolved = dependency.resolve()
+                if not resolved.is_relative_to(root):
+                    continue
+                target = Path(stage) / resolved.relative_to(root)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(resolved, target)
+                if resolved.suffix.lower() in ('.tex', '.sty', '.cls'):
+                    pending.append(resolved)
+
+
 def build_report(source, config, date=None, serial=None, here=False):
     source = Path(source).resolve()
     if source.suffix.lower() != '.tex' or not source.is_file():
@@ -602,13 +648,10 @@ def build_report(source, config, date=None, serial=None, here=False):
     # Do not delete an existing output before a successful build.
     with tempfile.TemporaryDirectory(prefix='wr-build-') as tmp:
         stage = Path(tmp) / 'src'
-        def ignore(directory, names):
-            return [n for n in names if n in ('.git', '.venv', '.windows-deps', '.runtime', '__pycache__')
-                    or (Path(directory) / n).is_symlink()
-                    or getattr(Path(directory) / n, 'is_junction', lambda: False)()]
-        shutil.copytree(source.parent, stage, ignore=ignore)
+        stage.mkdir()
         # A fixed ASCII entry name avoids TeX quoting problems with Unicode/space filenames.
         shutil.copyfile(source, stage / 'wr-input.tex')
+        stage_tex_dependencies(source, stage)
         result = compile_tex(stage, 'wr-input.tex', config, definitions)
         validation = stage / 'wr-validated.pdf'
         validation.write_bytes(result)
