@@ -22,7 +22,7 @@ class UpdateTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="report update ")
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.publisher = self.root / "publisher"
         self.publisher.mkdir()
         self.remote = self.root / "origin.git"
@@ -188,6 +188,15 @@ sys.exit(int(os.environ.get('UPDATE_TEST_BUILD_STATUS', '0')))
         self.assertEqual(self.git(self.repo, "branch", "--show-current"), "")
         self.assertFalse(self.lock.exists())
         self.assertEqual(self.call_count(), 1)
+
+    def test_no_argument_build_updates_and_uses_configured_output(self):
+        target = self.publish("v1.1.0")
+        self.setup("--auto-update")
+        result = self.run_command(["bash", str(self.repo / "scripts/report-build")], cwd=self.source)
+        self.assertEqual(self.git(self.repo, "rev-parse", "HEAD"), target)
+        self.assertIn("updated v1.0.0 -> v1.1.0", result.stderr)
+        self.assertEqual((self.output / "weekly source.pdf").read_bytes(), b"%PDF-1.4\n")
+        self.assertFalse(self.lock.exists())
 
     def test_prerelease_order_invalid_tags_and_global_sort_settings(self):
         self.publish("v1.2.0-beta")

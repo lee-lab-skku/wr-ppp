@@ -26,7 +26,8 @@ class BundleTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="admin-wr-test ")
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        # Match shell pwd -P when macOS TEMP starts with the /var symlink.
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / "repo's files"
         self.repo.mkdir()
         for directory in ("scripts", "skills"):
@@ -465,7 +466,7 @@ class PreviewTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="admin-wr-preview ")
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.bin = self.root / "bin"
         self.bin.mkdir()
         for command in ("dirname", "basename"):

@@ -389,7 +389,9 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-set -- "${SETUP_ARGS[@]}"
+# Bash 3.2 treats an empty array as unset under nounset. The guarded expansion
+# preserves zero arguments instead of failing or inserting an empty argument.
+set -- ${SETUP_ARGS[@]+"${SETUP_ARGS[@]}"}
 
 if [[ $# -gt 2 ]]; then
     usage
@@ -409,7 +411,7 @@ if [[ $ADMIN -eq 0 && ( $ADMIN_OUTPUT_SET -eq 1 || $ADMIN_DATA_SET -eq 1 ) ]]; t
 fi
 
 VALIDATED_SERVICES=()
-for service in "${SKILL_SERVICES[@]}"; do
+for service in ${SKILL_SERVICES[@]+"${SKILL_SERVICES[@]}"}; do
     case $service in
         codex|gemini|copilot)
             service=agents
@@ -424,14 +426,14 @@ for service in "${SKILL_SERVICES[@]}"; do
     esac
 
     # Keep the first occurrence of each destination after alias normalization.
-    for existing_service in "${VALIDATED_SERVICES[@]}"; do
+    for existing_service in ${VALIDATED_SERVICES[@]+"${VALIDATED_SERVICES[@]}"}; do
         if [[ $service == "$existing_service" ]]; then
             continue 2
         fi
     done
     VALIDATED_SERVICES+=("$service")
 done
-SKILL_SERVICES=("${VALIDATED_SERVICES[@]}")
+SKILL_SERVICES=(${VALIDATED_SERVICES[@]+"${VALIDATED_SERVICES[@]}"})
 
 echo "Repository version: $REPOSITORY_VERSION"
 
@@ -509,14 +511,14 @@ if [[ ! -x "$REPORT_BUILD_SOURCE" ]]; then
 fi
 
 REQUESTED_SKILLS=()
-if [[ ${#SKILL_SERVICES[@]} -gt 0 ]]; then
+if [[ $SKILLS_SET -eq 1 ]]; then
     REQUESTED_SKILLS+=("$WRITER_SKILL_NAME")
     if [[ $ADMIN -eq 1 ]]; then
         REQUESTED_SKILLS+=("$ADMIN_SKILL_NAME")
     fi
 fi
 
-for skill_name in "${REQUESTED_SKILLS[@]}"; do
+for skill_name in ${REQUESTED_SKILLS[@]+"${REQUESTED_SKILLS[@]}"}; do
     skill_source="$REPO_DIR/skills/$skill_name"
     if [[ ! -f "$skill_source/SKILL.md" ]]; then
         echo "Skill source not found: $skill_source/SKILL.md" >&2
@@ -533,8 +535,8 @@ then
     PREFLIGHT_FAILED=1
 fi
 
-for service in "${SKILL_SERVICES[@]}"; do
-    for skill_name in "${REQUESTED_SKILLS[@]}"; do
+for service in ${SKILL_SERVICES[@]+"${SKILL_SERVICES[@]}"}; do
+    for skill_name in ${REQUESTED_SKILLS[@]+"${REQUESTED_SKILLS[@]}"}; do
         skill_source="$REPO_DIR/skills/$skill_name"
         skill_link="$(skill_link_for_service "$service" "$skill_name")"
         if ! preflight_link \
@@ -583,8 +585,8 @@ install_link \
     "report-build command" \
     1
 
-for service in "${SKILL_SERVICES[@]}"; do
-    for skill_name in "${REQUESTED_SKILLS[@]}"; do
+for service in ${SKILL_SERVICES[@]+"${SKILL_SERVICES[@]}"}; do
+    for skill_name in ${REQUESTED_SKILLS[@]+"${REQUESTED_SKILLS[@]}"}; do
         skill_source="$REPO_DIR/skills/$skill_name"
         skill_link="$(skill_link_for_service "$service" "$skill_name")"
         install_link \

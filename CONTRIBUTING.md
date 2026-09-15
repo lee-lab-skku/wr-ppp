@@ -31,6 +31,7 @@ If restoration fails, report the backup path and remaining partial changes.
 Write shell scripts for both Linux and macOS whenever practical.
 Bash is the Linux/macOS automation shell, and those scripts should remain compatible with the Bash version shipped with macOS.
 Avoid features that require newer Bash releases unless the project requirements are updated explicitly.
+Guard expansions of possibly empty arrays with `${items[@]+"${items[@]}"}`: Bash 3.2 treats a direct empty-array expansion as unset under `set -u`, and substituting one empty argument changes command behavior.
 
 Linux commonly provides GNU command-line utilities, while macOS provides BSD variants.
 Avoid relying on implementation-specific flags or output formats.

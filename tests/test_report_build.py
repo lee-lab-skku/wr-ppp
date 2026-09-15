@@ -19,7 +19,7 @@ class ReportSerialTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="report-count-test ")
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / "repo"
         shutil.copytree(REPO / "scripts", self.repo / "scripts")
         self.output = self.root / "output"

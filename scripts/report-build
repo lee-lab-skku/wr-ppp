@@ -133,7 +133,8 @@ if [[ ${WR_REPORT_UPDATE_ROOT:-} != "$STYLE_DIR" ||
       ${WR_REPORT_UPDATE_PARENT:-} != "$PPID" ]]; then
     case ${AUTO_UPDATE_CHANNEL:-off} in
         stable|prerelease)
-            exec bash "$STYLE_DIR/scripts/report-update" "${ORIGINAL_ARGS[@]}"
+            # Zero-argument builds must also work with Bash 3.2 and nounset.
+            exec bash "$STYLE_DIR/scripts/report-update" ${ORIGINAL_ARGS[@]+"${ORIGINAL_ARGS[@]}"}
             ;;
         off) ;;
         *) echo "Invalid automatic update channel in $CONFIG_FILE" >&2; exit 2 ;;
