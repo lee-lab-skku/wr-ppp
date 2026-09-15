@@ -14,7 +14,7 @@ import tomllib
 from zoneinfo import ZoneInfo
 
 from .core import (ROOT, STATE_ROOT, atomic_write, checked_file, compile_tex, inspect_pdf, metadata,
-                   probe, read_tsv, sha256, stage_write, tex_escape, tsv)
+                   probe, publication_locks, read_tsv, refresh_pdf, sha256, stage_write, tex_escape, tsv)
 
 STATES = {'included': 'O', 'exception': 'O*', 'missing': 'X', 'optional-missing': '--', 'unknown': '?'}
 TOKEN = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]*')
@@ -336,20 +336,25 @@ def build_bundle(rows, root, config, date, output=None, draft=False, approved=Fa
                 file = checked_file(root, r[3])
                 records.append(['candidate', r[1], r[2], str(file.relative_to(Path(root).resolve())), str(int(file.stat().st_mtime)), sha256(file), r[4]])
         records += issues
-        # Separate atomic replacements, as in the original; history reads detect an interrupted pair.
-        # Stage both destinations before either final artifact is changed.
-        staged_pdf = stage_write(target, result)
-        staged_record = None
-        try:
-            staged_record = stage_write(record_path, tsv(records))
-            os.replace(staged_pdf, target)
-            os.replace(staged_record, record_path)
-        finally:
-            staged_pdf.unlink(missing_ok=True)
-            if staged_record:
-                staged_record.unlink(missing_ok=True)
         review_path = destdir / (meta['week-label'] + '.review.json')
-        if draft:
-            atomic_write(review_path, json.dumps(fingerprint, ensure_ascii=False, indent=2))
+        # Lock both destinations through publication, also across installations that
+        # share only the PDF or history folder. Recheck sources after waiting.
+        with publication_locks(target, record_path):
+            if review_fingerprint(rows, root, date) != fingerprint:
+                raise ValueError('발행 대기 중 후보 파일이 변경되었습니다. 다시 검토하세요.')
+            staged_pdf = stage_write(target, result)
+            staged_record = None
+            try:
+                staged_record = stage_write(record_path, tsv(records))
+                os.replace(staged_pdf, target)
+                refresh_pdf(target)
+                # Separate replacements: hash validation detects an interrupted pair.
+                os.replace(staged_record, record_path)
+                if draft:
+                    atomic_write(review_path, json.dumps(fingerprint, ensure_ascii=False, indent=2))
+            finally:
+                staged_pdf.unlink(missing_ok=True)
+                if staged_record:
+                    staged_record.unlink(missing_ok=True)
     return {'pdf': str(target), 'manifest': str(record_path), 'review': str(review_path) if draft else None,
             'issues': issues, 'state': state}

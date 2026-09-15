@@ -309,10 +309,107 @@ class NativeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 admin.build_bundle(self.rows, self.storage, self.config, '2026-09-04', approved=True, review=draft['review'])
 
-    def test_skill_alias_duplicate_is_rejected(self):
-        with self.assertRaises(ValueError):
-            skills.install(['agents', 'codex'], home=self.root)
-        self.assertFalse((self.root / '.agents').exists())
+    def test_skill_alias_destinations_are_deduplicated(self):
+        with patch.object(Path, 'symlink_to') as link:
+            result = skills.install(['agents', 'codex', 'gemini', 'copilot', 'antigravity'], home=self.root)
+        self.assertEqual(link.call_count, 2)
+        self.assertEqual(result['installed'], [str(self.root / '.agents/skills/wr-wr'),
+                                             str(self.root / '.gemini/config/skills/wr-wr')])
+
+    def test_config_preflight_preserves_existing_state(self):
+        config_file = self.root / 'config.json'
+        config_file.write_text('{"old": true}', encoding='utf-8')
+        blocked = self.root / 'blocked'
+        blocked.write_text('file', encoding='utf-8')
+        with patch.dict(os.environ, WR_CONFIG=str(config_file)), self.assertRaises(ValueError):
+            core.save_config(dict(self.config, admin_data=str(blocked / 'child')))
+        self.assertEqual(config_file.read_text(), '{"old": true}')
+        self.assertFalse(Path(self.config['pdf_output']).exists())
+
+    def test_setup_can_repair_invalid_saved_path(self):
+        from wr.cli import main
+        config_file = self.root / 'config.json'
+        config_file.write_text('{"pdf_output": "relative"}', encoding='utf-8')
+        with patch.dict(os.environ, WR_CONFIG=str(config_file)):
+            self.assertEqual(main(['setup', '--pdf-output', self.config['pdf_output']]), 0)
+            self.assertEqual(core.read_config()['pdf_output'], self.config['pdf_output'])
+
+    def test_skill_rollback_preserves_concurrent_replacement(self):
+        original = self.root / '.agents/skills/wr-wr'
+        original.parent.mkdir(parents=True)
+        original.write_text('old', encoding='utf-8')
+        def create_link(destination, source, **kwargs):
+            if destination == original:
+                destination.write_text('concurrent user file', encoding='utf-8')
+            else:
+                raise OSError('second installation failed')
+        with patch.object(Path, 'symlink_to', create_link), self.assertRaisesRegex(ValueError, '백업'):
+            skills.install(['agents', 'claude'], replace=True, home=self.root)
+        self.assertEqual(original.read_text(), 'concurrent user file')
+        self.assertEqual(original.with_name('wr-wr.backup').read_text(), 'old')
+
+    def test_serial_filters_artifacts_and_counts_uppercase(self):
+        tex = self.storage / 'main.tex'
+        tex.write_text('test')
+        output = Path(self.config['pdf_output'])
+        output.mkdir()
+        for name in ('real.PDF', '.hidden.pdf', '_.metadata.pdf', '~$lock.pdf', 'a.TMP.PDF', 'a.temp.pdf', 'a.bak.pdf'):
+            (output / name).write_bytes(pdf())
+        with patch.object(core, 'compile_tex', self.compile):
+            self.assertEqual(core.build_report(tex, self.config)['serial'], 2)
+
+    def test_tsv_preserves_literal_quotes(self):
+        source = self.root / 'quoted.tsv'
+        rows = [['name', '"quoted"'], ['name', 'literal "quote']]
+        source.write_text(core.tsv(rows), encoding='utf-8')
+        self.assertEqual(core.read_tsv(source), rows)
+
+    def test_publication_locks_shared_paths_and_cleanup(self):
+        first, shared = self.root / 'a.pdf', self.root / 'record.tsv'
+        with core.publication_locks(first, shared):
+            with self.assertRaisesRegex(ValueError, 'locked'):
+                with core.publication_locks(self.root / 'b.pdf', shared, timeout=0):
+                    self.fail('Shared history lock was ignored')
+            self.assertTrue((self.root / '.a.pdf.publish.lock/owner').is_file())
+            self.assertFalse((self.root / '.b.pdf.publish.lock').exists())
+        self.assertFalse(list(self.root.glob('*.publish.lock')))
+
+    def test_source_change_after_lock_wait_prevents_publication(self):
+        from contextlib import contextmanager
+        @contextmanager
+        def waited(*targets):
+            self.source.write_bytes(pdf(2))
+            yield
+        with patch.object(admin, 'compile_tex', self.compile), patch.object(admin, 'publication_locks', waited):
+            with self.assertRaisesRegex(ValueError, '발행 대기'):
+                admin.build_bundle(self.rows, self.storage, self.config, '2026-09-04')
+        self.assertFalse((Path(self.config['admin_output']) / '2026-09-W1.pdf').exists())
+
+    def test_interrupted_pair_is_detected_on_history_read(self):
+        with patch.object(admin, 'compile_tex', self.compile):
+            result = admin.build_bundle(self.rows, self.storage, self.config, '2026-09-04')
+            self.source.write_bytes(pdf(2))
+            real_replace = os.replace
+            def fail_record(source, destination):
+                if Path(destination) == Path(result['manifest']):
+                    raise OSError('Interrupted record replacement')
+                return real_replace(source, destination)
+            with patch.object(os, 'replace', side_effect=fail_record), self.assertRaises(OSError):
+                admin.build_bundle(self.rows, self.storage, self.config, '2026-09-04')
+        history, issues = admin.history_rows(self.config, [{'id': 'a'}], '2026-09-11')
+        self.assertEqual(history[0][3], 'unknown')
+        self.assertTrue(issues)
+
+    def test_invalid_pdf_preserves_report(self):
+        tex = self.storage / 'main.tex'
+        tex.write_text('test')
+        target = Path(self.config['pdf_output']) / (self.storage.name + '.pdf')
+        target.parent.mkdir()
+        target.write_bytes(pdf())
+        previous = target.read_bytes()
+        with patch.object(core, 'compile_tex', return_value=b'not PDF'), self.assertRaises(Exception):
+            core.build_report(tex, self.config)
+        self.assertEqual(target.read_bytes(), previous)
 
     def test_skill_preflight_preserves_conflicting_files(self):
         existing = self.root / '.claude/skills/wr-wr'

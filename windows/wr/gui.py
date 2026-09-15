@@ -372,10 +372,10 @@ class App(ttk.Frame):
         self.task(work, done)
 
     def install_skills(self):
-        from .skills import install
+        from .skills import SERVICES, install
         window = tk.Toplevel(self.root)
         window.title('AI 스킬 등록')
-        services = {name: tk.BooleanVar(value=name == 'agents') for name in ('agents', 'claude')}
+        services = {name: tk.BooleanVar(value=name == 'agents') for name in SERVICES}
         for name, variable in services.items():
             ttk.Checkbutton(window, text=name, variable=variable).pack(anchor='w', padx=20, pady=5)
         administrator = tk.BooleanVar(value=True)
@@ -397,7 +397,7 @@ class App(ttk.Frame):
         config = {k: v.get().strip() for k, v in self.settings.items()}
         config['allow_user_styles'] = self.allow_user_styles.get()
         core.save_config(config)
-        self.config = config
+        self.config = core.validate_config(config)
         self.draft = None
         self.status.set('설정을 저장했습니다.')
 

@@ -4,18 +4,26 @@ import os
 
 from .core import ROOT
 
+SERVICES = {'agents': '.agents', 'claude': '.claude', 'antigravity': '.gemini/config'}
+ALIASES = {'codex': 'agents', 'gemini': 'agents', 'copilot': 'agents'}
+
 
 def install(services, administrator=False, replace=False, home=None):
     home = Path(home or Path.home())
     names = ['wr-wr', 'admin-wr'] if administrator else ['wr-wr']
-    normalized = ['agents' if value == 'codex' else value for value in services]
-    if not normalized or len(set(normalized)) != len(normalized) or any(x not in ('agents', 'claude') for x in normalized):
-        raise ValueError('agents, claude 중 중복 없이 선택하세요. codex는 agents의 별칭입니다.')
+    normalized = list(dict.fromkeys(ALIASES.get(value, value) for value in services))
+    if not normalized or any(x not in SERVICES for x in normalized):
+        raise ValueError('agents, claude, antigravity 중 선택하세요. codex, gemini, copilot은 agents의 별칭입니다.')
     operations = []
     for service in normalized:
         for name in names:
             source = ROOT / 'skills' / name
-            destination = home / ('.agents' if service == 'agents' else '.claude') / 'skills' / name
+            destination = home / SERVICES[service] / 'skills' / name
+            if not source.is_dir():
+                raise ValueError(f'스킬 원본 폴더가 없습니다: {source}')
+            for parent in destination.parents:
+                if os.path.lexists(parent) and not parent.is_dir():
+                    raise ValueError(f'설치 상위 경로가 폴더가 아닙니다: {parent}')
             if destination.is_symlink() and destination.resolve() == source.resolve():
                 continue
             if os.path.lexists(destination):
@@ -37,11 +45,25 @@ def install(services, administrator=False, replace=False, home=None):
                 destination.rename(backup)
                 backups.append((destination, backup))
             destination.symlink_to(source, target_is_directory=True)
-            completed.append(destination)
+            completed.append((source, destination))
     except OSError as error:
-        for destination in reversed(completed):
-            destination.unlink()
+        failures = []
+        for source, destination in reversed(completed):
+            try:
+                # A concurrent user edit is not ours to undo.
+                if not destination.is_symlink() or destination.resolve() != source.resolve():
+                    raise ValueError(f'설치 후 변경된 항목을 보존했습니다: {destination}')
+                destination.unlink()
+            except (OSError, ValueError) as failure:
+                failures.append(str(failure))
         for destination, backup in reversed(backups):
-            backup.rename(destination)
-        raise ValueError('스킬 연결을 생성하지 못해 변경을 되돌렸습니다. Windows 개발자 모드 또는 심볼릭 링크 권한이 필요합니다. ' + str(error)) from error
-    return {'installed': [str(p) for p in completed], 'backups': [str(b) for _, b in backups]}
+            try:
+                if os.path.lexists(destination):
+                    raise ValueError(f'충돌 항목을 보존했습니다: {destination}; 백업: {backup}')
+                backup.rename(destination)
+            except (OSError, ValueError) as failure:
+                failures.append(f'{failure}; 백업: {backup}')
+        detail = '\n'.join(failures) if failures else '링크 변경을 되돌렸습니다.'
+        raise ValueError('스킬 연결 실패. Windows 개발자 모드 또는 심볼릭 링크 권한을 확인하세요. '
+                         + str(error) + '\n' + detail) from error
+    return {'installed': [str(p) for _, p in completed], 'backups': [str(b) for _, b in backups]}

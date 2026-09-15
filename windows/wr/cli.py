@@ -28,7 +28,7 @@ def main(argv=None):
     diagnostic = commands.add_parser('self-test')
     diagnostic.add_argument('--output', type=Path, required=True)
     skills = commands.add_parser('install-skills')
-    skills.add_argument('--services', required=True, help='agents,claude (codex aliases agents)')
+    skills.add_argument('--services', required=True, help='agents,claude,antigravity (codex,gemini,copilot alias agents)')
     skills.add_argument('--admin', action='store_true')
     skills.add_argument('--replace-existing', action='store_true')
     meta = commands.add_parser('report-metadata')
@@ -61,7 +61,7 @@ def main(argv=None):
     notify.add_argument('--send', action='store_true')
     args = parser.parse_args(argv)
     try:
-        config = core.read_config()
+        config = core.read_config(validate=args.command != 'setup')
         if args.command == 'gui':
             from .gui import run
             run()

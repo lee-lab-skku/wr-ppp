@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from contextlib import contextmanager
 import datetime as dt
 import hashlib
 import io
@@ -9,9 +10,11 @@ import os
 from pathlib import Path
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[2]))
 STATE_ROOT = (Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'WeeklyReport'
@@ -52,19 +55,83 @@ def atomic_write(path, data):
         staged.unlink(missing_ok=True)
 
 
+@contextmanager
+def publication_locks(*targets, timeout=30):
+    """Share the POSIX builder's directory locks, including partially shared destinations.
+
+    Never steal an existing lock: its owner may be publishing on another NAS host.
+    A terminated process leaves host/PID evidence for manual stale-lock recovery.
+    """
+    # Resolve directory aliases but not the file itself: os.replace replaces a
+    # destination symlink, so its link location is the publication destination.
+    locks = {}
+    for target in map(Path, targets):
+        lock = target.parent.resolve() / ('.' + target.name + '.publish.lock')
+        locks[os.path.normcase(str(lock))] = lock
+    held = []
+    deadline = time.monotonic() + timeout
+    try:
+        for name in sorted(locks):
+            lock = locks[name]
+            lock.parent.mkdir(parents=True, exist_ok=True)
+            while True:
+                try:
+                    lock.mkdir()
+                    break
+                except FileExistsError:
+                    if not lock.is_dir() or time.monotonic() >= deadline:
+                        raise ValueError(f'Bundle publication is locked: {lock}. Verify host/PID in owner before removing a stale lock.')
+                    time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+            held.append(lock)
+            (lock / 'owner').write_text(f'{socket.gethostname()}\t{os.getpid()}\n', encoding='utf-8')
+        yield
+    finally:
+        for lock in reversed(held):
+            (lock / 'owner').unlink(missing_ok=True)
+            lock.rmdir()
+
+
+def refresh_pdf(path):
+    """Notify viewers after replacement without losing a successfully published PDF."""
+    try:
+        os.utime(path, None)
+    except OSError as error:
+        print(f'PDF was published, but viewer refresh failed: {path}: {error}', file=sys.stderr)
+
+
 def config_path():
     return Path(os.environ.get('WR_CONFIG', DEFAULT_CONFIG))
 
 
-def read_config():
+def read_config(validate=True):
+    """Setup may defer validation until explicit replacements repair saved paths."""
     path = config_path()
-    return json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+    config = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+    if not isinstance(config, dict):
+        raise ValueError('설정은 JSON 객체여야 합니다.')
+    return validate_config(config) if validate else config
+
+
+def validate_config(config):
+    """Normalize native absolute directories and preflight every field before saving."""
+    if not isinstance(config, dict):
+        raise ValueError('설정은 JSON 객체여야 합니다.')
+    config = dict(config)
+    for key in ('pdf_output', 'admin_output', 'admin_data', 'tex_bin'):
+        value = config.get(key)
+        if value:
+            path = Path(value).expanduser()
+            if not path.is_absolute():
+                raise ValueError(f'{key}: 절대 경로를 지정하세요.')
+            for parent in (path, *path.parents):
+                if os.path.lexists(parent) and not parent.is_dir():
+                    raise ValueError(f'{key}: 폴더가 아닙니다: {parent}')
+            config[key] = str(path)
+    return config
 
 
 def save_config(config):
-    for key in ('pdf_output', 'admin_output', 'admin_data', 'tex_bin'):
-        if config.get(key) and not Path(config[key]).expanduser().is_absolute():
-            raise ValueError(f'{key}: 절대 경로를 지정하세요.')
+    config = validate_config(config)
     atomic_write(config_path(), json.dumps(config, ensure_ascii=False, indent=2))
 
 
@@ -90,12 +157,12 @@ def tsv(rows):
     for row in rows:
         if any(any(c in str(v) for c in '\t\r\n') for v in row):
             raise ValueError('기록 필드에는 탭이나 줄바꿈을 넣을 수 없습니다.')
-    csv.writer(output, delimiter='\t', lineterminator='\n', quoting=csv.QUOTE_NONE).writerows(rows)
+    csv.writer(output, delimiter='\t', lineterminator='\n', quoting=csv.QUOTE_NONE, quotechar=None).writerows(rows)
     return output.getvalue()
 
 
 def read_tsv(path):
-    return [r for r in csv.reader(Path(path).read_text(encoding='utf-8-sig').splitlines(), delimiter='\t')
+    return [r for r in csv.reader(Path(path).read_text(encoding='utf-8-sig').splitlines(), delimiter='\t', quoting=csv.QUOTE_NONE)
             if r and r[0] and not r[0].startswith('#')]
 
 
@@ -505,6 +572,13 @@ def probe(root, file):
     return dict(info, file=str(file), mtime=int(file.stat().st_mtime))
 
 
+def report_pdf_name(name):
+    """Apply the shared serial-number policy to a directory entry's literal name."""
+    lower = name.lower()
+    return (lower.endswith('.pdf') and not name.startswith(('.', '_.', '~$'))
+            and not lower.endswith(('.tmp.pdf', '.temp.pdf', '.bak.pdf')))
+
+
 def build_report(source, config, date=None, serial=None, here=False):
     source = Path(source).resolve()
     if source.suffix.lower() != '.tex' or not source.is_file():
@@ -519,7 +593,8 @@ def build_report(source, config, date=None, serial=None, here=False):
     if serial is not None and (not re.fullmatch(r'[1-9][0-9]*', str(serial))):
         raise ValueError('일련번호는 양의 정수여야 합니다.')
     if serial is None:
-        serial = 1 + sum(p.name != name for p in configured.glob('*.pdf') if p.is_file() and not p.is_symlink())
+        serial = 1 + sum(p.name.casefold() != name.casefold() for p in configured.glob('*')
+                         if p.is_file() and not p.is_symlink() and report_pdf_name(p.name))
     meta = metadata(date)
     definitions = (rf'\def\ReportSerialNumber{{{serial}}}'
                    rf'\def\ReportDate{{{meta["report-date"]}}}'
@@ -535,7 +610,11 @@ def build_report(source, config, date=None, serial=None, here=False):
         # A fixed ASCII entry name avoids TeX quoting problems with Unicode/space filenames.
         shutil.copyfile(source, stage / 'wr-input.tex')
         result = compile_tex(stage, 'wr-input.tex', config, definitions)
+        validation = stage / 'wr-validated.pdf'
+        validation.write_bytes(result)
+        inspect_pdf(validation)
         atomic_write(dest, result)
+        refresh_pdf(dest)
     if not here:
         local = source.parent / name
         if local.resolve() != dest.resolve() and local.exists():
