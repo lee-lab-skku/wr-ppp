@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] &mdash; 2026-09-16
+
 ### Changed
 
 - [build] reduce Windows report preparation overhead by staging the source and explicitly referenced local dependencies instead of copying the entire source directory, and avoid recursive repository-wide TeX searches.
@@ -164,7 +166,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-rc...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-rc...v1.4.0
 [1.4.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-beta...v1.4.0-rc
 [1.4.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.1...v1.4.0-beta
 [1.3.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.0...v1.3.1
