@@ -19,21 +19,43 @@ def validate_tag(tag):
 
 
 def release_notes(root, tag):
-    """Require the maintainer's release preparation; CI never edits versions or tags."""
-    validate_tag(tag)
+    """Collect stable and same-version prerelease notes without rewriting the changelog.
+
+    Prerelease publications retain their own incremental notes. A stable release
+    includes its optional rc and beta sections, newest stage first, and may have
+    no new bullets of its own when it only promotes tested prerelease changes.
+    The target section and matching template version are always required.
+    """
+    prerelease = validate_tag(tag)
     first = (root / 'template.tex').read_text(encoding='utf-8').splitlines()[0]
     if first != f'% Repository version: {tag}':
         raise ValueError(f'template.tex must start with "% Repository version: {tag}".')
     changelog = (root / 'CHANGELOG.md').read_text(encoding='utf-8')
-    heading = re.compile(r'^## \[' + re.escape(tag[1:]) + r'\] &mdash; (\d{4}-\d{2}-\d{2})$', re.M)
-    matches = list(heading.finditer(changelog))
-    if len(matches) != 1:
-        raise ValueError(f'CHANGELOG.md must contain one dated [{tag[1:]}] release section.')
-    dt.date.fromisoformat(matches[0][1])
-    body = re.split(r'^## ', changelog[matches[0].end():], maxsplit=1, flags=re.M)[0].strip()
-    if not re.search(r'^- ', body, re.M):
+    versions = [tag[1:]]
+    if not prerelease:
+        versions.extend((tag[1:] + '-rc', tag[1:] + '-beta'))
+    sections = []
+    for version in versions:
+        # Match the version before validating its date so malformed or duplicate
+        # selected sections cannot silently disappear from published notes.
+        heading = re.compile(r'^## \[' + re.escape(version) + r'\]([^\n]*)$', re.M)
+        matches = list(heading.finditer(changelog))
+        if not matches and version != tag[1:]:
+            continue
+        if len(matches) != 1:
+            raise ValueError(f'CHANGELOG.md must contain one dated [{version}] release section.')
+        date = re.fullmatch(r' &mdash; (\d{4}-\d{2}-\d{2})', matches[0][1])
+        if date is None:
+            raise ValueError(f'CHANGELOG.md must contain one dated [{version}] release section.')
+        dt.date.fromisoformat(date[1])
+        body = re.split(r'^## ', changelog[matches[0].end():], maxsplit=1, flags=re.M)[0].strip()
+        sections.append((version, date[1], body))
+    if not any(re.search(r'^- ', body, re.M) for _, _, body in sections):
         raise ValueError('The release changelog must describe at least one change.')
-    return body + '\n'
+    if len(sections) == 1:
+        return sections[0][2] + '\n'
+    return '\n\n'.join(f'## {version} &mdash; {date}\n\n{body}'.rstrip()
+                       for version, date, body in sections) + '\n'
 
 
 def validate_checkout(root, tag, expected_commit):

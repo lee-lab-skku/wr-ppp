@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [build] reduce Windows report preparation overhead by staging the source and explicitly referenced local dependencies instead of copying the entire source directory, and avoid recursive repository-wide TeX searches.
+- [build] assemble stable GitHub Release notes from the matching stable, RC, and beta changelog sections while keeping changelog entries incremental; prerelease publications retain their own section only.
 
 ## [1.4.0-rc] &mdash; 2026-09-15
 

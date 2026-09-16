@@ -26,6 +26,7 @@ class ReleaseTests(unittest.TestCase):
         self.assets.mkdir()
         self.artifacts()
         self.calls = []
+        self.published_notes = []
 
     def metadata(self):
         (self.root / 'template.tex').write_text(f'% Repository version: {self.tag}\n', encoding='utf-8')
@@ -43,6 +44,8 @@ class ReleaseTests(unittest.TestCase):
     def transport(self, existing=None, fail=None):
         def run(command, **kwargs):
             self.calls.append(command)
+            if '--notes-file' in command:
+                self.published_notes.append(Path(command[command.index('--notes-file') + 1]).read_text(encoding='utf-8'))
             if command[1] == 'api':
                 if existing is None:
                     return subprocess.CompletedProcess(command, 1, '', 'gh: Not Found (HTTP 404)')
@@ -75,6 +78,131 @@ class ReleaseTests(unittest.TestCase):
             changelog.write_text(content, encoding='utf-8')
             with self.assertRaises(ValueError):
                 release.release_notes(self.root, self.tag)
+
+    def staged_metadata(self, stable='- [build] Stable fix.', rc='- [build] RC fix.',
+                        beta='- [setup] Beta feature.'):
+        """Use non-stage order to ensure selection depends on versions, not proximity."""
+        sections = [('Unreleased', '- Pending change.'), ('2.3.4-beta', beta),
+                    ('2.3.5-rc', '- Future change.'), ('2.3.4', stable),
+                    ('2.3.3-rc', '- Older change.'), ('2.3.4-rc', rc)]
+        (self.root / 'template.tex').write_text(f'% Repository version: {self.tag}\n', encoding='utf-8')
+        (self.root / 'CHANGELOG.md').write_text('\n\n'.join(
+            f'## [{version}] &mdash; 2026-09-15\n\n### Changed\n\n{body}'
+            for version, body in sections if body is not None) + '\n', encoding='utf-8')
+
+    def test_stable_notes_collect_only_same_version_stages_in_order(self):
+        self.staged_metadata(beta='- [setup] Beta feature.\n  Continuation with `code`.')
+        notes = release.release_notes(self.root, self.tag)
+        self.assertEqual(notes, '''## 2.3.4 &mdash; 2026-09-15
+
+### Changed
+
+- [build] Stable fix.
+
+## 2.3.4-rc &mdash; 2026-09-15
+
+### Changed
+
+- [build] RC fix.
+
+## 2.3.4-beta &mdash; 2026-09-15
+
+### Changed
+
+- [setup] Beta feature.
+  Continuation with `code`.
+''')
+
+    def test_stable_notes_allow_missing_prerelease_stages(self):
+        for rc, beta in ((None, '- Beta.'), ('- RC.', None), (None, None)):
+            with self.subTest(rc=rc, beta=beta):
+                self.staged_metadata(rc=rc, beta=beta)
+                notes = release.release_notes(self.root, self.tag)
+                self.assertIn('Stable fix.', notes)
+                self.assertEqual('- RC.' in notes, rc is not None)
+                self.assertEqual('- Beta.' in notes, beta is not None)
+
+    def test_stable_promotion_can_have_no_new_changes_but_requires_target_section(self):
+        self.staged_metadata(stable='')
+        notes = release.release_notes(self.root, self.tag)
+        self.assertIn('RC fix.', notes)
+        self.assertIn('Beta feature.', notes)
+        for stable, rc, beta in ((None, '- RC.', '- Beta.'), ('', '', ''), ('', None, None)):
+            with self.subTest(stable=stable, rc=rc, beta=beta):
+                self.staged_metadata(stable=stable, rc=rc, beta=beta)
+                with self.assertRaises(ValueError):
+                    release.release_notes(self.root, self.tag)
+
+    def test_prerelease_notes_remain_incremental(self):
+        for stage, expected in (('rc', 'RC fix.'), ('beta', 'Beta feature.')):
+            with self.subTest(stage=stage):
+                self.tag = f'v2.3.4-{stage}'
+                self.staged_metadata()
+                notes = release.release_notes(self.root, self.tag)
+                self.assertIn(expected, notes)
+                for excluded in ('Stable fix.', 'Pending change.', 'Future change.', 'Older change.',
+                                 'Beta feature.' if stage == 'rc' else 'RC fix.'):
+                    self.assertNotIn(excluded, notes)
+
+    def test_empty_prerelease_cannot_borrow_changes_from_other_stages(self):
+        self.tag = 'v2.3.4-rc'
+        self.staged_metadata(rc='')
+        with self.assertRaises(ValueError):
+            release.release_notes(self.root, self.tag)
+
+    def test_selected_prerelease_sections_require_unique_valid_dates(self):
+        for stage in ('rc', 'beta'):
+            for invalid in ('duplicate', '2026-02-30', 'undated'):
+                with self.subTest(stage=stage, invalid=invalid):
+                    self.staged_metadata()
+                    path = self.root / 'CHANGELOG.md'
+                    text = path.read_text(encoding='utf-8')
+                    heading = f'## [2.3.4-{stage}] &mdash; 2026-09-15'
+                    if invalid == 'duplicate':
+                        text += '\n' + heading + '\n\n- Duplicate.\n'
+                    else:
+                        text = text.replace(heading, f'## [2.3.4-{stage}]' +
+                                            (f' &mdash; {invalid}' if invalid != 'undated' else ''))
+                    path.write_text(text, encoding='utf-8')
+                    with self.assertRaises(ValueError):
+                        self.publish()
+                    self.assertEqual(self.calls, [])
+
+    def test_aggregated_notes_reach_new_and_resumed_release_drafts(self):
+        self.staged_metadata()
+        original = (self.root / 'CHANGELOG.md').read_bytes()
+        for existing in (None, {'draft': True, 'target_commitish': self.commit}):
+            with self.subTest(existing=existing):
+                self.publish(existing=existing)
+                notes = self.published_notes[-1]
+                self.assertIn('Stable fix.', notes)
+                self.assertIn('RC fix.', notes)
+                self.assertIn('Beta feature.', notes)
+                self.assertNotIn('Pending change.', notes)
+                self.assertEqual(notes, release.release_notes(self.root, self.tag))
+                self.assertEqual((self.root / 'CHANGELOG.md').read_bytes(), original)
+
+    def test_prepare_command_accepts_promotion_with_only_prerelease_changes(self):
+        self.staged_metadata(stable='')
+        script = self.root / '.github/scripts/release.py'
+        script.parent.mkdir(parents=True)
+        script.write_bytes((REPO / '.github/scripts/release.py').read_bytes())
+        def git(*args):
+            return subprocess.check_output(['git', '-C', str(self.root), *args],
+                                           stderr=subprocess.STDOUT, text=True).strip()
+        git('init', '-q')
+        git('config', 'user.name', 'Release test')
+        git('config', 'user.email', 'test@example.invalid')
+        git('add', 'template.tex', 'CHANGELOG.md', '.github/scripts/release.py')
+        git('commit', '-qm', 'promotion fixture')
+        git('tag', '-a', self.tag, '-m', 'promotion fixture')
+        commit = git('rev-parse', 'HEAD')
+        output = self.root / 'github-output'
+        result = subprocess.run([sys.executable, '-B', str(script), 'prepare', '--tag', self.tag,
+                                 '--expected-commit', commit, '--github-output', str(output)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(output.read_text(encoding='utf-8'), f'commit={commit}\n')
 
     def test_artifact_checks_reject_corruption_wrong_names_and_extra_files(self):
         self.assertEqual(release.verify_artifacts(self.assets, self.tag), (self.installer, self.checksum))

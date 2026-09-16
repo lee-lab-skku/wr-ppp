@@ -231,6 +231,7 @@ Maintain `CHANGELOG.md` using the Keep a Changelog structure.
 
 Begin every changelog item with the most relevant component marker: `[latex]`, `[template]`, `[build]`, `[setup]`, `[skill]`, or `[docs]`.
 Describe notable user-facing differences rather than copying the commit log, and combine closely related commits into one entry when they deliver one change.
+Keep each version section incremental; do not copy beta or release-candidate entries into the stable section.
 
 If you are an AI agent, do not increment the version or create a release tag without explicit developer confirmation.
 Versions are recorded by Git tags named `vMAJOR.MINOR.PATCH`, optionally followed by exactly `-beta` or `-rc` for prereleases.
@@ -258,7 +259,8 @@ They run the same platform tests, Windows packaging, installer smoke tests, and 
 Manual installer versions use the existing Git-derived bundle version, including a development commit suffix when applicable; the checkout must have a reachable supported version tag and must produce a clean version.
 Use the Actions run and its commit SHA to identify the build; manual runs do not create or increment release tags.
 
-For tag pushes, the validation job accepts only the release-tag grammar above, requires the tag and triggering commit to match the checkout, checks the version comment in `template.tex`, and requires exactly one matching dated changelog section with release notes.
+For tag pushes, the validation job accepts only the release-tag grammar above, requires the tag and triggering commit to match the checkout, checks the version comment in `template.tex`, and requires exactly one matching dated changelog section.
+Release notes must contain at least one change across the selected sections; a stable section may be empty when promotion adds no changes beyond its prereleases.
 Complete the normal release preparation before pushing the tag; CI does not create tags, increment versions, or edit source files.
 
 Linux and macOS run the common/POSIX regression suite on their own hosted runners, using the operating system's `/bin/bash`.
@@ -273,7 +275,11 @@ Organization/repository Actions policies must allow the pinned official actions 
 Keep third-party action revisions pinned to full commit IDs; follow the Windows development guide when updating installer build dependencies.
 
 CI packages the exact triggering tag even if multiple tags refer to the same commit.
-The release contains only `WeeklyReport-<tag>-Setup.exe` and its `.exe.sha256` file; the publication job revalidates both after artifact transfer and uses the matching changelog section as release notes.
+The release contains only `WeeklyReport-<tag>-Setup.exe` and its `.exe.sha256` file; the publication job revalidates both after artifact transfer.
+`.github/scripts/release.py` uses only the matching changelog section for a prerelease publication.
+For a stable publication, it collects the matching stable section and any same-version `-rc` and `-beta` sections, in that order with version headings, without changing `CHANGELOG.md`.
+Missing prerelease stages are allowed; duplicate sections or invalid dates in any selected stage fail validation before publication.
+Unreleased changes and other base versions are never included.
 Tags ending in `-beta` or `-rc` produce prereleases and cannot become Latest; stable releases use GitHub's default Latest selection.
 Publication uploads to a draft before making it public.
 Retry a failed run using GitHub Actions' rerun controls: unpublished drafts for the same commit can resume, but published assets are never overwritten.
