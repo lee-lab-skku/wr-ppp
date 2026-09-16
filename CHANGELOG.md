@@ -12,23 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [build] reduce Windows report preparation overhead by staging the source and explicitly referenced local dependencies instead of copying the entire source directory, and avoid recursive repository-wide TeX searches.
-- [build] assemble stable GitHub Release notes from the matching stable, RC, and beta changelog sections while keeping changelog entries incremental; prerelease publications retain their own section only.
+- [ci] assemble stable GitHub Release notes from the matching stable, RC, and beta changelog sections while keeping changelog entries incremental; prerelease publications retain their own section only.
 
 ## [1.4.0-rc] &mdash; 2026-09-15
 
 ### Added
 
-- [build] manual CI runs validate and package a selected branch or tag, retaining Windows installers for download without publishing a release.
+- [ci] manual CI runs validate and package a selected branch or tag, retaining Windows installers for download without publishing a release.
 
 ### Changed
 
-- [build] reuse prepared Windows build dependencies to reduce CI setup time while retaining PDF, packaging, and installation checks.
+- [ci] reuse prepared Windows build dependencies to reduce CI setup time while retaining PDF, packaging, and installation checks.
 - [docs] root documents describe Windows capabilities and effects by default, with implementation and maintenance guidance in the Windows development guide; internal improvements may still be described at the root level.
 
 ### Fixed
 
-- [build] prevent false CI test failures caused by platform-specific temporary paths and leaked test exit codes.
-- [setup] fix Windows dependency preparation failures on runners with multiple tool installations.
+- [ci] prevent false CI test failures caused by platform-specific temporary paths and leaked test exit codes.
+- [ci] fix Windows dependency preparation failures on runners with multiple tool installations.
 - [setup] complete setup and preserve configured update channels with macOS's Bash 3.2, including invocations without positional arguments or skill selections.
 - [build] allow automatic release updates when `report-build` runs without arguments on Bash 3.2.
 
@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [build] tag-driven GitHub Actions tests on Linux/macOS and full Windows offline installer validation, with automatic EXE/checksum publication and changelog release notes after all platforms pass.
+- [ci] tag-driven GitHub Actions tests on Linux/macOS and full Windows offline installer validation, with automatic EXE/checksum publication and changelog release notes after all platforms pass.
 - [setup] native Windows GUI/CLI, source setup and automation, optional local report-building tools, and self-contained per-user offline installers.
 - [build] native report compilation, explicit administrator bundles with reviewed promotion, and canonical Slack notifications without Bash, WSL, or Docker.
 - [latex] form/Markdown headings and strike-through formatting, with consistent report headers and footers.

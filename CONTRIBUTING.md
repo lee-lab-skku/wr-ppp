@@ -229,7 +229,9 @@ Compatibility means that documented usage continues to work with its stated sema
 
 Maintain `CHANGELOG.md` using the Keep a Changelog structure.
 
-Begin every changelog item with the most relevant component marker: `[latex]`, `[template]`, `[build]`, `[setup]`, `[skill]`, or `[docs]`.
+Begin every changelog item with the most relevant component marker: `[latex]`, `[template]`, `[build]`, `[setup]`, `[skill]`, `[ci]`, or `[docs]`.
+Use `[ci]` for CI/CD workflows, automated validation, dependency caches, and release packaging or publication automation; use `[build]` for report compilation and artifact generation behavior.
+As the repository's responsibilities expand, extend this list when a distinct component needs its own marker, and document the new marker and its scope here in the same change.
 Describe notable user-facing differences rather than copying the commit log, and combine closely related commits into one entry when they deliver one change.
 Keep each version section incremental; do not copy beta or release-candidate entries into the stable section.
 
