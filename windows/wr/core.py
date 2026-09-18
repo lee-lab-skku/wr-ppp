@@ -585,6 +585,52 @@ _TEX_DEPENDENCY = re.compile(
 )
 
 
+def report_figure_paths(text):
+    """Return image arguments from ReportFigure/ReportFigurePair calls.
+
+    Captions may contain nested LaTeX groups, so a balanced-brace reader is
+    used instead of a regular expression over the complete command.
+    """
+    found = []
+    for command, count, path_indexes in (('ReportFigurePair', 6, (0, 3)),
+                                         ('ReportFigure', 4, (0,))):
+        marker = '\\' + command
+        offset = 0
+        while True:
+            start = text.find(marker, offset)
+            if start < 0:
+                break
+            cursor = start + len(marker)
+            # Do not treat a longer control sequence as this command.
+            if cursor < len(text) and text[cursor].isalpha():
+                offset = cursor
+                continue
+            arguments = []
+            valid = True
+            for _ in range(count):
+                while cursor < len(text) and text[cursor].isspace():
+                    cursor += 1
+                if cursor >= len(text) or text[cursor] != '{':
+                    valid = False
+                    break
+                depth, argument_start = 1, cursor + 1
+                cursor += 1
+                while cursor < len(text) and depth:
+                    if text[cursor] == '{' and (cursor == 0 or text[cursor - 1] != '\\'):
+                        depth += 1
+                    elif text[cursor] == '}' and (cursor == 0 or text[cursor - 1] != '\\'):
+                        depth -= 1
+                    cursor += 1
+                if depth:
+                    valid = False
+                    break
+                arguments.append(text[argument_start:cursor - 1])
+            if valid:
+                found.extend(arguments[index] for index in path_indexes)
+            offset = max(cursor, start + len(marker))
+    return found
+
+
 def stage_tex_dependencies(source, stage):
     """Copy only local files explicitly referenced by a TeX source tree."""
     root = Path(source).parent.resolve()
@@ -605,6 +651,25 @@ def stage_tex_dependencies(source, stage):
             text = current.read_text(encoding='utf-8-sig')
         except (OSError, UnicodeError):
             continue
+        # weekly-report.sty resolves these paths internally with
+        # \includegraphics, so they are not visible to _TEX_DEPENDENCY in the
+        # report source itself. Stage the original files explicitly.
+        for name in report_figure_paths(text):
+            relative = Path(name.strip().replace('\\', '/'))
+            if (not name.strip() or relative.is_absolute() or '..' in relative.parts or
+                    relative.suffix.lower() not in extensions['includegraphics']):
+                continue
+            dependency = root / relative
+            if not dependency.is_file():
+                raise ValueError(f'보고서 이미지 파일을 찾을 수 없습니다: {relative}')
+            if dependency.is_symlink() or getattr(dependency, 'is_junction', lambda: False)():
+                raise ValueError(f'연결 파일 대신 실제 이미지 파일을 사용하세요: {relative}')
+            resolved = dependency.resolve()
+            if not resolved.is_relative_to(root):
+                continue
+            target = Path(stage) / resolved.relative_to(root)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(resolved, target)
         for command, argument in _TEX_DEPENDENCY.findall(text):
             names = argument.split(',') if command in ('bibliography', 'usepackage') else [argument]
             for name in names:
@@ -680,6 +745,7 @@ def form_source(values, allow_styles=False):
     valid_positions = {'after_abstract', 'after_progress', 'after_problems', 'after_plans'}
     def figure_parts(position):
         generated = []
+        used_pairs = set()
         for item in figures:
             item_position = item.get('position', 'after_plans')
             if item_position not in valid_positions:
@@ -688,7 +754,29 @@ def form_source(values, allow_styles=False):
                 continue
             if not re.fullmatch(r'figures/[A-Za-z0-9_-]+\.(png|jpg|jpeg|pdf)', item['file']) or not re.fullmatch(r'[A-Za-z0-9_-]+', item['id']):
                 raise ValueError('그림 경로/식별자 형식이 올바르지 않습니다.')
-            generated.append(r'\ReportFigure{' + item['file'] + '}{' + rich_text(item['caption']) + '}{fig:' + item['id'] + '}{45mm}')
+            pair = item.get('pair_group')
+            if pair:
+                if pair in used_pairs:
+                    continue
+                members = sorted((f for f in figures if f.get('pair_group') == pair and
+                                  f.get('position', 'after_plans') == position),
+                                 key=lambda f: f.get('pair_order', 0))
+                if len(members) != 2:
+                    raise ValueError('나란히 배치할 그림은 정확히 두 장이어야 합니다.')
+                for member in members:
+                    if not re.fullmatch(r'figures/[A-Za-z0-9_-]+\.(png|jpg|jpeg|pdf)', member['file']):
+                        raise ValueError('그림 경로/식별자 형식이 올바르지 않습니다.')
+                generated.append(r'\ReportFigurePair{' + members[0]['file'] + '}{' +
+                                 rich_text(members[0].get('caption', '')) + '}{fig:' + members[0]['id'] + '}{' +
+                                 members[1]['file'] + '}{' + rich_text(members[1].get('caption', '')) +
+                                 '}{fig:' + members[1]['id'] + '}')
+                used_pairs.add(pair)
+            else:
+                height = int(item.get('height_mm', 45))
+                if not 15 <= height <= 120:
+                    raise ValueError('그림 높이는 15~120mm여야 합니다.')
+                generated.append(r'\ReportFigure{' + item['file'] + '}{' + rich_text(item['caption']) +
+                                 '}{fig:' + item['id'] + '}{' + str(height) + 'mm}')
         return generated
     parts = [header, r'\WRMarkdownBodyStyle', r'\begin{reportabstract}',
              markdown_to_latex(cleaned.get('abstract', ''), styles), r'\end{reportabstract}']

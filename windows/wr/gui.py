@@ -16,7 +16,7 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 import uuid
 from zoneinfo import ZoneInfo
 
-from . import admin, core
+from . import admin, core, visual_editor
 from .cli import notifications
 
 
@@ -33,6 +33,8 @@ class App(ttk.Frame):
         self.tables = []
         self.pending_figures = {}
         self.jobs = queue.Queue()
+        self.visual_updates = queue.Queue()
+        self.visual_servers = []
         self.busy = False
         self.manager = None
         self.selections = {}
@@ -62,6 +64,8 @@ class App(ttk.Frame):
             messagebox.showinfo('작업 중', '파일 생성 작업이 끝난 뒤 창을 닫아 주세요.')
             return
         if messagebox.askyesno('종료', '저장하지 않은 편집 내용은 사라집니다. 종료할까요?'):
+            for server in self.visual_servers:
+                server.stop()
             self.root.destroy()
 
     def guarded(self, action):
@@ -91,6 +95,11 @@ class App(ttk.Frame):
 
     def poll(self):
         try:
+            while True:
+                self.apply_visual_values(self.visual_updates.get_nowait())
+        except queue.Empty:
+            pass
+        try:
             done, result, error = self.jobs.get_nowait()
             self.busy = False
             if error:
@@ -116,7 +125,8 @@ class App(ttk.Frame):
         bar.pack(fill='x')
         for label, action in [('새 보고서', self.new_report), ('작성 파일 열기', self.open_form),
                               ('기존 .tex 열기', self.open_tex), ('템플릿 복사', self.copy_template),
-                              ('저장', self.save_report), ('Markdown → LaTeX', self.preview_latex),
+                              ('저장', self.save_report), ('시각 편집기', self.open_visual_editor),
+                              ('Markdown → LaTeX', self.preview_latex),
                               ('PDF 생성', self.build_report)]:
             self.button(bar, label, action)
         self.writer_mode = tk.StringVar(value='입력 화면으로 작성 중')
@@ -244,9 +254,49 @@ class App(ttk.Frame):
         self.editor_tabs.select(4)
         self.status.set('Markdown을 LaTeX로 변환했습니다. 저장·PDF 생성 때도 자동으로 다시 변환됩니다.')
 
+    def open_visual_editor(self):
+        if self.source:
+            raise ValueError('시각 편집기는 작성 데이터(.wr.json) 모드에서 사용할 수 있습니다.')
+        source = self.save_report()
+        if not source:
+            return
+        template = core.ROOT / 'assets' / 'editor.html'
+        if not template.is_file():
+            raise ValueError('시각 편집기 파일을 찾을 수 없습니다: ' + str(template))
+        for existing in self.visual_servers:
+            existing.stop()
+        self.visual_servers.clear()
+        server = visual_editor.VisualEditorServer(
+            self.form_file, template,
+            on_save=lambda values: self.visual_updates.put(values),
+            allow_user_styles=self.config.get('allow_user_styles', False),
+        )
+        self.visual_servers.append(server)
+        os.startfile(server.start())
+        self.status.set('시각 편집기를 열었습니다. 변경 내용은 자동 저장됩니다.')
+
+    def apply_visual_values(self, values):
+        if not self.form_file:
+            return
+        for key, variable in self.fields.items():
+            variable.set(values.get(key, ''))
+        for key in ('abstract', 'Progress', 'Problems', 'Plans'):
+            focused = self.root.focus_get()
+            if focused is self.texts[key]:
+                continue
+            self.texts[key].delete('1.0', 'end')
+            self.texts[key].insert('1.0', values.get(key, ''))
+        self.figures, self.tables = values.get('figures', []), values.get('tables', [])
+        self.pending_figures.clear()
+        self.status.set('시각 편집기의 변경 내용을 자동 저장했습니다.')
+
     def add_figure(self):
         if self.source:
             raise ValueError('원본 편집 모드에서는 LaTeX의 ReportFigure 명령을 사용하세요.')
+        # An image needs a durable report-relative destination immediately.
+        # Establish the .wr.json location before opening the image picker.
+        if not self.form_file and not self.save_report():
+            return
         name = filedialog.askopenfilename(filetypes=[('그림', '*.png *.jpg *.jpeg *.pdf')])
         if not name:
             return
@@ -266,8 +316,11 @@ class App(ttk.Frame):
             self.pending_figures[relative] = Path(name)
             self.figures.append({'file': relative, 'caption': caption.get(), 'id': identity,
                                  'position': labels[position.get()]})
+            # Copy the original and regenerate .wr.json/.tex now, rather than
+            # keeping the only usable copy at the external source path.
+            self.save_report()
             window.destroy()
-            self.status.set('그림을 추가했습니다: ' + position.get())
+            self.status.set('그림 원본을 저장하고 추가했습니다: ' + position.get())
         buttons = ttk.Frame(window)
         buttons.pack(fill='x', padx=8, pady=12)
         ttk.Button(buttons, text='추가', command=lambda: self.guarded(add)).pack(side='left')

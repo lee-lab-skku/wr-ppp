@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from wr import core, admin, skills
+from wr import core, admin, skills, visual_editor
 from wr.cli import notifications
 from pypdf import PdfReader, PdfWriter
 
@@ -194,6 +194,32 @@ class NativeTests(unittest.TestCase):
         source = core.form_source({'figures': [{'file': 'figures/legacy.png', 'id': 'legacy', 'caption': ''}]})
         self.assertGreater(source.index('{fig:legacy}'), source.index(r'\end{pppbox}', source.index(r'\begin{pppbox}{Plans}')))
 
+    def test_visual_editor_state_round_trip(self):
+        values = {'title': '제목', 'author': '작성자', 'project': '과제', 'abstract': '요약',
+                  'Progress': '진행', 'Problems': '문제', 'Plans': '계획',
+                  'tables': [{'caption': '보존', 'rows': [['A']]}],
+                  'figures': [{'file': 'figures/a.png', 'id': 'a', 'caption': '그림',
+                               'position': 'after_progress', 'height_mm': 62}]}
+        state = visual_editor.values_to_state(values, '2026-09-14')
+        restored = visual_editor.state_to_values(state, values)
+        for key in ('title', 'author', 'project', 'abstract', 'Progress', 'Problems', 'Plans', 'tables'):
+            self.assertEqual(restored[key], values[key])
+        self.assertEqual(restored['figures'][0]['height_mm'], 62)
+        self.assertEqual(restored['figures'][0]['position'], 'after_progress')
+
+    def test_visual_figure_height_and_pair_render(self):
+        figures = [
+            {'file': 'figures/a.png', 'id': 'a', 'caption': 'A', 'position': 'after_plans',
+             'pair_group': 'g', 'pair_order': 0},
+            {'file': 'figures/b.jpg', 'id': 'b', 'caption': 'B', 'position': 'after_plans',
+             'pair_group': 'g', 'pair_order': 1},
+            {'file': 'figures/c.pdf', 'id': 'c', 'caption': 'C', 'position': 'after_plans',
+             'height_mm': 73},
+        ]
+        source = core.form_source({'figures': figures})
+        self.assertIn(r'\ReportFigurePair{figures/a.png}{A}{fig:a}{figures/b.jpg}{B}{fig:b}', source)
+        self.assertIn(r'\ReportFigure{figures/c.pdf}{C}{fig:c}{73mm}', source)
+
     def test_invalid_figure_position_is_rejected(self):
         with self.assertRaises(ValueError):
             core.form_source({'figures': [{'file': 'figures/x.png', 'id': 'x', 'caption': '', 'position': 'inside'}]})
@@ -282,6 +308,35 @@ class NativeTests(unittest.TestCase):
         with patch.object(core, 'compile_tex', compile_report):
             core.build_report(tex, self.config)
         self.assertEqual(observed['files'], ['figures/chart.png', 'wr-input.tex'])
+
+    def test_report_stages_report_figure_and_pair_assets(self):
+        tex = self.storage / 'report.wr.tex'
+        tex.write_text(
+            r'\ReportFigure{figures/one.png}{Caption with \textbf{nested}}{fig:one}{45mm}' + '\n' +
+            r'\ReportFigurePair{figures/two.jpg}{Two}{fig:two}{figures/three.pdf}{Three}{fig:three}',
+            encoding='utf-8',
+        )
+        figures = self.storage / 'figures'
+        figures.mkdir()
+        for name in ('one.png', 'two.jpg', 'three.pdf'):
+            (figures / name).write_bytes(name.encode())
+        observed = {}
+
+        def compile_report(directory, source, config, definitions=''):
+            observed['files'] = sorted(str(path.relative_to(directory)).replace('\\', '/')
+                                       for path in Path(directory).rglob('*') if path.is_file())
+            return pdf()
+
+        with patch.object(core, 'compile_tex', compile_report):
+            core.build_report(tex, self.config)
+        self.assertEqual(observed['files'], [
+            'figures/one.png', 'figures/three.pdf', 'figures/two.jpg', 'wr-input.tex'])
+
+    def test_report_rejects_missing_report_figure_asset(self):
+        tex = self.storage / 'report.wr.tex'
+        tex.write_text(r'\ReportFigure{figures/missing.png}{Missing}{fig:missing}{45mm}', encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, '이미지 파일을 찾을 수 없습니다'):
+            core.build_report(tex, self.config)
 
     def test_duplicate_selection_rejected(self):
         self.rows.append(['entry', '2', 'b', 'B', 'required', 'included', str(self.source), 'selected'])
