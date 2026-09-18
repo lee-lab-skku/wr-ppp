@@ -10,11 +10,6 @@ function Resolve-WrPython {
         else { $candidate = (Get-Command $Python -CommandType Application -TotalCount 1 -ErrorAction Stop).Source }
     } elseif (Test-Path -LiteralPath (Join-Path $script:WrRoot '.venv\Scripts\python.exe') -PathType Leaf) {
         $candidate = Join-Path $script:WrRoot '.venv\Scripts\python.exe'
-    } elseif (Test-Path -LiteralPath (Join-Path $script:WrRoot '.venv\bin\python.exe') -PathType Leaf) {
-        # MSYS/MinGW Python creates the POSIX venv layout while still reporting
-        # sys.platform == win32 and supporting tkinter. Keep it usable when a
-        # standard Windows Python installation is not available.
-        $candidate = Join-Path $script:WrRoot '.venv\bin\python.exe'
     } elseif ($Bootstrap) {
         $launcher = Get-Command py.exe -CommandType Application -TotalCount 1 -ErrorAction SilentlyContinue
         if ($launcher) {
