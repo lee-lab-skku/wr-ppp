@@ -12,6 +12,16 @@ try {
     $source = Join-Path $qa 'portable-template\main.tex'
     [IO.Directory]::CreateDirectory((Split-Path -Parent $source)) | Out-Null
     Copy-Item -LiteralPath (Join-Path $script:WrRoot 'template.tex') -Destination $source
+    # template.tex intentionally demonstrates three report figures. The build
+    # now rejects missing report assets instead of silently printing figure
+    # placeholders, so the portable smoke test must provide real files too.
+    $figures = Join-Path (Split-Path -Parent $source) 'figures'
+    [IO.Directory]::CreateDirectory($figures) | Out-Null
+    $samplePdf = [Convert]::FromBase64String(
+        'JVBERi0xLjMKJeLjz9MKMSAwIG9iago8PAovUHJvZHVjZXIgKHB5cGRmKQo+PgplbmRvYmoKMiAwIG9iago8PAovVHlwZSAvUGFnZXMKL0NvdW50IDEKL0tpZHMgWyA0IDAgUiBdCj4+CmVuZG9iagozIDAgb2JqCjw8Ci9UeXBlIC9DYXRhbG9nCi9QYWdlcyAyIDAgUgo+PgplbmRvYmoKNCAwIG9iago8PAovVHlwZSAvUGFnZQovUmVzb3VyY2VzIDw8Cj4+Ci9NZWRpYUJveCBbIDAuMCAwLjAgMTAwIDEwMCBdCi9QYXJlbnQgMiAwIFIKPj4KZW5kb2JqCnhyZWYKMCA1CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDU0IDAwMDAwIG4gCjAwMDAwMDAxMTMgMDAwMDAgbiAKMDAwMDAwMDE2MiAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDUKL1Jvb3QgMyAwIFIKL0luZm8gMSAwIFIKPj4Kc3RhcnR4cmVmCjI1NgolJUVPRgo=')
+    foreach ($name in @('calibration-curve.pdf', 'rare-class-errors.pdf', 'seed-variance.pdf')) {
+        [IO.File]::WriteAllBytes((Join-Path $figures $name), $samplePdf)
+    }
     Invoke-WrChecked $app @('setup', '--pdf-output', (Join-Path $qa 'portable-output'))
     Invoke-WrChecked $app @('preflight')
     Invoke-WrChecked $app @('self-test', '--output', (Join-Path $qa 'portable-selftest.json'))
