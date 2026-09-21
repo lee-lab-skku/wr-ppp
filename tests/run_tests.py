@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-EDITOR = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE.parent / 'assets' / 'editor.html'
+EDITOR = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE.parent / 'report_editor' / 'assets' / 'editor.html'
 
 HARNESS = r"""
 <script>

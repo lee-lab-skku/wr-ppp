@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Fail if the editor's page model has drifted from weekly-report.sty.
 
-The preview is only trustworthy because it hardcodes the same numbers the
-class file uses. Those numbers live in another repo (lee-lab-skku/wr-ppp),
-so this check is what stops the two from quietly diverging.
+Check the shared editor against the style in this repository.
+Matching these constants does not guarantee identical browser and TeX pagination.
 
 Usage: verify_geometry.py [path/to/weekly-report.sty] [path/to/editor.html]
 """
@@ -12,8 +11,8 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_STY = Path.home() / 'lee-lab-skku' / 'wr-ppp' / 'weekly-report.sty'
-DEFAULT_HTML = HERE.parent / 'assets' / 'editor.html'
+DEFAULT_STY = HERE.parent / 'weekly-report.sty'
+DEFAULT_HTML = HERE / 'assets' / 'editor.html'
 
 
 def check(sty_path, html_path):

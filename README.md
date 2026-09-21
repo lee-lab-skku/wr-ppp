@@ -17,11 +17,13 @@ Exceed that limit only when essential research content cannot fit after all reas
 - Consistent formatting for prose, lists, equations, tables, and figures
 - Automatic reporting week, serial number, and page count
 - Docker-based PDF builds without a local TeX installation
+- An optional shared browser editor for supported report sources
 - A shared style file, so routine report writing is limited to the report source
 
 ## Requirements
 
 Linux/macOS use Bash and Docker; macOS compatibility is a source-level design target rather than a tested-platform guarantee.
+The optional local browser editor also needs Python 3.9 or newer on the host, using only its standard library.
 The native Windows offline installer includes the tools needed to generate reports without separate dependency installation.
 See the [Windows guide](windows/README.md) for source prerequisites and installation.
 For the Bash/Docker workflow, make sure that:
@@ -296,6 +298,42 @@ Keep any excess to the minimum necessary and explain the specific indispensable 
 A busy week, many projects, or a preference for more detail does not justify extra pages.
 An overlength report without that justification still needs revision.
 
+## Visual Editing
+
+The Docker workflow and the native Windows application share the same HTML editor.
+On Linux/macOS or WSL, start it from the repository with an existing report source:
+
+```bash
+python3 /path/to/wr-ppp/scripts/report-edit /path/to/report/main.tex --date 2026-09-21
+```
+
+The command opens a local browser session and prints its URL; use `--no-open` to open that URL yourself.
+Keep the terminal process running while editing, then stop it with Ctrl+C after saving.
+Edits are saved to `main.edited.tex` beside the source, leaving `main.tex` unchanged.
+Use `--output /path/to/report/another-name.tex` to choose a different new sibling file; existing output files are refused.
+Uploaded image originals go into the report's `figures/` directory.
+To resume later, pass the edited file as the source and choose another new output filename.
+The command is available directly from the checkout; `setup.sh` continues to install `report-build` and the selected skills.
+
+The existing LaTeX importer supports a subset of the template interfaces.
+A round-trip check refuses sources whose content or structure would be lost, including many customized reports and the fully commented example template.
+Keep refused reports in LaTeX; do not remove their content or comments merely to make the editor accept them.
+The browser preview is a layout aid, and matching page dimensions does not guarantee the same line or page breaks as XeLaTeX.
+Review the generated source and build the edited file through the usual Docker command:
+
+```bash
+cd /path/to/report
+report-build --here --date 2026-09-21 main.edited.tex
+```
+
+Use the same date for the editor preview and the PDF build.
+Check the actual PDF, references, and page count before replacing the original source with a reviewed revision.
+The native Windows application retains its form editor, PDF generation, and administrator screens; its **시각 편집기** button opens this shared browser editor with the existing `.wr.json` save workflow described in the [Windows guide](windows/README.md).
+
+For existing script-based integrations, `scripts/tex_to_state.py`, `state_to_tex.py`, `build_artifact.py`, `check_roundtrip.py`, and `verify_geometry.py` remain entry points to the common implementation.
+The duplicated `ppp-editor/` tree and root `SKILL.md` have been consolidated: use these root scripts and the installed `wr-wr` skill's visual-editing guidance instead of a separate `ppp-editor` skill link.
+Artifact HTML export remains available through `build_artifact.py`; the local workflow does not require an Artifact service or upload the report to one.
+
 ## AI-Assisted Workflow
 
 The optional `wr-wr` skill helps an agent work with any part of this report
@@ -309,7 +347,7 @@ For drafting, substantive revision, and content review, the skill reads the cano
 Before authoring or changing report LaTeX, it first checks the packages and configuration in `weekly-report.sty` and uses the available functionality where appropriate.
 The template includes commented examples for cross-references (`\cref`), units (`\si`, `\SI`), and chemical notation (`\ce`); these illustrate usage without restricting other supported commands, argument forms, or options.
 It applies relevant prompts with judgment and preserves useful author choices; matching the example's organization is not a review requirement.
-Its references provide task-specific procedures for source conventions, editorial judgment and evidence, and LaTeX and build validation.
+Its references provide task-specific procedures for source conventions, editorial judgment and evidence, optional visual editing, and LaTeX and build validation.
 During review, the agent must identify manually written figure, table, and equation numbers and correct them to label-based `cleveref` references when editing is in scope; review-only feedback must specify the correction.
 For an unreferenced figure, it must guide the author to a suitable place and context for a body reference, or add one when editing is authorized and the available material supports the connection.
 It checks the rendered page count and revises overlength drafts within the authorized scope; any unavoidable exception must be explained in the handoff.
@@ -404,6 +442,8 @@ The [automatic update option](#automatic-release-updates) may also be combined w
 - `template.tex`: the illustrative source copied to `main.tex` for a new report
 - `weekly-report.sty`: shared layout, automatic values, and reusable helpers
 - `scripts/report-build`: canonical implementation of the installed build command
+- `scripts/report-edit`: local browser editing entry point for the Docker workflow
+- `report_editor/`: common HTML, editor transport, and LaTeX conversion tools
 - `scripts/report-metadata.sh`: source-compatible report date and reporting-week CLI
 - `scripts/setup.sh`: saves the build configuration and links `report-build`
 - `scripts/test.sh`: verifies the setup through the canonical build command

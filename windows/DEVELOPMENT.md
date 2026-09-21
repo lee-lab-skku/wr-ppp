@@ -17,6 +17,11 @@ Keep the shared report policy, plan/manifest formats, publication safety, and sk
 Directory publication locks cover both PDF and history destinations and revalidate source fingerprints after acquisition; never automatically steal a NAS lock.
 The Git release updater remains specific to Bash; native Windows updates are manual.
 
+The native GUI remains responsible for its report form, builds, and administrator screens.
+Its visual-editor adapter in `wr/visual_editor.py` converts `.wr.json` values and persists native form output; it delegates HTTP serving and browser assets to the root `report_editor` package.
+Keep that package independent of Windows modules and preserve the existing native save callbacks when changing the adapter.
+PyInstaller must analyze both the Windows and repository import roots and bundle `report_editor/assets/editor.html` at its package-relative location.
+
 PowerShell scripts containing non-ASCII literals require UTF-8 with BOM for Windows PowerShell 5.1; otherwise keep their source ASCII.
 
 ## Validation

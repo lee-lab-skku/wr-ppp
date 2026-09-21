@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [build] provide a shared local HTML editor entry point for the Docker report workflow, retaining the existing import guard and writing edits to a separate TeX source.
+
+### Changed
+
+- [build] consolidate editor assets, conversion tools, and local browser transport while retaining the Windows native application's form and save workflow.
+- [skill] integrate visual-editing guidance into `wr-wr` and replace the duplicate standalone editor tree with shared tools and compatibility entry points.
+
 ## [1.4.0] &mdash; 2026-09-16
 
 ### Changed

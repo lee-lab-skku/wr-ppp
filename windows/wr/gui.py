@@ -17,6 +17,7 @@ import uuid
 from zoneinfo import ZoneInfo
 
 from . import admin, core, visual_editor
+from report_editor import TEMPLATE
 from .cli import notifications
 
 
@@ -260,7 +261,7 @@ class App(ttk.Frame):
         source = self.save_report()
         if not source:
             return
-        template = core.ROOT / 'assets' / 'editor.html'
+        template = TEMPLATE
         if not template.is_file():
             raise ValueError('시각 편집기 파일을 찾을 수 없습니다: ' + str(template))
         for existing in self.visual_servers:

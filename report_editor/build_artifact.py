@@ -13,14 +13,14 @@ MARK = '<script id="state-json" type="application/json">'
 def build(state, template_html):
     start = template_html.index(MARK) + len(MARK)
     end = template_html.index('</script>', start)
-    body = json.dumps(state, ensure_ascii=False, indent=1)
+    body = json.dumps(state, ensure_ascii=False, indent=1).replace('</', '<\\/')
     return template_html[:start] + '\n' + body + '\n' + template_html[end:]
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    tpl = Path(__file__).resolve().parent.parent / 'assets' / 'editor.html'
+    tpl = Path(__file__).resolve().parent / 'assets' / 'editor.html'
     html = build(json.load(open(sys.argv[1], encoding='utf-8')), tpl.read_text(encoding='utf-8'))
     if len(sys.argv) > 2:
         Path(sys.argv[2]).write_text(html, encoding='utf-8')

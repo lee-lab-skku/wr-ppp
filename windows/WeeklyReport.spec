@@ -6,7 +6,7 @@ repo = Path(SPECPATH).parent
 datas = [(str(repo / name), str(Path(name).parent)) for name in
          ('template.tex', 'weekly-report.sty', 'README.md', 'CONTRIBUTING.md',
           'windows/README.md', 'windows/install-tex.ps1', 'windows/common.ps1', 'scripts/notify-held',
-          'assets/editor.html')]
+          'report_editor/assets/editor.html')]
 datas.append((str(repo / 'skills'), 'skills'))
 binaries, hiddenimports = [], ['getpass', 'urllib.request', 'urllib.error']
 for package in ('tzdata', 'pypdf'):
@@ -14,7 +14,7 @@ for package in ('tzdata', 'pypdf'):
     datas += data
     binaries += binary
     hiddenimports += hidden
-a = Analysis([str(repo / 'windows/weekly_report.py')], pathex=[str(repo / 'windows')],
+a = Analysis([str(repo / 'windows/weekly_report.py')], pathex=[str(repo / 'windows'), str(repo)],
              binaries=binaries, datas=datas, hiddenimports=hiddenimports,
              hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False)
 pyz = PYZ(a.pure)

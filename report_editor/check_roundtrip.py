@@ -11,12 +11,11 @@ Exit:  0 = safe to edit, 1 = would lose content
 """
 import difflib
 import re
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+from .tex_to_state import convert
+from .state_to_tex import render
 
 # constructs the state model has no room for; each one is content that would vanish
 UNSUPPORTED = [
@@ -34,16 +33,8 @@ def normalise(text):
     return re.sub(r'\s+', ' ', text).strip()
 
 
-def main():
-    if len(sys.argv) < 2:
-        sys.exit(__doc__)
-    src = Path(sys.argv[1])
-    floor = 0.99
-    for a in sys.argv[2:]:
-        if a.startswith('--min'):
-            floor = float(a.split('=', 1)[1] if '=' in a else sys.argv[sys.argv.index(a) + 1])
-
-    original = src.read_text(encoding='utf-8')
+def assess(original):
+    """Return the existing fidelity score and unsupported constructs."""
     preamble, _, body = original.partition(r'\begin{document}')
 
     found = [why for pat, why in UNSUPPORTED if re.search(pat, body)]
@@ -57,18 +48,25 @@ def main():
         if pkg not in ('weekly-report', 'siunitx'):
             found.append(f'\\usepackage{{{pkg}}} (the exporter only emits weekly-report + siunitx)')
 
-    with tempfile.TemporaryDirectory() as tmp:
-        state, back = Path(tmp) / 'state.json', Path(tmp) / 'back.tex'
-        for cmd in ([sys.executable, HERE / 'tex_to_state.py', src, state],
-                    [sys.executable, HERE / 'state_to_tex.py', state, back]):
-            r = subprocess.run([str(c) for c in cmd], capture_output=True, text=True)
-            if r.returncode:
-                print('FAIL: conversion errored\n' + r.stderr)
-                return 1
-        ratio = difflib.SequenceMatcher(None, normalise(body),
-                                        normalise(back.read_text(encoding='utf-8')
-                                                  .split(r'\begin{document}', 1)[-1])).ratio()
+    back = render(convert(original))
+    ratio = difflib.SequenceMatcher(None, normalise(body),
+                                    normalise(back.split(r'\begin{document}', 1)[-1])).ratio()
+    return ratio, found
 
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    src = Path(sys.argv[1])
+    floor = 0.99
+    for a in sys.argv[2:]:
+        if a.startswith('--min'):
+            floor = float(a.split('=', 1)[1] if '=' in a else sys.argv[sys.argv.index(a) + 1])
+    try:
+        ratio, found = assess(src.read_text(encoding='utf-8'))
+    except (ValueError, KeyError) as error:
+        print('FAIL: conversion errored\n' + str(error))
+        return 1
     print(f'round-trip fidelity: {ratio*100:.1f}%  (floor {floor*100:.0f}%)')
     for why in found:
         print('  unsupported:', why)

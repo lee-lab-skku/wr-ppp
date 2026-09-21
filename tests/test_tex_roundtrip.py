@@ -4,7 +4,7 @@ import importlib.util
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('tex_to_state', ROOT / 'scripts' / 'tex_to_state.py')
+spec = importlib.util.spec_from_file_location('tex_to_state', ROOT / 'report_editor' / 'tex_to_state.py')
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 

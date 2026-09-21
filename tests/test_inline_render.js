@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const editor = fs.readFileSync(path.join(__dirname, '..', 'assets', 'editor.html'), 'utf8');
+const editor = fs.readFileSync(path.join(__dirname, '..', 'report_editor', 'assets', 'editor.html'), 'utf8');
 const helpers = editor.slice(editor.indexOf('  function escapeHtml'), editor.indexOf('  function mdToHtml'));
 global.window = {};
 eval(helpers);

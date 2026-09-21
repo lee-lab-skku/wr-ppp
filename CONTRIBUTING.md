@@ -16,6 +16,13 @@ Use the repository sources according to their roles:
 - `weekly-report.sty` defines the shared LaTeX interfaces and presentation.
 - `template.tex` provides contextual writing prompts and an adaptable worked example.
 
+The Docker workflow is the primary report path; native Windows adapts shared capabilities to its GUI and build environment.
+Keep HTML editing resources, local browser transport, and portable LaTeX conversion in `report_editor/`, without imports from `windows/` or a dependency on an Artifact provider.
+The TeX adapter exposes editing through `scripts/report-edit` and leaves PDF compilation to `report-build`.
+Windows retains its native application and owns form-model conversion and persistence through an adapter to the common editor.
+Keep one HTML source and one implementation of each conversion tool; root script entry points delegate to the shared package.
+Preserve the import fidelity gate and original source when exposing the editor to the Docker workflow; do not broaden the supported LaTeX subset as part of structural refactoring.
+
 Install command and skill links to canonical repository sources rather than generating duplicate implementations.
 Routine report content should not require changes to the template, style, or shared build scripts.
 
@@ -185,6 +192,9 @@ When changing report guidance, skills, or the illustrative template, validate ag
 Page-limit exceptions belong in the authoring and review judgment, with a specific necessity rationale; deterministic builders must preserve complete content rather than truncate reports.
 
 Validate in proportion to the change and its risks.
+For shared editor changes, exercise both the TeX and Windows form adapters with `python3 -B -m unittest discover -s tests -p 'test_editor.py' -v`.
+Run `python3 scripts/verify_geometry.py`, `node tests/test_inline_render.js`, and `python3 tests/run_tests.py` for layout constants, inline rendering, and browser behavior respectively; the browser check needs Chrome/Chromium.
+Common Python tests use only the standard library, including local HTTP requests, and do not compile TeX or open a browser.
 Exercise the affected workflow and relevant error behavior, confirm documentation against the canonical sources, and compile the example when build or LaTeX behavior changes.
 Skill changes should cover representative activation, reference routing, all shared repository-resolver entry points, and affected report tasks.
 
