@@ -1,19 +1,21 @@
-# Windows native edition
+# Windows Native Edition
 
-Docker, WSL, Bash 없이 실행하는 추가 구현입니다. 기존 Linux/macOS 스크립트와 템플릿은 유지합니다.
+The native Windows application runs without Docker, WSL, or Bash.
+It supplements the existing Linux/macOS scripts and shared report template.
 
-## 일반 사용자 설치
+## Install the Application
 
-GitHub Releases에 Windows 설치 파일이 첨부된 릴리스에서 `WeeklyReport-<버전>-Setup.exe`를 다운로드하여 실행합니다.
-바탕화면 바로가기 옵션을 유지하고 설치한 뒤 **Weekly Report** 아이콘으로 실행합니다.
-Python과 TinyTeX가 포함되어 별도 설치가 필요 없습니다. Windows 10/11 x64용이며 현재 사용자 계정에 설치됩니다.
-Windows 설정의 설치된 앱에서 제거할 수 있습니다. 사용자 설정과 작성한 보고서는 보존됩니다.
-설치 파일에는 아직 코드 서명이 없습니다.
+Download and run `WeeklyReport-<version>-Setup.exe` from a GitHub Release that includes a Windows installer.
+Keep the desktop shortcut option selected and launch **Weekly Report** after installation.
+Python and TinyTeX are included, so no separate installation is required.
+The installer supports Windows 10/11 x64 and installs for the current user.
+Uninstall through Windows Settings; user configuration and authored reports are preserved.
+The installer is not currently code-signed.
 
-## 소스 코드에서 실행
+## Run from Source
 
-Windows PowerShell 5.1 이상 또는 PowerShell 7, Windows용 Python 3.11 이상(Tcl/Tk, pip, venv 포함)이 필요합니다.
-저장소 루트에서 다음을 실행합니다.
+Use Windows PowerShell 5.1 or newer, or PowerShell 7, and native Windows Python 3.11 or newer with Tcl/Tk, pip, and venv.
+Run these commands from the repository root:
 
 ```powershell
 .\Windows-Setup.ps1
@@ -21,58 +23,106 @@ Windows PowerShell 5.1 이상 또는 PowerShell 7, Windows용 Python 3.11 이상
 .\Start-Weekly-Report.ps1
 ```
 
-Python launcher를 사용할 수 없으면 `Windows-Setup.ps1 -Python 'C:\Python313\python.exe'`처럼 지정합니다.
-설치는 저장소 `.venv`를 만들거나 재사용하며 입력 대기 없이 종료합니다.
-기존 비 Windows 가상환경은 보존하고 오류를 내므로 먼저 이름을 바꾸고 다시 실행하세요.
-TinyTeX는 Python에 포함되는 패키지가 아니라 별도로 준비하는 TeX 배포판입니다.
-`install-tex.ps1`은 프로젝트 `.runtime/TinyTeX`에 설치하며, 기존 Windows TeX Live가 있다면 이 단계를 생략하고 앱 설정에 `bin/windows` 경로를 지정할 수 있습니다.
-시스템 PATH와 다른 TeX 설치는 변경하지 않습니다.
+If the Python launcher is unavailable, specify an interpreter with `Windows-Setup.ps1 -Python 'C:\Python313\python.exe'`.
+Setup creates or reuses the repository's `.venv` and finishes without interactive prompts.
+An existing non-Windows virtual environment is preserved and reported as an error; rename it before retrying.
+TinyTeX is a separate TeX distribution, not a package included with Python.
+`install-tex.ps1` installs it under the project's `.runtime/TinyTeX`.
+If Windows TeX Live is already installed, skip this step and select its `bin/windows` directory in the application settings.
+Setup does not change the system PATH or other TeX installations.
 
-기존 `Windows-Setup.cmd`와 `Start-Weekly-Report.cmd`는 제거되었습니다.
-소스 사용자는 같은 이름의 `.ps1`로 전환하세요.
-설치 EXE와 바탕화면 바로가기는 PowerShell 런처 없이 직접 실행됩니다.
-실행 정책이 스크립트를 차단하면 해당 호출에만 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Windows-Setup.ps1` 형식을 사용하세요.
+The former `Windows-Setup.cmd` and `Start-Weekly-Report.cmd` launchers have been removed.
+Source users should use the corresponding `.ps1` files.
+The installed executable and desktop shortcut run directly without these PowerShell launchers.
+If execution policy blocks a script, use `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Windows-Setup.ps1` for that invocation only.
 
-`Start-Weekly-Report.ps1`은 저장소 가상환경을 사용하며, 인수가 없으면 GUI를 엽니다.
-인수를 주면 기존 Python CLI로 그대로 전달하고 종료 코드와 stdout/stderr를 보존합니다.
-다른 작업 폴더에서 절대 경로로 호출해도 동작하며 상대 입력 경로는 호출한 폴더 기준입니다.
-기존 `WR_CONFIG` 환경 변수는 덮어쓰지 않습니다.
+`Start-Weekly-Report.ps1` uses the repository's virtual environment and opens the GUI when called without arguments.
+Arguments are passed to the Python CLI, preserving its exit code and stdout/stderr.
+The launcher also works through an absolute path from another working directory; relative input paths remain relative to the caller's directory.
+An existing `WR_CONFIG` environment variable is preserved.
 
-## 작성
+## Write a Report
 
-입력 화면에서 제목·이름·프로젝트·요약·PPP를 작성합니다. 그림과 CSV 표를 추가할 수 있습니다. 그림을 추가할 때 Abstract 뒤, Progress 뒤, Problems 뒤, Plans 뒤 중 삽입 위치를 선택합니다. 이전 버전에서 저장한 위치 정보 없는 그림은 Plans 뒤에 배치됩니다. 저장 시 `.wr.json`과 생성된 `.wr.tex`가 만들어집니다. 그림은 상대 경로의 `figures` 폴더에 복사됩니다. 보고서마다 별도 폴더를 사용하세요. 폴더명이 PDF 이름이 됩니다.
+Enter the title, author, project, abstract, and PPP content in the report form.
+You can add figures and CSV tables.
+Choose whether each figure appears after the abstract, Progress, Problems, or Plans.
+Figures saved by earlier versions without position information appear after Plans.
+Saving creates `.wr.json` data and generated `.wr.tex` source.
+Figures are copied into the report's relative `figures` directory.
+Use a separate directory for each report; its name determines the PDF filename.
 
-**시각 편집기**는 현재 작성 데이터를 저장한 뒤 기본 브라우저에 A4 미리보기를 엽니다. 본문을 입력하면 즉시 화면 높이에 반영되고 약 300ms 뒤 `.wr.json`과 `.wr.tex`에 자동 저장됩니다. 그림을 끌어 놓거나 선택하여 추가하고, 한 장의 높이를 15~120mm로 조절하거나 두 장을 나란히 묶을 수 있습니다. 이미지 원본은 보고서의 `figures` 폴더에 저장됩니다. 시각 편집기 창은 앱이 실행 중인 동안 사용해야 합니다.
+The **Visual editor** button saves the current form and opens an A4 preview in the default browser.
+Text edits immediately affect the displayed height and are saved to `.wr.json` and `.wr.tex` after approximately 300 ms.
+Add images by dropping or selecting them, adjust a single figure's height from 15 to 120 mm, or place two figures side by side.
+Original images are stored in the report's `figures` directory.
+Keep the application running while using the browser editor.
+The interface currently uses Korean labels; the English control names in this guide describe their functions.
 
-HTML 편집 화면은 [Docker 경로의 시각 편집기](../README.md#visual-editing)와 공통으로 사용합니다.
-Windows의 기존 입력 화면, 파일 저장, PDF 생성 및 관리자 기능은 그대로 사용하며, 시각 편집기의 변경사항도 기존 Windows 작성 파일에 저장됩니다.
-브라우저 미리보기와 실제 PDF의 줄바꿈·페이지 나눔은 다를 수 있으므로 최종 PDF를 확인하세요.
+The HTML editing interface is shared with the [Docker workflow's visual editor](../README.md#visual-editing).
+The native form, file saving, PDF generation, and administrator screens remain available, and browser edits use the existing Windows report files.
+Line and page breaks may differ between the browser preview and the generated PDF; inspect the final PDF.
 
-일반 문장 안의 수식은 `$a+b$`, 별도 줄의 수식은 `$$E=mc^2$$`처럼 입력합니다. 수식 밖의 `%`, `&`, `_` 같은 문자는 자동 처리됩니다. 닫히지 않은 수식과 파일·문서 조작 명령은 저장 단계에서 거절됩니다.
+Use `$a+b$` for inline mathematics and `$$E=mc^2$$` for display mathematics.
+Characters such as `%`, `&`, and `_` outside math are handled automatically.
+Unclosed math expressions and file or document manipulation commands are rejected when saving.
 
-요약·Progress·Problems·Plans 입력창은 Markdown을 지원합니다. `## 소제목`은 번호 없는 소제목, `- 항목`은 글머리표, `1. 항목`은 번호 목록, `**굵게**`, `*기울임*`, `` `코드` ``, `[이름](https://주소)`는 해당 LaTeX 표현으로 바뀝니다. **Markdown → LaTeX** 버튼을 누르면 결과를 LaTeX 탭에서 확인할 수 있습니다. 저장과 PDF 생성 때도 같은 변환을 자동 적용합니다. 원본 LaTeX 명령을 Markdown 입력창에 직접 넣으면 문자로 처리됩니다.
+The abstract and PPP input fields support Markdown.
+`## Heading` creates an unnumbered heading, `- Item` a bulleted list, and `1. Item` a numbered list.
+`**bold**`, `*italic*`, `` `code` ``, and `[label](https://example.com)` are converted to their LaTeX equivalents.
+Use **Markdown &rightarrow; LaTeX** to inspect the result in the LaTeX tab.
+The same conversion runs when saving or building a PDF.
+Raw LaTeX entered into Markdown fields is treated as text.
 
-Markdown 제목의 숫자는 자동으로 생성하지 않습니다. `# 1.1 제목`처럼 사용자가 입력한 번호만 표시됩니다. `<style>...</style>`은 기본적으로 제거하고 기존 LaTeX 템플릿 서식을 적용합니다. 나중에 설정의 **사용자 Markdown 스타일 허용 (잠금 해제)**을 켜면 제한된 CSS를 LaTeX 설정으로 변환합니다. 잠금 해제 시 `@page`의 A4 여백, `body`의 글자 크기·줄 간격, `h1`~`h3`의 크기·줄 간격·여백, `p`의 문단 간격, `table`과 `th, td`의 크기·여백·셀 간격을 지원합니다. 파이프 표는 스타일 잠금 상태와 관계없이 LaTeX 표로 변환합니다. Markdown 이미지 경로는 자동으로 파일을 가져오지 못하므로 변환 결과에 첨부 필요 표시를 남기며, 실제 파일은 **그림 추가**로 선택합니다.
+Markdown heading numbers are not generated automatically; only numbers explicitly entered, such as `# 1.1 Heading`, are shown.
+By default, `<style>...</style>` blocks are removed and the shared LaTeX template styling is used.
+Enable **Allow user Markdown styles (unlock)** in settings to convert a supported subset of CSS into LaTeX settings.
+Supported properties cover A4 margins in `@page`, body font size and line spacing, heading size/spacing/margins for `h1` through `h3`, paragraph spacing, and size/spacing/cell padding for `table`, `th`, and `td`.
+Pipe tables are converted regardless of the style-lock setting.
+Markdown image paths do not import files automatically; the generated output marks them as requiring attachment.
+Use **Add figure** to select the actual files.
 
-입력창 위의 서식 도구막대에서 글꼴(기본·명조·고딕·고정폭), 8–16pt 크기, 굵게, 기울임, 밑줄, 취소선, 코드, 링크, 불릿, 번호 목록과 3단계 소제목을 적용할 수 있습니다. 글자 서식은 한 문단 안의 텍스트를 선택한 뒤 적용합니다. 서식 표시는 작성 데이터에 함께 저장되고 기존 LaTeX 템플릿 안에서 변환됩니다.
+The formatting toolbar supports font families (default, serif, sans serif, and monospace), sizes from 8 to 16 pt, bold, italic, underline, strike-through, code, links, bullets, numbered lists, and three heading levels.
+Select text within one paragraph before applying character formatting.
+Formatting is stored in the report data and rendered within the shared LaTeX template.
 
-기존 `.tex`는 원본 편집 모드로 열 수 있습니다. 주석과 사용자 정의 코드를 유지합니다. 임의의 LaTeX를 폼으로 역변환하지 않으며, 원본 편집 모드에서는 폼 값이 적용되지 않습니다. 그림은 폼에서 삽입 위치를 고를 수 있고 표는 PPP 뒤에 배치됩니다. 더 자유로운 배치는 원본 모드를 사용하세요.
+Open an existing `.tex` file in source-editing mode to preserve its comments and custom code.
+Arbitrary LaTeX is not converted back into form fields, and form values are not applied in source-editing mode.
+The form allows figure-position selection and places tables after the PPP sections.
+Use source-editing mode for more flexible placement.
 
-날짜·일련번호·현재 폴더 저장 옵션을 지원합니다. 2페이지 초과는 경고하며 페이지나 내용을 자르지 않습니다. Windows 환경에서 생성하는 폼 소스에는 `kotex`를 추가합니다. 기존 소스에는 자동으로 패키지를 삽입하지 않습니다.
+The application supports report dates, serial numbers, and saving the PDF in the current directory.
+Reports longer than two pages produce a warning; content and pages are not truncated.
+Form-generated Windows sources include `kotex`; existing sources do not receive packages automatically.
 
-## 관리자
+## Administrator Workflow
 
-설정에서 최종 합본 출력과 선택적 관리자 데이터 폴더를 지정합니다. 구성원 설정에서 저장소·시간대와 구성원 ID, 이름, 순서, 필수 여부, 상대 검색 폴더를 입력합니다. NAS/UNC 경로는 현재 사용자에게 접근 권한이 있어야 합니다.
+Configure the final bundle output and optional administrator data directory in settings.
+Enter storage roots, time zones, and each member's ID, name, order, required status, and relative search directory.
+The current Windows user must have access to any NAS or UNC paths.
 
-보고서를 검색한 뒤 구성원을 더블클릭하여 후보를 명시적으로 선택합니다. PDF 확인으로 내용과 페이지 수를 검토합니다. 수정 시각만으로 자동 선택하지 않습니다. **초안 생성 → PDF 및 문제 확인 → 검토 후 확정** 순서로 진행합니다. 초안 이후 계획이나 파일 내용이 바뀌면 확정이 거절됩니다.
+After discovery, double-click a member to select a candidate explicitly.
+Inspect PDFs for content and page count; modification time alone does not select a report.
+Follow **Create draft &rightarrow; inspect PDFs and issues &rightarrow; confirm after review**.
+Changes to the plan or source files after draft creation invalidate promotion.
 
-기존 TOML 구성원 설정과 `admin-wr-plan/v1`, `admin-wr-bundle/v1` TSV 형식을 지원합니다. 기존 Linux 절대 경로는 Windows 경로로 직접 다시 지정해야 합니다. 파일을 자동 이동하지 않습니다. 이력은 외부 설정 위치, 저장소 로컬, 기존 최종 출력의 순서로 누락 파일에만 fallback합니다. 손상되거나 해시가 다른 이력은 우회하지 않고 검토 대상으로 표시합니다.
+The application supports the existing TOML member configuration and `admin-wr-plan/v1` and `admin-wr-bundle/v1` TSV formats.
+Replace Linux absolute paths with Windows paths explicitly; files are not moved automatically.
+History lookup falls back from configured external storage to repository-local storage and then legacy final-output storage only when files are missing.
+Invalid records or mismatched hashes require review rather than being bypassed.
 
-표지는 기존 LaTeX 자산으로 생성하며 전체 이력을 유지합니다. 한 페이지에 들어가지 않으면 실패합니다. 원본 PDF는 pypdf로 모든 페이지와 페이지 크기를 유지하여 합칩니다. 과거 상태는 포함/예외/필수 누락/선택 미포함/불명으로 구분합니다.
+The cover uses the existing LaTeX asset and retains the full history.
+Generation fails if the cover cannot fit on one page.
+Source PDFs are combined with pypdf while preserving every page and its dimensions.
+Historical states distinguish included, exceptional, required-missing, optional-not-included, and unknown submissions.
 
-Slack 기능은 기존 Python 구현을 재사용합니다. 설정은 발송하지 않습니다. 필수 누락이 있는 초안에서 보류와 발송을 확인한 경우에만 보냅니다. 성공 중복 방지 및 불확실한 실패의 자동 재시도 금지를 유지합니다. Webhook은 관리자 데이터 폴더의 `slack-webhook.url`에 저장되므로 해당 폴더는 본인 또는 허가된 관리자만 읽을 수 있도록 Windows/NAS 접근 권한을 설정하세요.
+Slack notifications reuse the existing Python implementation.
+Configuration does not send a message.
+Sending requires confirmation of both holding the bundle and notifying about missing required reports in a draft.
+Successful sends are deduplicated, and uncertain failures are never retried automatically.
+The webhook is stored in `slack-webhook.url` under the administrator data directory.
+Use Windows or NAS access controls to restrict that directory to you and authorized administrators.
 
-## CLI / 기존 AI 워크플로 연결
+## CLI and AI Workflows
 
 ```powershell
 .\Start-Weekly-Report.ps1 setup --pdf-output C:\Reports --tex-bin C:\texlive\2026\bin\windows
@@ -88,21 +138,31 @@ Slack 기능은 기존 Python 구현을 재사용합니다. 설정은 발송하�
 .\Start-Weekly-Report.ps1 notify-held --manifest C:\Review\draft\.manifests\2026-09-W1.manifest.tsv
 ```
 
-Windows에서는 기존 스킬의 셸 명령을 위의 동명 하위 명령으로 대체하여 사용합니다. 작성·근거 검토·후보 판단은 기존 스킬의 정책대로 외부 AI 에이전트가 수행하며 앱 내부 AI API는 추가하지 않았습니다. 설정의 **AI 스킬 등록** 또는 `install-skills --services agents,claude,antigravity --admin`으로 기존 스킬의 링크를 등록합니다. 등록은 먼저 심볼릭 링크를 시도하고 권한이 없으면 Windows junction을 사용하므로 개발자 모드가 필수는 아닙니다. 충돌 항목은 기본적으로 보존하며, `--replace-existing`은 파일/링크만 인접 백업 후 교체합니다. 일반 디렉터리는 교체하지 않습니다. 등록 중 실패하면 링크 변경을 되돌립니다.
+On Windows, replace the skills' shell commands with the corresponding subcommands above.
+External AI agents handle writing, evidence review, and candidate selection under the existing skill policies; the application does not embed an AI API.
+Register skill links through **Register AI skills** in settings or `install-skills --services agents,claude,antigravity --admin`.
+Registration tries symbolic links first and falls back to Windows junctions when permissions prevent them, so Developer Mode is not required.
+Conflicting entries are preserved by default.
+`--replace-existing` backs up and replaces only files or links; ordinary directories are never replaced.
+If installation fails, link changes are rolled back.
 
-### VS Code에서 AI 스킬 사용
+### Use AI Skills in VS Code
 
-소스 체크아웃을 VS Code로 열어 사용하는 경우 먼저 `Windows-Setup.ps1`을 실행해 `.venv`를 준비하고 `Start-Weekly-Report.ps1 preflight`가 성공하는지 확인합니다. 그다음 두 스킬을 Codex의 공용 에이전트 경로와 Claude 경로에 등록합니다.
+For a source checkout opened in VS Code, first run `Windows-Setup.ps1` to prepare `.venv` and confirm that `Start-Weekly-Report.ps1 preflight` succeeds.
+Then register the skills in the user directories for your chosen agents.
 
-클론한 저장소에서 다음 대화형 등록 프로그램을 실행하면 `1. Codex` 또는 `2. Claude`를 선택할 수 있습니다. 선택한 AI의 사용자 스킬 경로에 `wr-wr`와 `admin-wr`를 모두 연결하며 다른 AI 경로는 변경하지 않습니다. 별도 의존성 설치는 필요하지 않습니다.
+Run the interactive registration program from the cloned repository and select `1. Codex` or `2. Claude`.
+It links both `wr-wr` and `admin-wr` into the selected agent's user skill directory and leaves other agent directories unchanged.
+No additional dependencies are required.
 
 ```powershell
 python .\windows\register_skills.py
 ```
 
-Python 명령이 여러 개라면 `py .\windows\register_skills.py`도 사용할 수 있습니다. 등록은 저장소의 스킬 원본을 가리키므로 같은 체크아웃을 `git pull`로 갱신하면 연결된 스킬에도 반영됩니다.
+If several Python commands are available, you can also use `py .\windows\register_skills.py`.
+The links point to the repository's canonical skill sources, so updating that checkout with `git pull` also updates the linked skills.
 
-기존 CLI로 여러 AI에 동시에 등록할 수도 있습니다.
+To register multiple agents at once, use the existing CLI:
 
 ```powershell
 .\Windows-Setup.ps1
@@ -110,27 +170,39 @@ Python 명령이 여러 개라면 `py .\windows\register_skills.py`도 사용할
 .\Start-Weekly-Report.ps1 install-skills --services agents,claude --admin
 ```
 
-설치 EXE를 사용하는 경우에는 설치 폴더의 `WeeklyReportCLI.exe`에 같은 하위 명령을 전달합니다. 등록 후 VS Code의 AI 확장을 다시 시작하여 스킬 목록을 새로 읽게 합니다. `wr-wr`와 `admin-wr`는 설치된 `SKILL.md`의 실제 대상 경로에서 리소스 루트를 찾고, 소스 체크아웃이면 `Start-Weekly-Report.ps1`, 설치본이면 `_internal` 옆의 `WeeklyReportCLI.exe`를 사용합니다. Windows에서는 스킬 참고 문서의 Bash, Docker, `/tmp`, `.local-config` 예제를 실행하지 않습니다.
+For an installed application, pass the same subcommands to `WeeklyReportCLI.exe` in the installation directory.
+Restart the VS Code AI extension after registration so it reloads the skills.
+Both skills resolve the installed `SKILL.md` link to locate their resource root.
+They use `Start-Weekly-Report.ps1` for source checkouts and `WeeklyReportCLI.exe` beside `_internal` for packaged installations.
+Do not run the references' Bash, Docker, `/tmp`, or `.local-config` examples on native Windows.
 
-`codex`, `gemini`, `copilot`은 `agents`의 별칭이며 동일 대상은 한 번만 설치합니다.
-등록 도중 사용자가 바꾼 항목은 롤백에서 보존하고, 복원하지 못한 백업의 경로를 표시합니다.
+`codex`, `gemini`, and `copilot` are aliases for `agents`; identical destinations are installed only once.
+Rollback preserves entries changed by the user during registration and reports any backup it could not restore.
 
-## 소스 코드에서 실행·저장 차이
+## Runtime and Storage Differences
 
-- `.windows-config.json`을 사용하며 Bash `.local-config`는 실행하거나 덮어쓰지 않습니다. 패키징된 앱 설정은 `%LOCALAPPDATA%/WeeklyReport/config.json`에 저장합니다. `WR_CONFIG`로 테스트용 경로를 지정할 수 있습니다.
-- `latexmk` 대신 XeLaTeX를 참조 정보가 안정될 때까지 최대 5회 실행합니다. Perl은 필요하지 않습니다. BibTeX/Biber 등 별도 사용자 빌드 단계는 자동 실행하지 않습니다.
-- 임시 사본에서 실행하고 shell escape를 끕니다. 이것은 Docker의 OS/네트워크 격리와 동등하지 않습니다. 기존의 격리 보장이 필요한 신뢰할 수 없는 소스는 기존 Docker 실행 경로를 사용하세요.
-- 빌드 실패 시 기존 PDF를 유지합니다. 로컬 PDF는 새 출력이 검증되고 저장된 후 정리합니다.
-- PDF와 이력 파일의 대상 경로를 모두 잠근 뒤 원본을 재검증하고 각각 원자적으로 교체하지만 한 트랜잭션은 아닙니다. 중간 중단은 다음 이력 조회의 해시 검증으로 확인합니다.
-- GUI는 항상 초안을 먼저 검토합니다. CLI는 문제가 없는 명시적 계획에 대해 기존처럼 바로 최종 생성도 가능합니다.
+- Source checkouts use `.windows-config.json` and do not execute or overwrite Bash `.local-config`.
+  Packaged applications store configuration in `%LOCALAPPDATA%/WeeklyReport/config.json`.
+  Set `WR_CONFIG` to select a test configuration path.
+- XeLaTeX runs up to five times until references stabilize, without `latexmk` or Perl.
+  Custom build stages such as BibTeX or Biber are not run automatically.
+- Builds use temporary copies with shell escape disabled.
+  This does not provide Docker's OS or network isolation.
+  Use the Docker workflow for untrusted sources that require those isolation guarantees.
+- A failed build preserves the existing PDF.
+  Local PDF cleanup occurs only after the new output has been validated and saved.
+- Publication locks both the PDF and history destinations, revalidates sources, and replaces each file atomically, but the pair is not a single transaction.
+  A later history lookup detects an interruption between replacements through hash validation.
+- The GUI always reviews a draft first.
+  The CLI can directly publish an explicit plan without issues, as in the existing workflow.
 
-Git 릴리스 자동 업데이트는 Linux/macOS Bash 실행 경로에서만 지원합니다.
-Windows 소스는 사용자가 Git 체크아웃을 갱신하고, 설치본은 새 설치 파일로 갱신합니다.
-발행 잠금이 남으면 오류에 나온 `.publish.lock/owner`의 호스트와 PID를 확인하고 해당 프로세스가 종료된 경우에만 잠금 디렉터리를 제거하세요.
-다른 NAS 사용자의 활성 잠금을 지우지 마세요.
+Git release auto-updates are available only in the Linux/macOS Bash workflow.
+Update Windows source checkouts through Git and installed applications through a new installer.
+If a publication lock remains, inspect the host and PID in the reported `.publish.lock/owner` file and remove the lock directory only after confirming that the process has exited.
+Do not remove another NAS user's active lock.
 
-## 개발 및 변경 기록
+## Development and Change History
 
-Windows 구현의 개발 환경, 내부 구조, 검증 및 패키징 절차는 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요.
-Windows 내부 변경과 해당 검증 기록은 [CHANGELOG.md](CHANGELOG.md)에 모읍니다.
-공통 보고서 정책과 Docker 사용법은 [루트 README](../README.md), 저장소 버전과 사용자에게 보이는 릴리스 변경은 [루트 CHANGELOG](../CHANGELOG.md)를 따릅니다.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, internal architecture, validation, and packaging procedures.
+[CHANGELOG.md](CHANGELOG.md) records internal Windows changes and their validation evidence.
+The [root README](../README.md) owns shared report policy and Docker usage; the [root changelog](../CHANGELOG.md) owns repository versions and user-visible release changes.

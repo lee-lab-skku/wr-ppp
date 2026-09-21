@@ -13,7 +13,7 @@ Use Windows PowerShell 5.1 or newer and native Windows Python 3.11 or newer with
 From the repository root, run `Windows-Setup.ps1` to prepare the project environment; preserve an incompatible existing environment instead of replacing it silently.
 Use `windows/install-tex.ps1` for project-local TinyTeX when validating the distributed toolchain.
 A separately installed Windows TeX Live may be selected for local development, but does not validate the bundled runtime.
-See the [user guide](README.md#소스-코드에서-실행) for source launch commands and configuration paths.
+See the [user guide](README.md#run-from-source) for source launch commands and configuration paths.
 Commands in this document run from the repository root.
 Use `-Python` on test and packaging scripts to select an explicit Windows interpreter when required.
 

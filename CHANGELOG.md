@@ -11,15 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [build] provide a shared local HTML editor entry point for the Docker report workflow, retaining the existing import guard and writing edits to a separate TeX source.
+- [build] add a shared browser editor with figure sizing and side-by-side placement, a guarded TeX editing entry point for the Docker workflow that preserves the original source, and native Windows form integration with automatic saving and image uploads.
+- [setup] add interactive Codex or Claude selection to register both report-writing and administrator skills from a Windows source checkout.
 
 ### Changed
 
-- [build] consolidate editor assets, conversion tools, and local browser transport while retaining the Windows native application's form and save workflow.
-- [skill] integrate visual-editing guidance into `wr-wr` and replace the duplicate standalone editor tree with shared tools and compatibility entry points.
-- [build] make root `scripts/` canonical for administrator bundle commands while preserving skill entry points through links.
-- [ci] group editor development checks under `tests/` with explicit names and prepare native Python import paths at entry points instead of during package import.
-- [docs] organize Windows documentation around user guidance, contribution rules, and dated internal change/validation history, with repository versioning remaining at the root.
+- [skill] integrate optional visual-editing guidance into `wr-wr` and clarify native Windows commands, temporary paths, and configuration lookup across report and administrator workflows.
+- [build] expose administrator bundle commands directly under root `scripts/` while preserving existing skill entry points through links.
+- [build] report missing supported local images referenced by Windows report figure commands as errors instead of continuing with placeholders.
+- [ci] add shared-editor conversion, HTTP persistence, geometry, and browser checks with explicit entry points, and supply real image fixtures for portable Windows template builds.
+- [docs] organize English Windows documentation around user guidance, contribution rules, and dated internal change/validation history, with repository versioning remaining at the root.
+
+### Fixed
+
+- [setup] allow Windows skill registration without symbolic-link privileges by falling back to directory junctions, including recognition during repeat installation and rollback.
+- [build] save figure originals when they are added to a Windows report and include images referenced by single-figure and paired-figure commands in the temporary build sources.
 
 ## [1.4.0] &mdash; 2026-09-16
 
