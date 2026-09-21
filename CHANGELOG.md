@@ -18,14 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [skill] integrate optional visual-editing guidance into `wr-wr` and clarify native Windows commands, temporary paths, and configuration lookup across report and administrator workflows.
 - [build] expose administrator bundle commands directly under root `scripts/` while preserving existing skill entry points through links.
-- [build] report missing supported local images referenced by Windows report figure commands as errors instead of continuing with placeholders.
 - [ci] add shared-editor conversion, HTTP persistence, geometry, and browser checks with explicit entry points, and supply real image fixtures for portable Windows template builds.
 - [docs] organize English Windows documentation around user guidance, contribution rules, and dated internal change/validation history, with repository versioning remaining at the root.
 
 ### Fixed
 
 - [setup] allow Windows skill registration without symbolic-link privileges by falling back to directory junctions, including recognition during repeat installation and rollback.
-- [build] save figure originals when they are added to a Windows report and include images referenced by single-figure and paired-figure commands in the temporary build sources.
+- [build] save figure originals when they are added to a Windows report and include available images referenced by single-figure and paired-figure commands in the temporary build sources, preserving shared placeholder behavior for unavailable images.
 
 ## [1.4.0] &mdash; 2026-09-16
 

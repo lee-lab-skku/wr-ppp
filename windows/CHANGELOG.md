@@ -12,6 +12,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 ### Changed
 
 - Consolidate user guidance, contributor procedures, and internal history into English README, CONTRIBUTING, and CHANGELOG documents with one sentence per source line; retain historical validation scope and limitations here rather than in separate validation documents.
+- Stage available local images from shared report figure commands while leaving unavailable or excluded linked images to the shared style's placeholder rendering, including pairs with only one available image.
+
+### Validation
+
+- Report-figure staging, 2026-09-21: four focused tests passed on native Windows Python 3.13.7 with pypdf 6.18.0, covering referenced assets, missing single/paired images, and source preservation.
+  Native Windows TeX Live 2026 produced a one-page PDF with two expected placeholders from a source containing a missing single image and a pair with one available image.
+  A missing raw `\includegraphics` file still produced a LaTeX error.
+  These checks exercised the working-tree change based on [daf9985](https://github.com/lee-lab-skku/wr-ppp/commit/daf9985), not a rebuilt installer; GUI and packaged application checks were not rerun.
 
 ## 2026-09-21 &mdash; Shared editor and source entry points
 

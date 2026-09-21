@@ -386,8 +386,10 @@ column layout followed by the rows, caption, and label:
 The number of column specifiers determines the number of columns. `L`, `C`,
 and `R` create wrapping, flexible-width columns aligned left, center, and
 right. Standard `tabularx` specifiers such as `l`, `c`, `r`, and `p{20mm}` can
-also be mixed into the layout. If a referenced image is not yet available, the
-PDF shows a placeholder containing the expected file path.
+also be mixed into the layout.
+For `\ReportFigure` and `\ReportFigurePair`, both Docker and native Windows builds show a placeholder containing the expected path when an image is unavailable.
+A pair may contain one real image and one placeholder.
+Raw `\includegraphics` commands retain normal LaTeX missing-file errors.
 
 ## Automatic Values
 

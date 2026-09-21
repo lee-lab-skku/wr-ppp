@@ -12,9 +12,8 @@ try {
     $source = Join-Path $qa 'portable-template\main.tex'
     [IO.Directory]::CreateDirectory((Split-Path -Parent $source)) | Out-Null
     Copy-Item -LiteralPath (Join-Path $script:WrRoot 'template.tex') -Destination $source
-    # template.tex intentionally demonstrates three report figures. The build
-    # now rejects missing report assets instead of silently printing figure
-    # placeholders, so the portable smoke test must provide real files too.
+    # Supply real images for the template's three figures so this check covers
+    # asset staging and rendering rather than only the placeholder path.
     # Use PNG here: a blank-page PDF is readable by pypdf but is not a valid
     # image XObject for every xdvipdfmx version bundled with TinyTeX.
     $figures = Join-Path (Split-Path -Parent $source) 'figures'

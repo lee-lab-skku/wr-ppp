@@ -49,6 +49,8 @@ Choose whether each figure appears after the abstract, Progress, Problems, or Pl
 Figures saved by earlier versions without position information appear after Plans.
 Saving creates `.wr.json` data and generated `.wr.tex` source.
 Figures are copied into the report's relative `figures` directory.
+If an image referenced by `\ReportFigure` or `\ReportFigurePair` is unavailable, the shared template renders a placeholder with its expected path, as in the Docker workflow.
+This does not make missing files in raw `\includegraphics` commands optional.
 Use a separate directory for each report; its name determines the PDF filename.
 
 The **Visual editor** button saves the current form and opens an A4 preview in the default browser.

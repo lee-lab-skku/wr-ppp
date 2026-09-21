@@ -660,10 +660,12 @@ def stage_tex_dependencies(source, stage):
                     relative.suffix.lower() not in extensions['includegraphics']):
                 continue
             dependency = root / relative
-            if not dependency.is_file():
-                raise ValueError(f'보고서 이미지 파일을 찾을 수 없습니다: {relative}')
-            if dependency.is_symlink() or getattr(dependency, 'is_junction', lambda: False)():
-                raise ValueError(f'연결 파일 대신 실제 이미지 파일을 사용하세요: {relative}')
+            # The shared figure helpers deliberately render placeholders when
+            # images are unavailable. Preserve that behavior and the existing
+            # staging rule that excludes links instead of following them.
+            if (not dependency.is_file() or dependency.is_symlink() or
+                    getattr(dependency, 'is_junction', lambda: False)()):
+                continue
             resolved = dependency.resolve()
             if not resolved.is_relative_to(root):
                 continue

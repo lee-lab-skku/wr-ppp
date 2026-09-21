@@ -26,6 +26,9 @@ Setup must be repeatable without prompts, preserve incompatible environments, an
 Preserve caller environment variables and restore any temporary working-directory or environment changes.
 Python owns the native GUI, LaTeX generation, PDF operations, and administrator rules; PowerShell must not duplicate those implementations.
 The native backend uses temporary source copies and disables TeX shell escape, but does not provide container OS/network isolation.
+Stage existing local images referenced by `\ReportFigure` and `\ReportFigurePair`, but leave unavailable images to the shared style's placeholder rendering instead of rejecting the build.
+Preserve the staging exclusion for symbolic links and junctions; do not follow links to supply missing assets.
+Keep the source commands intact, including pairs with one available image, and retain normal TeX errors for raw `\includegraphics` references.
 Keep the shared report policy, plan/manifest formats, publication safety, and skill destination aliases consistent across platforms.
 Directory publication locks cover both PDF and history destinations and revalidate source fingerprints after acquisition; never automatically steal a NAS lock.
 The Git release updater remains specific to Bash; native Windows updates are manual.

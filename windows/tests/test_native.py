@@ -333,11 +333,29 @@ class NativeTests(unittest.TestCase):
         self.assertEqual(observed['files'], [
             'figures/one.png', 'figures/three.pdf', 'figures/two.jpg', 'wr-input.tex'])
 
-    def test_report_rejects_missing_report_figure_asset(self):
+    def test_report_preserves_missing_figure_commands_for_placeholders(self):
         tex = self.storage / 'report.wr.tex'
-        tex.write_text(r'\ReportFigure{figures/missing.png}{Missing}{fig:missing}{45mm}', encoding='utf-8')
-        with self.assertRaisesRegex(ValueError, '이미지 파일을 찾을 수 없습니다'):
+        source = (
+            r'\ReportFigure{figures/missing.png}{Missing}{fig:missing}{45mm}' + '\n' +
+            r'\ReportFigurePair{figures/present.png}{Present}{fig:present}'
+            r'{figures/absent.pdf}{Absent}{fig:absent}')
+        tex.write_text(source, encoding='utf-8')
+        figures = self.storage / 'figures'
+        figures.mkdir()
+        (figures / 'present.png').write_bytes(b'image')
+        observed = {}
+
+        def compile_report(directory, entry, config, definitions=''):
+            observed['source'] = (Path(directory) / entry).read_text(encoding='utf-8')
+            observed['files'] = sorted(str(path.relative_to(directory)).replace('\\', '/')
+                                       for path in Path(directory).rglob('*') if path.is_file())
+            return pdf()
+
+        with patch.object(core, 'compile_tex', compile_report):
             core.build_report(tex, self.config)
+        self.assertEqual(observed['source'], source)
+        self.assertEqual(observed['files'], ['figures/present.png', 'wr-input.tex'])
+        self.assertEqual(tex.read_text(encoding='utf-8'), source)
 
     def test_duplicate_selection_rejected(self):
         self.rows.append(['entry', '2', 'b', 'B', 'required', 'included', str(self.source), 'selected'])
