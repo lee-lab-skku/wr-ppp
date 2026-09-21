@@ -6,7 +6,7 @@ once during development: drag that silently did nothing, edit boxes that
 never closed, figure pairs that stretched past their fixed height, bold runs
 torn apart by inline math.
 
-Usage: run_tests.py [path/to/editor.html]
+Usage: check_editor_browser.py [path/to/editor.html]
 """
 import json
 import re

@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [build] consolidate editor assets, conversion tools, and local browser transport while retaining the Windows native application's form and save workflow.
 - [skill] integrate visual-editing guidance into `wr-wr` and replace the duplicate standalone editor tree with shared tools and compatibility entry points.
+- [build] make root `scripts/` canonical for administrator bundle commands while preserving skill entry points through links.
+- [ci] group editor development checks under `tests/` with explicit names and prepare native Python import paths at entry points instead of during package import.
 
 ## [1.4.0] &mdash; 2026-09-16
 

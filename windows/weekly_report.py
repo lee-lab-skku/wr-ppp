@@ -1,5 +1,12 @@
 """Source and packaged entry point."""
+from pathlib import Path
 import sys
+
+# Source execution starts in windows/; shared packages live at the repository
+# root. Frozen builds use PyInstaller's collected modules instead.
+if not getattr(sys, 'frozen', False):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from wr.cli import main
 
 if __name__ == '__main__':

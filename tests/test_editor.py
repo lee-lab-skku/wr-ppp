@@ -112,6 +112,16 @@ class EditorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'beside the source'):
             TexBackend(self.source, outside / 'edited.tex')
 
+    def test_native_source_entry_and_package_import_from_another_directory(self):
+        result = subprocess.run([sys.executable, str(ROOT / 'windows/weekly_report.py'), '--help'],
+                                cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        script = ('import sys; sys.path.insert(0, ' + repr(str(ROOT / 'windows')) + '); '
+                  'before = list(sys.path); import wr; assert sys.path == before')
+        result = subprocess.run([sys.executable, '-c', script], cwd=self.root,
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_entry_points_resolve_resources_from_another_directory(self):
         guard = subprocess.run([sys.executable, str(ROOT / 'scripts/check_roundtrip.py'), str(self.source)],
                                cwd=self.root, capture_output=True, text=True)

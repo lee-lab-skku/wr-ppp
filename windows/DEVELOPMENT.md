@@ -21,6 +21,7 @@ The native GUI remains responsible for its report form, builds, and administrato
 Its visual-editor adapter in `wr/visual_editor.py` converts `.wr.json` values and persists native form output; it delegates HTTP serving and browser assets to the root `report_editor` package.
 Keep that package independent of Windows modules and preserve the existing native save callbacks when changing the adapter.
 PyInstaller must analyze both the Windows and repository import roots and bundle `report_editor/assets/editor.html` at its package-relative location.
+Source launchers and native test entry points prepare these import roots explicitly; `wr/__init__.py` must remain free of import-path mutations.
 
 PowerShell scripts containing non-ASCII literals require UTF-8 with BOM for Windows PowerShell 5.1; otherwise keep their source ASCII.
 

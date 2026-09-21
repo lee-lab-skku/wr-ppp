@@ -24,6 +24,10 @@ Keep one HTML source and one implementation of each conversion tool; root script
 Preserve the import fidelity gate and original source when exposing the editor to the Docker workflow; do not broaden the supported LaTeX subset as part of structural refactoring.
 
 Install command and skill links to canonical repository sources rather than generating duplicate implementations.
+Keep Linux/macOS operational command implementations in root `scripts/`; expose them from `skills/*/scripts/` through relative links rather than placing the canonical implementation inside a skill.
+Skill-specific templates and procedural references may remain with the skill; resolve their paths from the repository root so commands work through either entry point.
+Keep development-only checks in `tests/`, with names that identify their scope; preserve a documented older command with a thin wrapper when needed.
+Source launchers and test entry points prepare Python import paths; importing a library package must not modify `sys.path`.
 Routine report content should not require changes to the template, style, or shared build scripts.
 
 Apply the [shared setup destination policy](README.md#quick-start) to command and skill links, preserving idempotency, explicit replacement, directory protection, and preflight before mutation.
@@ -193,7 +197,8 @@ Page-limit exceptions belong in the authoring and review judgment, with a specif
 
 Validate in proportion to the change and its risks.
 For shared editor changes, exercise both the TeX and Windows form adapters with `python3 -B -m unittest discover -s tests -p 'test_editor.py' -v`.
-Run `python3 scripts/verify_geometry.py`, `node tests/test_inline_render.js`, and `python3 tests/run_tests.py` for layout constants, inline rendering, and browser behavior respectively; the browser check needs Chrome/Chromium.
+Run `python3 tests/check_editor_geometry.py`, `node tests/test_inline_render.js`, and `python3 tests/check_editor_browser.py` for layout constants, inline rendering, and browser behavior respectively; the browser check needs Chrome/Chromium.
+The former browser-check path `tests/run_tests.py` is now `tests/check_editor_browser.py`; `scripts/verify_geometry.py` remains a compatibility entry point for the geometry check.
 Common Python tests use only the standard library, including local HTTP requests, and do not compile TeX or open a browser.
 Exercise the affected workflow and relevant error behavior, confirm documentation against the canonical sources, and compile the example when build or LaTeX behavior changes.
 Skill changes should cover representative activation, reference routing, all shared repository-resolver entry points, and affected report tasks.

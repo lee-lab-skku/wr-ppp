@@ -114,6 +114,10 @@ else:
         self.assertEqual(hashlib.sha256(self.source.read_bytes()).hexdigest(), source_hash)
         self.assertNotIn("review command:", result.stderr)
 
+    def test_root_builder_preserves_the_skill_entry_point_contract(self):
+        self.builder = self.repo / 'scripts/build-bundle'
+        self.test_final_manifest_is_separate_and_matches_pdf()
+
     def test_history_is_transposed_sorted_and_preserved(self):
         self.plan.write_text(self.clean_plan +
             "history\t2026-08-W4\tmember-a\tmissing\tverified-august\n"
@@ -507,6 +511,10 @@ sys.exit({status})
                 self.viewer(command)
                 self.run_opener(self.pdf)
                 self.assertEqual(json.loads(self.log.read_text()), [str(self.pdf)])
+
+    def test_root_opener_preserves_literal_paths(self):
+        self.opener = REPO / 'scripts/open-bundle'
+        self.test_linux_and_macos_pass_literal_pdf_path()
 
     def test_wslview_is_used_when_available(self):
         self.env["ADMIN_TEST_RELEASE"] = "6.6.87.2-microsoft-standard-WSL2"

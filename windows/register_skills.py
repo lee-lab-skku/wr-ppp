@@ -5,6 +5,7 @@ import sys
 
 # Allow this file to run directly from a freshly cloned repository.
 WINDOWS_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(WINDOWS_ROOT.parent))
 sys.path.insert(0, str(WINDOWS_ROOT))
 
 from wr.skills import install  # noqa: E402

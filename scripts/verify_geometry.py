@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Compatibility entry point for the shared report editor."""
+"""Compatibility entry point for the development-only editor geometry check."""
 from pathlib import Path
 import runpy
-import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 if __name__ == '__main__':
-    runpy.run_module('report_editor.verify_geometry', run_name='__main__')
+    runpy.run_path(str(Path(__file__).resolve().parents[1] / 'tests' / 'check_editor_geometry.py'),
+                   run_name='__main__')

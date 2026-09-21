@@ -4,7 +4,7 @@
 Check the shared editor against the style in this repository.
 Matching these constants does not guarantee identical browser and TeX pagination.
 
-Usage: verify_geometry.py [path/to/weekly-report.sty] [path/to/editor.html]
+Usage: check_editor_geometry.py [path/to/weekly-report.sty] [path/to/editor.html]
 """
 import re
 import sys
@@ -12,7 +12,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_STY = HERE.parent / 'weekly-report.sty'
-DEFAULT_HTML = HERE / 'assets' / 'editor.html'
+DEFAULT_HTML = HERE.parent / 'report_editor' / 'assets' / 'editor.html'
 
 
 def check(sty_path, html_path):
