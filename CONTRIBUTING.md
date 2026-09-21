@@ -61,7 +61,7 @@ A completed PDF should replace its target only after a successful build and vali
 
 Windows must preserve the shared report policy, plan/manifest formats, publication safety, and skill destination aliases.
 Native Windows builds do not provide container OS/network isolation, and Windows updates remain manual.
-Follow the [Windows development guide](windows/DEVELOPMENT.md) for implementation constraints and platform-specific validation.
+Follow the [Windows development guide](windows/CONTRIBUTING.md) for implementation constraints and platform-specific validation.
 
 Keep POSIX scripts as LF text through `.gitattributes` so Windows checkouts remain usable from WSL.
 When Windows Git materializes repository symlinks as plain files (`core.symlinks=false`), run POSIX checks in a Linux checkout that preserves the Git symlink modes; line-ending normalization alone cannot restore links.
@@ -205,7 +205,7 @@ Skill changes should cover representative activation, reference routing, all sha
 
 Run the administrator workflow regression checks with `python3 -B -m unittest discover -s tests -v` (Python 3 standard library only).
 On native Windows, use `windows/test.ps1` for native tests and common checks; POSIX-only checks must run separately in WSL/Linux.
-Use the [Windows validation guidance](windows/DEVELOPMENT.md#validation) for additional platform checks.
+Use the [Windows validation guidance](windows/CONTRIBUTING.md#validation) for additional platform checks.
 These checks use isolated repositories and substitute Docker and desktop openers to exercise artifact placement, failure handling, and platform command routing without publishing reports or opening windows.
 Also exercise a real Docker build when available; substituted commands do not validate TeX rendering or a desktop viewer.
 
@@ -217,7 +217,13 @@ An unavailable macOS or agent environment does not by itself block a contributio
 
 When editing root documents, treat the Windows implementation as a black box by default.
 Describe its supported capabilities, inputs and outputs, observable behavior, compatibility, and repository-wide contracts without requiring readers to understand its internal components.
-Keep Windows-specific architecture, implementation rules, and dependency or packaging procedures in the [Windows development guide](windows/DEVELOPMENT.md), and link there when detail is needed.
+Keep Windows-specific architecture, implementation rules, and dependency or packaging procedures in the [Windows development guide](windows/CONTRIBUTING.md), and link there when detail is needed.
+Use `windows/README.md`, `windows/CONTRIBUTING.md`, and `windows/CHANGELOG.md` as the three Windows documentation entry points.
+Their roles mirror the root documents: user guidance, durable contributor guidance, and internal change history with relevant validation evidence.
+Keep Windows internals that cannot be adequately described through the root documents' external perspective in these subordinate documents, and link to root policy instead of duplicating it.
+The Windows changelog supplements the root history using dated change groups linked to commits or PRs, with relevant validation recorded alongside them; it must not introduce independent version numbers or release authority.
+Keep its detailed entry conventions in [the Windows contribution guide](windows/CONTRIBUTING.md#documenting-internal-changes).
+Preserve the environment, scope, and limitations of historical validation when consolidating records; do not present past checks as verification of current source.
 This perspective does not prohibit describing changes that are entirely internal: explain relevant improvements, their purpose, evidence, and limitations at the level appropriate to the root document, even when the public interface is unchanged.
 For example, root documentation may describe faster CI dependency preparation or more reliable installation; the implementation and cache maintenance steps belong in the Windows guide.
 
@@ -284,7 +290,7 @@ Linux and macOS run the common/POSIX regression suite on their own hosted runner
 These jobs substitute Docker and desktop viewers and do not build release artifacts or install TeX.
 Windows must pass native/common regression checks, actual PDF generation, and portable and installed application checks before publication.
 Validate the offline distribution without relying on development tools, and verify that uninstallation preserves user configuration and PDFs.
-See the [Windows development guide](windows/DEVELOPMENT.md#ci-and-packaging) for build dependencies and packaging procedures.
+See the [Windows development guide](windows/CONTRIBUTING.md#ci-and-packaging) for build dependencies and packaging procedures.
 
 Only the publication job has `contents: write`, and it runs after every platform succeeds.
 Use the repository's automatic `GITHUB_TOKEN`; no personal access token is required.
@@ -305,7 +311,7 @@ Preserve published tags and use a new allowed version when source fixes are need
 
 CI reuses prepared Windows build dependencies to reduce setup time while retaining all build and distribution checks.
 Cache misses trigger fresh preparation; finished installers and previous test results are not reused.
-See [dependency cache maintenance](windows/DEVELOPMENT.md#tinytex-cache) for refresh and sharing procedures.
+See [dependency cache maintenance](windows/CONTRIBUTING.md#tinytex-cache) for refresh and sharing procedures.
 Release builds are tested artifacts rather than byte-reproducible rebuilds.
 Failures in dependency preparation, any test, checksum verification, or asset upload prevent publication.
 Windows installers and available failure diagnostics are retained as separate Actions artifacts for seven days.

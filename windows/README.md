@@ -129,48 +129,8 @@ Windows 소스는 사용자가 Git 체크아웃을 갱신하고, 설치본은 �
 발행 잠금이 남으면 오류에 나온 `.publish.lock/owner`의 호스트와 PID를 확인하고 해당 프로세스가 종료된 경우에만 잠금 디렉터리를 제거하세요.
 다른 NAS 사용자의 활성 잠금을 지우지 마세요.
 
-## 테스트 / 배포
+## 개발 및 변경 기록
 
-```powershell
-.\windows\test.ps1
-.\windows\test.ps1 -RealBuild -Gui
-.\windows\package.ps1 -IncludeTeX
-.\windows\test.ps1 -Package
-```
-
-PyInstaller는 Python과 GUI 의존성을 포함한 `windows/dist/WeeklyReport/WeeklyReport.exe`와 명령용 `WeeklyReportCLI.exe`를 만듭니다. **전체 폴더**를 배포해야 합니다. `package.ps1 -IncludeTeX`는 준비된 `.runtime/TinyTeX`까지 `tex` 폴더에 포함하여 오프라인 실행이 가능한 배포 폴더를 만듭니다. 앱은 이 폴더의 도구를 자동 탐색합니다. 기본 패키지는 앱에서 LaTeX 도구 준비 버튼을 사용하거나 별도 설치가 필요합니다. 설치 마법사는 아래 명령으로 별도 생성합니다.
-
-일반 자동 테스트는 실제 PDF 파일의 검사·병합과 업무 규칙을 검증하며, LaTeX 실행은 대체합니다. 실제 출력 검증은 별도로 `python windows/tests/real_build.py`를 실행합니다. `self-test --output <절대경로.json>`은 배포 EXE의 GUI 생성·리소스·PDF 라이브러리 로딩을 숨김 상태로 검사합니다. 기존 POSIX 셸 테스트는 native Windows에서 명시적으로 건너뛰고, Slack 공통 테스트는 실행합니다. Linux 동작은 POSIX 환경에서 별도 검증해야 합니다.
-
-## 설치 파일 만들기
-
-정식 배포는 릴리스 준비가 끝난 `vMAJOR.MINOR.PATCH` 태그를 푸시하면 GitHub Actions에서 자동으로 수행합니다.
-Linux/macOS 테스트와 Windows의 실제 PDF·포터블 EXE·설치·제거 검사가 모두 성공해야 GitHub Release에 설치 EXE와 SHA256이 게시됩니다.
-`-beta`와 `-rc` 태그는 사전 릴리스로 게시하며, 이미 공개된 자산은 덮어쓰지 않습니다.
-태그 준비와 실패 후 재실행 절차는 [기여 가이드](../CONTRIBUTING.md#tag-driven-ci-and-windows-releases)를 따르세요.
-릴리스 없이 검증하려면 GitHub Actions의 **Test and release &rightarrow; Run workflow**에서 브랜치를 선택하세요.
-수동 실행도 같은 테스트와 설치 파일 빌드를 수행하고, EXE와 SHA256을 실행 페이지의 `windows-installer` 아티팩트로 7일간 보관합니다.
-버전은 기존 Git 태그와 개발 커밋에서 파생되며, GitHub Release는 발행하지 않습니다.
-CI는 패키지 설치와 포맷 생성이 끝난 TinyTeX를 캐시하고, 일치하는 캐시가 있으면 준비 단계를 생략합니다.
-캐시를 복원해도 실제 PDF 생성과 설치 파일 검사는 매번 수행합니다.
-캐시 갱신과 브랜치 간 공유 조건은 [Windows 개발 가이드](DEVELOPMENT.md#tinytex-cache)를 참고하세요.
-아래 명령은 같은 패키징 경로를 로컬에서 실행할 때 사용합니다.
-
-Inno Setup 6과 Python 빌드 환경, `.runtime/TinyTeX`가 필요합니다.
-
-```powershell
-.\windows\build-installer.ps1
-```
-
-`-Compiler`로 ISCC.exe 경로를 지정할 수 있습니다. 검증된 최신 오프라인 배포 폴더가 이미 있으면 `-SkipPackage`로 포장만 수행합니다.
-결과는 `windows/dist/installer/WeeklyReport-<버전>-Setup.exe`와 SHA256 파일입니다.
-소스 코드는 Git에 커밋하고, 설치 파일과 SHA256 파일은 GitHub Releases에 첨부합니다. `windows/dist`는 Git 추적에서 제외됩니다.
-
-설치 파일 생성 전 `sanitize-bundle.py`가 배포 폴더에서 개발 PC의 TeX 로그·글꼴 캐시를 제거하고, 생성된 설정의 경로를 정리합니다. `-SkipPackage` 사용 시에도 `-Python`에 빌드용 Python 경로를 지정할 수 있습니다.
-
-패키징 시 버전은 저장소 Git 태그와 체크아웃 상태에서 파생되어 번들의 `_internal/VERSION`에 저장됩니다.
-개발 커밋과 미커밋 변경은 버전 접미사로 구분되며 설치 프로그램도 같은 버전을 사용합니다.
-`-Version`으로 별도 앱 버전을 지정하지 않습니다.
-`-SkipPackage`는 현재 소스가 아니라 기존 번들의 버전을 사용하므로 해당 번들을 먼저 검증하세요.
-테스트·패키징·설치 프로그램 빌드에는 `-Python`으로 Windows Python 실행 파일을 지정할 수 있습니다.
-`-Package` 검증은 개발 Python/TeX를 PATH에서 제외하고 번들 템플릿을 실제 빌드하며 환경 변수는 종료 시 복원합니다.
+Windows 구현의 개발 환경, 내부 구조, 검증 및 패키징 절차는 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요.
+Windows 내부 변경과 해당 검증 기록은 [CHANGELOG.md](CHANGELOG.md)에 모읍니다.
+공통 보고서 정책과 Docker 사용법은 [루트 README](../README.md), 저장소 버전과 사용자에게 보이는 릴리스 변경은 [루트 CHANGELOG](../CHANGELOG.md)를 따릅니다.
