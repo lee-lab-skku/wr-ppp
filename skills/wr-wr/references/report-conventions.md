@@ -4,7 +4,7 @@ Use these conventions when helping a user locate, organize, create, or build a r
 
 ## Find the Relevant Files
 
-- Resolve the template repository with the skill's `scripts/resolve-repo-root` helper.
+- On native Windows, resolve the installed `SKILL.md` link as described in the skill entry point and do not run the POSIX `scripts/resolve-repo-root` helper. On Linux/macOS, resolve the template repository with that helper.
 - Treat the user's report source directory as separate from the template repository unless the existing layout shows otherwise.
 - Look for an existing `main.tex`, another explicitly named `.tex` source, supporting figures, neighboring weekly directories, and previous report sources before proposing new files.
 - If several plausible reports exist and the request does not identify one, ask which report is in scope rather than guessing.

@@ -1,9 +1,9 @@
 # Administrator Manifest
 
 The manager manifest is human-managed configuration.
-With setup option `--admin-data=<directory>`, its write location is `<directory>/manager-manifest.toml`; otherwise it is the repository-local `.manager-manifest.toml`.
-Setup saves the optional base directory as `ADMIN_DATA_DIR` in `.local-config`, creates a commented skeleton when absent, and never guesses members or replaces an existing manifest.
-For reads, use the `manager-manifest` path returned by `scripts/admin-paths`: a missing configured file falls back to the repository-local file.
+With the platform's `--admin-data` setup option, its write location is `<directory>/manager-manifest.toml`; otherwise it is the repository-local `.manager-manifest.toml`.
+On Windows, configuration uses `.windows-config.json` for a source checkout or `%LOCALAPPDATA%/WeeklyReport/config.json` for a packaged installation. Resolve the active manifest path with the launcher's `admin-paths` subcommand; do not read `.local-config` or invoke a POSIX helper. On Linux/macOS, setup saves the optional base directory as `ADMIN_DATA_DIR` in `.local-config`.
+Setup creates a commented skeleton when absent and never guesses members or replaces an existing manifest. For reads, use the `manager-manifest` path returned by the platform's `admin-paths` command; a missing configured file falls back to the repository-local file.
 An existing but invalid or incomplete configured manifest must be diagnosed rather than bypassed.
 
 ## Schema
@@ -49,4 +49,4 @@ Do not add filename patterns, expected internal week labels, or template require
 
 ## Incomplete Configuration
 
-If `storage_root` or members are absent, explain which values are missing and stop before discovery. If `.local-config` has no `ADMIN_OUTPUT_DIR`, discovery and a temporary draft remain possible, but final promotion must wait until setup is rerun with `--admin-output=<absolute-directory>`.
+If `storage_root` or members are absent, explain which values are missing and stop before discovery. If the active platform configuration has no administrator output directory, discovery and a temporary draft remain possible, but final promotion must wait until setup is rerun with an absolute `--admin-output` directory.

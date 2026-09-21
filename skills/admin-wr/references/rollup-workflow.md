@@ -4,12 +4,14 @@
 
 Use this workflow to select source PDFs, prepare a deterministic bundle plan, classify issues, and decide whether promotion requires approval.
 
-On native Windows, use the PowerShell/EXE command substitutions described in the skill entry point and `windows/README.md`; the Bash examples below apply to Linux/macOS.
+On native Windows, use the PowerShell/EXE command substitutions described in the skill entry point and `windows/README.md`; every Bash block, `scripts/...` path, `/tmp` path, Docker instruction, and `.local-config` reference below applies only to Linux/macOS. Do not execute or probe those POSIX helpers on Windows. Use the resolved absolute `Start-Weekly-Report.ps1` or `WeeklyReportCLI.exe` path with the matching subcommand, and use Windows absolute paths for plans and review directories.
 Preserve all review rules, and pass the native draft's generated `--review` record when promoting with approval.
 
 ## Preflight the Administrator Tools
 
-Run the following from this skill directory as its own command before reading report storage:
+On Windows, run the resolved launcher with `preflight`. The native check does not use Docker. The remainder of this section describes Linux/macOS.
+
+On Linux/macOS, run the following from this skill directory as its own command before reading report storage:
 
 ```bash
 scripts/admin-preflight
@@ -19,19 +21,23 @@ Do not combine it with filters, pipelines, or unrelated shell commands. It check
 
 ## Resolve the Reporting Period
 
+On Windows, run the resolved launcher with `report-metadata --date YYYY-MM-DD`. The Bash example below is Linux/macOS only.
+
 Use a date supplied by the user. Otherwise resolve the current date in the manifest timezone, not the host's implicit timezone. Resolve the repository root and run the executable metadata helper with that explicit date:
 
 ```bash
 /absolute/path/to/repository/scripts/report-metadata.sh --date 2026-09-04
 ```
 
-The helper prints `report-metadata/v1` TSV containing the report date, canonical label, and Monday-to-Sunday period. Always pass the same date to `scripts/build-bundle`. The canonical period identifies the bundle; it does not require each source PDF to contain the same label.
+The helper prints `report-metadata/v1` TSV containing the report date, canonical label, and Monday-to-Sunday period. Always pass the same date to the platform's `build-bundle` command. The canonical period identifies the bundle; it does not require each source PDF to contain the same label.
 
 ## Discover Within Authorized Roots
 
+On Windows, use `admin-paths` to resolve configuration and history, then `discover` to enumerate candidates from the configured manifest. Do not invoke `scripts/admin-paths` or read `.local-config` directly.
+
 For each member in manifest order, recursively enumerate regular files ending in `.pdf`, case-insensitively, below only that member's search roots. Use NUL-delimited filesystem operations so spaces and Unicode names are preserved. Exclude AppleDouble files named `._*.pdf`; do not follow directory symlinks.
 
-Run `scripts/admin-paths` from this skill directory to resolve metadata locations from `.local-config`.
+On Linux/macOS, run `scripts/admin-paths` from this skill directory to resolve metadata locations from `.local-config`.
 Its successful TSV output contains `manager-manifest<TAB>path`, `history-output<TAB>directory`, and zero or more `history<TAB>week<TAB>path` records.
 Read the returned manifest and history paths; the helper resolves locations only, so validate contents and PDF hashes as below.
 With `ADMIN_DATA_DIR` configured, reads prefer `<directory>/manager-manifest.toml` and `<directory>/manifests/<week>.manifest.tsv`.
@@ -67,7 +73,7 @@ A required member with no plausible candidate is `missing`. An optional member w
 
 An explicit internal week that differs from the canonical week is `included` with an `internal-week-mismatch` warning when the author, target-period relevance, and lack of a competing final candidate are otherwise clear. The warning still requires draft review and approval. If another signal also conflicts or several candidates remain plausible, classify the selection as `exception` with an error instead.
 
-Probe every proposed PDF before writing the plan, running each invocation as a standalone command:
+Probe every proposed PDF before writing the plan, running each invocation as a standalone command. On Windows use the resolved launcher's `probe-report` subcommand; the following Bash example is Linux/macOS only:
 
 ```bash
 scripts/probe-report \
@@ -136,6 +142,8 @@ Page counts and ranges remain in the execution manifest for source validation an
 
 ## Build, Confirm, and Promote
 
+On Windows, invoke `build-bundle` and `open-bundle` through the resolved launcher. Put plans and drafts in an explicit Windows temporary or review directory. The Bash examples below are Linux/macOS only.
+
 For a clean run:
 
 ```bash
@@ -192,7 +200,7 @@ The PDF builder performs no network notification; sending is a separate action a
 
 Final PDFs are written to the configured administrator output.
 Final execution TSVs are written to `<ADMIN_DATA_DIR>/manifests/<week>.manifest.tsv` when configured, otherwise `<repository>/.admin-wr/manifests/<week>.manifest.tsv`.
-The builder uses `scripts/admin-paths --history-output` for this destination; read fallback never redirects writes to local storage.
+The builder uses the platform's `admin-paths` result for this destination; read fallback never redirects writes to local storage.
 A write failure at the configured destination is an error, not permission to write elsewhere.
 New builds do not move/delete prior manifests.
 A caller may explicitly choose the PDF output as the history destination; otherwise the default layout keeps them separate.

@@ -84,7 +84,29 @@ Slack 기능은 기존 Python 구현을 재사용합니다. 설정은 발송하�
 .\Start-Weekly-Report.ps1 notify-held --manifest C:\Review\draft\.manifests\2026-09-W1.manifest.tsv
 ```
 
-Windows에서는 기존 스킬의 셸 명령을 위의 동명 하위 명령으로 대체하여 사용합니다. 작성·근거 검토·후보 판단은 기존 스킬의 정책대로 외부 AI 에이전트가 수행하며 앱 내부 AI API는 추가하지 않았습니다. 설정의 **AI 스킬 등록** 또는 `install-skills --services agents,claude,antigravity --admin`으로 기존 스킬의 링크를 등록합니다. Windows 개발자 모드 또는 심볼릭 링크 권한이 필요합니다. 충돌 항목은 기본적으로 보존하며, `--replace-existing`은 파일/링크만 인접 백업 후 교체합니다. 디렉터리는 교체하지 않습니다. 등록 중 실패하면 링크 변경을 되돌립니다.
+Windows에서는 기존 스킬의 셸 명령을 위의 동명 하위 명령으로 대체하여 사용합니다. 작성·근거 검토·후보 판단은 기존 스킬의 정책대로 외부 AI 에이전트가 수행하며 앱 내부 AI API는 추가하지 않았습니다. 설정의 **AI 스킬 등록** 또는 `install-skills --services agents,claude,antigravity --admin`으로 기존 스킬의 링크를 등록합니다. 등록은 먼저 심볼릭 링크를 시도하고 권한이 없으면 Windows junction을 사용하므로 개발자 모드가 필수는 아닙니다. 충돌 항목은 기본적으로 보존하며, `--replace-existing`은 파일/링크만 인접 백업 후 교체합니다. 일반 디렉터리는 교체하지 않습니다. 등록 중 실패하면 링크 변경을 되돌립니다.
+
+### VS Code에서 AI 스킬 사용
+
+소스 체크아웃을 VS Code로 열어 사용하는 경우 먼저 `Windows-Setup.ps1`을 실행해 `.venv`를 준비하고 `Start-Weekly-Report.ps1 preflight`가 성공하는지 확인합니다. 그다음 두 스킬을 Codex의 공용 에이전트 경로와 Claude 경로에 등록합니다.
+
+클론한 저장소에서 다음 대화형 등록 프로그램을 실행하면 `1. Codex` 또는 `2. Claude`를 선택할 수 있습니다. 선택한 AI의 사용자 스킬 경로에 `wr-wr`와 `admin-wr`를 모두 연결하며 다른 AI 경로는 변경하지 않습니다. 별도 의존성 설치는 필요하지 않습니다.
+
+```powershell
+python .\windows\register_skills.py
+```
+
+Python 명령이 여러 개라면 `py .\windows\register_skills.py`도 사용할 수 있습니다. 등록은 저장소의 스킬 원본을 가리키므로 같은 체크아웃을 `git pull`로 갱신하면 연결된 스킬에도 반영됩니다.
+
+기존 CLI로 여러 AI에 동시에 등록할 수도 있습니다.
+
+```powershell
+.\Windows-Setup.ps1
+.\Start-Weekly-Report.ps1 preflight
+.\Start-Weekly-Report.ps1 install-skills --services agents,claude --admin
+```
+
+설치 EXE를 사용하는 경우에는 설치 폴더의 `WeeklyReportCLI.exe`에 같은 하위 명령을 전달합니다. 등록 후 VS Code의 AI 확장을 다시 시작하여 스킬 목록을 새로 읽게 합니다. `wr-wr`와 `admin-wr`는 설치된 `SKILL.md`의 실제 대상 경로에서 리소스 루트를 찾고, 소스 체크아웃이면 `Start-Weekly-Report.ps1`, 설치본이면 `_internal` 옆의 `WeeklyReportCLI.exe`를 사용합니다. Windows에서는 스킬 참고 문서의 Bash, Docker, `/tmp`, `.local-config` 예제를 실행하지 않습니다.
 
 `codex`, `gemini`, `copilot`은 `agents`의 별칭이며 동일 대상은 한 번만 설치합니다.
 등록 도중 사용자가 바꾼 항목은 롤백에서 보존하고, 복원하지 못한 백업의 경로를 표시합니다.

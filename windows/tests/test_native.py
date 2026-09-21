@@ -390,6 +390,63 @@ class NativeTests(unittest.TestCase):
         self.assertEqual(result['installed'], [str(self.root / '.agents/skills/wr-wr'),
                                              str(self.root / '.gemini/config/skills/wr-wr')])
 
+    def test_interactive_skill_registration_selects_only_requested_ai(self):
+        import importlib.util
+        script = core.ROOT / 'windows/register_skills.py'
+        spec = importlib.util.spec_from_file_location('register_skills', script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        messages = []
+        with patch.object(module, 'install') as register:
+            register.return_value = {'installed': ['one', 'two'], 'backups': []}
+            result = module.main(read=lambda _: '2', write=messages.append, home=self.root)
+        self.assertEqual(result, 0)
+        register.assert_called_once_with(['claude'], administrator=True, home=self.root)
+        self.assertTrue(any('Claude' in message for message in messages))
+
+    def test_skill_uses_windows_junction_when_symlink_is_not_permitted(self):
+        source = core.ROOT / 'skills/wr-wr'
+        destination = self.root / '.agents/skills/wr-wr'
+        destination.parent.mkdir(parents=True)
+        with patch.object(Path, 'symlink_to', side_effect=PermissionError('denied')), \
+             patch.object(skills.subprocess, 'run') as run, \
+             patch.object(skills, '_is_link', return_value=True):
+            run.return_value.returncode = 0
+            skills._create_link(source, destination)
+        command = run.call_args.args[0]
+        self.assertEqual(command[:3], ['powershell.exe', '-NoProfile', '-NonInteractive'])
+        environment = run.call_args.kwargs['env']
+        self.assertEqual(environment['WR_SKILL_LINK'], str(destination))
+        self.assertEqual(environment['WR_SKILL_SOURCE'], str(source))
+
+    @unittest.skipUnless(os.name == 'nt', 'Requires Windows link semantics')
+    def test_skill_real_windows_links_resolve_to_canonical_sources(self):
+        result = skills.install(['agents', 'claude'], administrator=True, home=self.root)
+        expected = [self.root / service / 'skills' / name
+                    for service in ('.agents', '.claude') for name in ('wr-wr', 'admin-wr')]
+        self.assertEqual(result['installed'], [str(path) for path in expected])
+        try:
+            for path in expected:
+                self.assertTrue(skills._is_link(path), path)
+                self.assertEqual(path.resolve(), (core.ROOT / 'skills' / path.name).resolve())
+                self.assertTrue((path / 'SKILL.md').is_file())
+        finally:
+            for path in reversed(expected):
+                if skills._is_link(path):
+                    skills._remove_link(path)
+
+    @unittest.skipUnless(os.name == 'nt', 'Requires Windows junction semantics')
+    def test_skill_junction_detection_supports_python_without_isjunction(self):
+        source = core.ROOT / 'skills/wr-wr'
+        destination = self.root / 'skill-junction'
+        with patch.object(Path, 'symlink_to', side_effect=PermissionError('denied')):
+            skills._create_link(source, destination)
+        try:
+            with patch.object(skills.os.path, 'isjunction', None, create=True):
+                self.assertTrue(skills._is_link(destination))
+        finally:
+            skills._remove_link(destination)
+
     def test_config_preflight_preserves_existing_state(self):
         config_file = self.root / 'config.json'
         config_file.write_text('{"old": true}', encoding='utf-8')
@@ -412,12 +469,12 @@ class NativeTests(unittest.TestCase):
         original = self.root / '.agents/skills/wr-wr'
         original.parent.mkdir(parents=True)
         original.write_text('old', encoding='utf-8')
-        def create_link(destination, source, **kwargs):
+        def create_link(source, destination):
             if destination == original:
                 destination.write_text('concurrent user file', encoding='utf-8')
             else:
                 raise OSError('second installation failed')
-        with patch.object(Path, 'symlink_to', create_link), self.assertRaisesRegex(ValueError, '백업'):
+        with patch.object(skills, '_create_link', create_link), self.assertRaisesRegex(ValueError, '백업'):
             skills.install(['agents', 'claude'], replace=True, home=self.root)
         self.assertEqual(original.read_text(), 'concurrent user file')
         self.assertEqual(original.with_name('wr-wr.backup').read_text(), 'old')
@@ -498,7 +555,7 @@ class NativeTests(unittest.TestCase):
         existing = self.root / '.agents/skills/wr-wr'
         existing.parent.mkdir(parents=True)
         existing.write_text('existing')
-        with patch.object(Path, 'symlink_to', side_effect=PermissionError('denied')), self.assertRaises(ValueError):
+        with patch.object(skills, '_create_link', side_effect=PermissionError('denied')), self.assertRaises(ValueError):
             skills.install(['agents'], replace=True, home=self.root)
         self.assertEqual(existing.read_text(), 'existing')
         self.assertFalse(existing.with_name('wr-wr.backup').exists())

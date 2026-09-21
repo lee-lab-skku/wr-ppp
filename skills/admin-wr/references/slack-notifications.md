@@ -21,6 +21,8 @@ Webhook URL은 해당 채널에 글을 쓸 수 있는 비밀값이므로 채팅�
 
 ## URL 저장하기
 
+Windows에서는 스킬 진입점에서 확인한 `Start-Weekly-Report.ps1` 또는 `WeeklyReportCLI.exe`의 절대 경로에 `notify-held --configure`를 전달합니다. 아래 `scripts/notify-held` 예시는 Linux/macOS 전용입니다.
+
 레포 디렉터리의 터미널에서 실행합니다.
 
 ```bash
@@ -37,6 +39,8 @@ NAS에 저장할 때는 공유 권한으로 이 파일을 보호하세요.
 설정 파일이 없을 때 다른 채널의 로컬 URL로 발송되는 것을 방지하기 위한 구분입니다.
 
 ## 보류 결정 후 사용하기
+
+Windows에서는 아래 각 `scripts/notify-held` 호출을 확인한 Windows 런처의 `notify-held` 하위 명령으로 바꾸고 Windows manifest 절대 경로를 사용합니다.
 
 먼저 실제 취합 초안의 실행 TSV로 메시지를 미리 확인합니다.
 다음 명령은 네트워크 요청을 하지 않습니다.
