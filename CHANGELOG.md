@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- [skill] defer minor pagination, overflow, and alignment repairs until editorial revision while accurately reporting observed issues; retain early repairs for compilation blockers, substantive content loss, and explicit layout requests.
+- [skill] keep drafts based on organized records in the author's research perspective without excessive first-person wording, carry meaningful structure into subsection bodies, and check applicable `siunitx` and `mhchem` notation in text, tables, and captions; silently skip irrelevant checks without adding content to satisfy them.
+
 ## [1.4.0] &mdash; 2026-09-16
 
 ### Changed
