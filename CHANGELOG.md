@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] &mdash; 2026-09-23
+
 ### Fixed
 
 - [skill] defer minor pagination, overflow, and alignment repairs until editorial revision while accurately reporting observed issues; retain early repairs for compilation blockers, substantive content loss, and explicit layout requests.
@@ -171,7 +173,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-rc...v1.4.0
 [1.4.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-beta...v1.4.0-rc
 [1.4.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.3.1...v1.4.0-beta
