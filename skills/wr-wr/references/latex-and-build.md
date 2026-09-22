@@ -14,12 +14,32 @@ Read the resource root's `windows/README.md` for native prerequisites, configura
 
 When inserting ordinary text, handle LaTeX-sensitive characters such as `%`, `&`, `_`, `#`, braces, backslashes, tildes, and carets according to context. Do not escape characters blindly inside commands, paths, URLs, or mathematics.
 
+## Match Layout Work to the Stage
+
+Infer the current stage from the user's request and artifact: collecting material and producing an initial draft precede editorial revision; a request to polish, finalize, or produce a submission-ready report includes revision.
+Do not advance into layout polishing merely because an initial draft compiles or has a visible defect.
+Before revision, report minor awkward page breaks, overflow, alignment, spacing, and observed excess pages without fixing them.
+Do not iterate builds, renderings, manual breaks, float placement, spacing, or size adjustments solely to improve these issues.
+An early build may still verify that the draft compiles or expose a substantive problem.
+
+Report only what was actually checked: distinguish a log warning from visually confirmed clipping or misalignment, give the affected location when known, and state which checks remain unperformed.
+Keep deferred issues in the author handoff or author-only notes, not the report body; no special issue-tracking artifact is needed.
+Fix compilation blockers and defects that hide, omit, or change substantive content when necessary for the current task, and address layout directly when the user explicitly requests that repair.
+During editorial revision or finalization, revisit deferred issues and validate page flow and length with the content; preserve readable typography and the shared style.
+
 ## Use the Style's Packages
 
 Inspect `weekly-report.sty` for its current `\RequirePackage` declarations, options, and configuration before choosing LaTeX constructs or adding packages.
 Use suitable functionality already provided by the style instead of manually reproducing it or loading the same package again.
 For example, use `cleveref` for labeled cross-references, `siunitx` for numbers and units, and `mhchem` for chemical notation when the report calls for them.
 These are examples, not an exhaustive package list; the style remains the source of truth.
+
+Treat applicable package usage as an authoring and review requirement, not an optional refinement after a successful build.
+Use `siunitx` for scientific numerical values and units, including quantities, ranges, and uncertainties as applicable, and `mhchem` for chemical formulas, species, and reactions.
+Check body text, table cells, and captions for manually formatted substitutes such as `25 °C`, `$5\,\mathrm{m s^{-1}}$`, or `H$_2$O`; express the same values with suitable supported commands such as `\SI{25}{\degreeCelsius}`, `\SI{5}{\metre\per\second}`, or `\ce{H2O}`.
+Preserve values, precision, uncertainty, and chemical meaning during conversion.
+Ordinary counts, dates, identifiers, and algebraic expressions do not need to be mechanically wrapped in scientific notation commands.
+For review-only tasks, identify applicable omissions and give corrections; when editing is authorized, correct them even in existing user-written source.
 
 Read the package-usage comments in canonical `template.tex` as starting points.
 Choose other commands, argument forms, and options supported by the loaded package version when they better express the material; do not constrain usage to the exact example calls or insert unrelated scientific content merely to demonstrate them.
@@ -36,6 +56,10 @@ Confirm the current definitions in `weekly-report.sty` when exact arguments matt
 - `\ReportFigure` and `\ReportFigurePair` for figures.
 
 For `\ReportTable`, the number of column specifiers must match the row data. `L`, `C`, and `R` are flexible-width wrapping columns; standard `tabularx` specifiers may be mixed in. Keep labels unique and use cross-references consistently.
+
+Within a `\ReportSubsection`, use `itemize` with `\item` for parallel points, nesting only when supporting detail belongs to a parent point; use `enumerate` when order is meaningful.
+The style already configures these environments through `enumitem`.
+Choose them according to the body relationships described in the template, not to satisfy a list-count quota, and do not simulate lists with manually typed bullet characters or forced line breaks.
 
 Missing figure files intentionally render as placeholders. That can support drafting, but disclose it and do not treat a placeholder as a completed final figure.
 
@@ -72,6 +96,7 @@ For work intended as a final report, check as relevant:
 - absence of illustrative template content and unintended placeholders;
 - valid table layouts, labels, cross-references, and figure paths;
 - body-reference coverage for every figure and compliance with `cleveref` usage for all figure, table, and equation references;
+- applicable scientific notation in body text, tables, and captions through the style's packages, including `siunitx` and `mhchem`;
 - readable page flow and any meaningful warnings;
 - the actual rendered page count against the README's length policy for the complete weekly report;
 - consistency between rendered content and the available evidence.
@@ -79,6 +104,6 @@ For work intended as a final report, check as relevant:
 Use the resolved repository's `README.md`, "Length and Exceptions", for the page limit and necessity criteria.
 Read [content-quality.md](content-quality.md) when overflow requires content revision or final review raises questions about evidence or meaning.
 A successful build alone does not establish that a report meets the length requirement.
-If the PDF exceeds the limit, revise content within the authorized scope, rebuild, and inspect again while preserving readable typography and layout.
+During editorial revision or finalization, if the PDF exceeds the limit, revise content within the authorized scope, rebuild, and inspect again while preserving readable typography and layout.
 Do not declare an overlength report ready unless the narrow necessity exception is established and explained with the verified page count in the handoff.
 If PDF generation or page inspection is unavailable, report that length compliance remains unverified.

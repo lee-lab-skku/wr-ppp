@@ -28,6 +28,7 @@ Infer these from the request and accessible files when practical. Do not turn th
 
 Before authoring or changing report LaTeX, first inspect the package declarations and relevant configuration in the resolved repository's `weekly-report.sty`.
 Use the loaded packages where they suit the content, following [references/latex-and-build.md](references/latex-and-build.md); template command examples illustrate usage without limiting the supported commands or argument forms.
+Apply its notation checks during authoring and review, including to user-supplied LaTeX; successful compilation is not proof of package compliance.
 
 Before drafting, substantively revising, or reviewing report content, read the instructional comments in the resolved repository's canonical `template.tex` and the `README.md` sections "Write the Report" and "Length and Exceptions".
 The README defines shared report policy; template comments explain how to apply it while writing.
@@ -37,6 +38,7 @@ The README's figure, table, and equation reference rules are requirements, not o
 When drafting, revising, or reviewing content, apply the reference checks in [references/latex-and-build.md](references/latex-and-build.md), including to existing user-written prose.
 
 Read only the references needed for the current request. Combine them when a problem crosses boundaries.
+Apply checks only where the actual content and task make them relevant; silently skip inapplicable checks without adding content to exercise them or reporting their non-applicability.
 
 - Read [references/report-conventions.md](references/report-conventions.md) when locating, naming, scaffolding, preserving template comments, configuring, or building report sources and outputs.
 - Read [references/content-quality.md](references/content-quality.md) when assessing evidence, drafting from source material, making editorial decisions, revising claims, preserving authorial intent, or working without supporting material.
@@ -52,6 +54,9 @@ Consult the resolved repository's `weekly-report.sty` and scripts for exact LaTe
 - Explain unfamiliar conventions at the point they become relevant, using language appropriate to the user's apparent experience. Do not require the user to know LaTeX or repository terminology before helping them.
 - Preserve the shared template and style during ordinary report work. Change them only when the user requests a reusable template or build-system change.
 - Never invent evidence, measurements, completed work, citations, decisions, or figure contents. Separate verified facts, author-supplied claims, interpretations, and unresolved questions.
+- Write from the report author's research perspective even when the input is organized records rather than conversation; use objective descriptions without habitual first-person wording or narration of the agent's source review.
+- Make the body structure express relationships among findings and support, not just subsection titles; follow the template's structural guidance without imposing a fixed outline.
+- Before editorial revision or finalization, report minor pagination, overflow, and alignment issues accurately and defer their repair; do not spend drafting time on layout tuning or repeated builds for cosmetic fixes. Follow the stage and exception guidance in [references/latex-and-build.md](references/latex-and-build.md).
 - When source material is unavailable, continue with work that does not require it. Improve clarity, organization, grammar, and LaTeX while preserving factual meaning; identify claims that cannot be strengthened or verified to the author or in author-only source comments instead of converting them into reader-facing uncertainty language.
 - Protect existing work, including source comments and customizations. Inspect before overwriting, keep changes scoped to the requested report, and disclose placeholders or unresolved problems to the author without automatically rendering them in the report. Do not automatically synchronize existing reports' comments to the current template.
 
