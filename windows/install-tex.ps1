@@ -14,9 +14,29 @@ if (-not (Test-Path -LiteralPath $tlmgr)) {
     $extraction = Start-Process -FilePath $archive -ArgumentList '-y' -WorkingDirectory $InstallRoot -WindowStyle Hidden -Wait -PassThru
     if ($extraction.ExitCode -ne 0) { throw 'TinyTeX extraction failed.' }
 }
+# Resolve CTAN once: separate tlmgr/Python requests can otherwise select mirrors
+# at different sync revisions, even for a package installed moments earlier.
+if ($PrepareDistribution) {
+    $indexSuffix = '/tlpkg/texlive.tlpdb.xz'
+    $curl = (Get-Command curl.exe -CommandType Application -TotalCount 1 -ErrorAction Stop).Source
+    $resolved = & $curl '-fsSL' '--retry' '2' '--connect-timeout' '30' '--max-time' '120' '--proto' '=https' '--proto-redir' '=https' '-o' 'NUL' '-w' '%{url_effective}' ($Repository.TrimEnd('/') + $indexSuffix)
+    if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve TeX repository.' }
+    $resolved = [string]$resolved
+    if (-not $resolved.StartsWith('https://') -or -not $resolved.EndsWith($indexSuffix)) {
+        throw "Unexpected TeX repository URL: $resolved"
+    }
+    $Repository = $resolved.Substring(0, $resolved.Length - $indexSuffix.Length)
+    Write-Host "Distribution TeX repository: $Repository"
+}
 # Do not change machine/user PATH or touch another TeX installation.
 & $tlmgr option repository $Repository
 if ($LASTEXITCODE -ne 0) { throw 'Unable to set TeX repository.' }
+if ($PrepareDistribution) {
+    # install skips existing packages from the daily bootstrap or a previous
+    # local setup. Align those too before matching their documentation hashes.
+    & $tlmgr update --self --all
+    if ($LASTEXITCODE -ne 0) { throw 'TeX packages could not be updated for distribution.' }
+}
 # weekly-report.sty also requires mhchem, which is outside these collections.
 & $tlmgr install collection-latexrecommended collection-latexextra collection-langcjk collection-langkorean collection-fontsrecommended collection-xetex mhchem
 if ($LASTEXITCODE -ne 0) { throw 'TeX packages could not be installed.' }

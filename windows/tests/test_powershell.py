@@ -136,6 +136,65 @@ class PowerShellTests(unittest.TestCase):
                 self.assertTrue(Path(result.stdout.splitlines()[0]).samefile(python), result.stdout)
                 self.assertIn('curl ', result.stdout)
 
+    def test_tex_distribution_uses_one_mirror_and_stops_on_setup_failures(self):
+        shutil.copyfile(ROOT / 'windows/install-tex.ps1', self.root / 'windows/install-tex.ps1')
+        bin_dir = self.root / '.runtime/TinyTeX/bin/windows'
+        bin_dir.mkdir(parents=True)
+        (bin_dir / 'tlmgr.bat').write_text(
+            '@echo off\necho %*>>"%WR_TEST_TLMGR_LOG%"\n'
+            'if "%1"=="update" exit /b %WR_TEST_UPDATE_EXIT%\nexit /b 0\n', encoding='ascii')
+        # Substitute only external dependencies; execute the real orchestration
+        # in PowerShell, including native exit handling and argument forwarding.
+        (self.root / 'curl-stub.ps1').write_text(
+            "$args | ConvertTo-Json | Set-Content -LiteralPath $env:WR_TEST_CURL_LOG\n"
+            'Write-Output $env:WR_TEST_MIRROR\nexit ([int]$env:WR_TEST_CURL_EXIT)\n', encoding='ascii')
+        with (self.root / 'windows/common.ps1').open('a', encoding='utf-8') as common:
+            common.write("\nfunction Get-Command {\n"
+                         "param($Name, $CommandType, $TotalCount, $ErrorAction)\n"
+                         "if ($Name -ne 'curl.exe') { throw 'Unexpected executable lookup' }\n"
+                         "[pscustomobject]@{ Source = (Join-Path $script:WrRoot 'curl-stub.ps1') }\n}\n"
+                         "function Resolve-WrPython { param($Python) 'python-fixture' }\n"
+                         "function Invoke-WrChecked { param($FilePath, $Arguments)\n"
+                         "$Arguments | ConvertTo-Json | Set-Content -LiteralPath $env:WR_TEST_PREPARE_LOG\n}\n")
+        tlmgr_log = self.root / 'tlmgr.log'
+        curl_log = self.root / 'curl.json'
+        prepare_log = self.root / 'prepare.json'
+        mirror = 'https://mirror.example.invalid/tlnet'
+        env = {'WR_TEST_TLMGR_LOG': str(tlmgr_log), 'WR_TEST_CURL_LOG': str(curl_log),
+               'WR_TEST_PREPARE_LOG': str(prepare_log), 'WR_TEST_MIRROR': mirror + '/tlpkg/texlive.tlpdb.xz'}
+        for shell in SHELLS:
+            for mode in ('source', 'distribution', 'curl-failure', 'update-failure'):
+                with self.subTest(shell=shell, mode=mode):
+                    for log in (tlmgr_log, curl_log, prepare_log):
+                        log.unlink(missing_ok=True)
+                    env.update(WR_TEST_CURL_EXIT='7' if mode == 'curl-failure' else '0',
+                               WR_TEST_UPDATE_EXIT='9' if mode == 'update-failure' else '0')
+                    flags = [] if mode == 'source' else ['-PrepareDistribution']
+                    result = self.run_ps(shell, self.root / 'windows/install-tex.ps1', *flags, extra_env=env)
+                    if mode == 'curl-failure':
+                        self.assertNotEqual(result.returncode, 0, result.stdout)
+                        self.assertFalse(tlmgr_log.exists())
+                        self.assertFalse(prepare_log.exists())
+                        continue
+                    calls = tlmgr_log.read_text().splitlines()
+                    if mode == 'update-failure':
+                        self.assertNotEqual(result.returncode, 0, result.stdout)
+                        self.assertEqual(calls, ['option repository ' + mirror, 'update --self --all'])
+                        self.assertFalse(prepare_log.exists())
+                        continue
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    if mode == 'source':
+                        self.assertFalse(curl_log.exists())
+                        self.assertFalse(prepare_log.exists())
+                        self.assertEqual(len(calls), 3)
+                    else:
+                        self.assertEqual(calls[:2], ['option repository ' + mirror, 'update --self --all'])
+                        self.assertTrue(calls[2].startswith('install collection-'))
+                        self.assertEqual(calls[3], 'postaction install script xetex')
+                        args = json.loads(prepare_log.read_text(encoding='utf-8-sig'))
+                        self.assertEqual(args[args.index('--repository') + 1], mirror)
+                        self.assertEqual(args[1], 'prepare-tex')
+
     def test_release_version_uses_triggering_tag_and_rejects_dirty_checkout(self):
         def git(*args):
             return subprocess.check_output(['git', '-C', str(self.root), *args], stderr=subprocess.STDOUT, text=True).strip()

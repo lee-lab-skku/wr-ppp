@@ -14,7 +14,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 - Collect the canonical project license and notice plus the KaTeX license in PyInstaller resources; retain the upstream KaTeX text inside editor HTML for source, local-server, and standalone-export use.
 - Compare full legal resources and attributed editor HTML with the selected checkout in portable and installed smoke tests, with missing-file and changed-content regression cases.
 - Collect the selected Python installation and package licenses, actual PyInstaller runtime-hook attribution, and native payload hashes; verify the generated inventory after packaging and installation.
-- Recover named TeX legal/readme documents from checksum-matched package archives without enabling full documentation installation, retain them with the prepared dependency cache, and reject mismatched repository content.
+- Prepare TeX packages and named legal/readme documents from one resolved mirror, updating existing packages before installation; retain checksum-matched notices with the dependency cache without enabling full documentation installation.
+  Reject mismatched repository content before downloading documentation archives, reporting the selected mirror, package revisions, and differing hashes.
 - Sanitize offline portable bundles as well as installers, preserve collected notices, and identify TeX packaging modifications in the distributed notice.
 
 ### Validation
@@ -24,6 +25,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 - Runtime/TeX notice implementation on Linux: all 129 common regression tests passed, followed by all 15 collector/sanitizer tests after the final preservation adjustment.
   Checksum-verified UnFonts core/extra documentation archives exercised the real archive layout and selective extraction without installation or network access.
   Python/spec syntax, PowerShell ASCII source, and whitespace checks passed; five native PowerShell tests skipped, and Windows packaging/installation remains untested.
+- Repository alignment changes on Linux: all 16 collector/sanitizer tests passed, including rejection of a late package mismatch before any documentation archive download.
+  Six native PowerShell tests skipped, including the new orchestration check for shared mirror selection, update ordering, and stopping on resolution/update failures; the corrected Windows CI path still requires execution.
 
 ## 2026-09-21 &mdash; Documentation consolidation and figure compatibility
 

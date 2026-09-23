@@ -167,6 +167,30 @@ def prepare_tex(tex, cache, repository='https://mirror.ctan.org/systems/texlive/
             return
     installed = packages(database.read_text(encoding='utf-8'))
     remote = packages(lzma.decompress(fetch(repository.rstrip('/') + '/tlpkg/texlive.tlpdb.xz')).decode())
+    # Check the whole snapshot before downloading any documentation: a late
+    # mismatch must not waste all preceding archive downloads. A fixed mirror
+    # can still change during setup; keep rejecting mixed versions in that case.
+    mismatches = []
+    for name, info in sorted(installed.items()):
+        if name.startswith('00texlive.'):
+            continue
+        checksum = next(iter(info.get('doccontainerchecksum', [])), None)
+        if checksum is None:
+            continue
+        if not re.fullmatch(r'[0-9a-f]{128}', checksum):
+            raise ValueError(f'Invalid TeX doc checksum: {name}')
+        other = remote.get(name, {})
+        if other.get('doccontainerchecksum') != [checksum]:
+            mismatches.append(
+                f'{name}: installed revision {info.get("revision", [])}, '
+                f'doc SHA512 {checksum}; repository revision {other.get("revision", [])}, '
+                f'doc SHA512 {other.get("doccontainerchecksum", [])}')
+    if mismatches:
+        raise ValueError(
+            f'TeX documentation no longer matches {len(mismatches)} package(s) at {repository}:\n'
+            + '\n'.join(mismatches[:10])
+            + '\nRun install-tex.ps1 -PrepareDistribution against one synchronized repository, '
+            'or use -Repository with a matching snapshot for intentionally retained versions.')
     cache.mkdir(parents=True, exist_ok=True)
     files, inventory, index = {}, [], ['TeX package notices', '', 'Package versions and notice hashes: manifest.json', '']
     with tempfile.TemporaryDirectory(prefix='wr-licenses-', dir=tex / 'tlpkg') as temporary:
@@ -190,11 +214,7 @@ def prepare_tex(tex, cache, repository='https://mirror.ctan.org/systems/texlive/
             checksum = next(iter(info.get('doccontainerchecksum', [])), None)
             if checksum is None:
                 continue
-            if not re.fullmatch(r'[0-9a-f]{128}', checksum):
-                raise ValueError(f'Invalid TeX doc checksum: {name}')
             other = remote.get(name, {})
-            if other.get('doccontainerchecksum') != [checksum]:
-                raise ValueError(f'TeX documentation no longer matches {name}; prepare from a matching repository snapshot.')
             wanted = [p for p in other.get('docfiles', []) if LEGAL_NAME.match(PurePosixPath(p).name)
                       and p not in files]
             if not wanted:

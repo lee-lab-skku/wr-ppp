@@ -153,6 +153,22 @@ class DistributionLicenseTests(unittest.TestCase):
             self.prepare()
         self.assertFalse((self.tex / licenses.TEX_NOTICES).exists())
 
+    def test_repository_mismatch_preflight_reports_versions_before_any_archive_download(self):
+        self.tex_fixture()
+        installed = self.installed + '\nname z-later\nrevision 100\ndoccontainerchecksum ' + 'a' * 128 + '\n'
+        self.remote += '\nname z-later\nrevision 101\ndoccontainerchecksum ' + 'b' * 128 + '\n'
+        (self.tex / 'tlpkg/texlive.tlpdb').write_text(installed, encoding='utf-8')
+        with self.assertRaises(ValueError) as raised:
+            self.prepare()
+        message = str(raised.exception)
+        for detail in ('z-later', "revision ['100']", "revision ['101']", 'a' * 128, 'b' * 128,
+                       'https://mirror.ctan.org', '-PrepareDistribution'):
+            self.assertIn(detail, message)
+        self.assertEqual(len(self.requests), 1)
+        self.assertTrue(self.requests[0].endswith('texlive.tlpdb.xz'))
+        self.assertFalse(self.cache.exists())
+        self.assertFalse((self.tex / licenses.TEX_NOTICES).exists())
+
     def test_indexed_notice_missing_from_archive_fails_closed(self):
         self.tex_fixture()
         self.remote += ' RELOC/doc/fonts/example/NOTICE.txt\n'

@@ -52,10 +52,14 @@ The generated runtime notice index lives under `_internal/licenses`; it suppleme
 
 Keep TeX legal documents independent of the optional full documentation/source installation settings.
 Use `install-tex.ps1 -PrepareDistribution` to prepare notices during TeX setup, as CI does before saving the dependency cache; this uses the configured Windows Python environment or `-Python`.
+Distribution preparation resolves the HTTPS repository redirect once, then uses that concrete mirror for package updates, installation, and notice collection.
+It runs `tlmgr update --self --all` before installing the selected collections so packages already present in the daily bootstrap or a previous local setup are aligned too; `tlmgr install` alone leaves existing packages untouched.
 Ordinary source-only TeX setup does not perform this additional download, while `package.ps1 -IncludeTeX` always requires preparation or a matching prepared cache.
 Preparation records the installed package database and retrieves named legal/readme files from documentation archives whose SHA512 matches that database.
 Archive checksums require downloading complete documentation containers even though only selected notices are retained in the distribution; allow extra preparation time and disk space on a cache miss.
 The remote package index must identify the same documentation container; never substitute newer notices for an older cached package by name alone.
+Check all installed documentation checksums before downloading archives, and report the selected repository, package revisions, and differing hashes on failure.
+Even a concrete mirror can change during a build; if this check fails, prepare again against a synchronized mirror or an intentional matching snapshot rather than bypassing it.
 Keep the resulting notices and inventory in `tlpkg/wr-licenses` inside prepared TinyTeX so a matching cache can be reused offline.
 If a prepared tree changes, regenerate its notice inventory against matching repository content; `install-tex.ps1 -Repository <snapshot-url>` selects a matching HTTPS repository.
 The archive download cache under `.runtime/tex-notice-cache` is preparation-only and must not be copied into the application.
@@ -135,7 +139,7 @@ Follow the root contribution guide for release authorization, tag preparation, C
 ## TinyTeX Cache
 
 CI caches the complete prepared `.runtime/TinyTeX` tree, including installed packages and generated TeX formats.
-An exact cache hit skips `install-tex.ps1`; a miss uses the existing daily bootstrap and current TeX package repository.
+An exact cache hit skips `install-tex.ps1`; a miss uses the daily bootstrap, updates its packages, and installs the required collections from the same resolved repository used for notices.
 The cache key includes the Windows runner image label, architecture, installation script, shared PowerShell helper and notice collector hashes, and `TINYTEX_CACHE_REVISION` in the workflow.
 Do not add release tags or source commit IDs to this dependency key, or use partial restore keys that could mix incompatible TeX installations.
 Increment `TINYTEX_CACHE_REVISION` to refresh upstream TeX packages or replace an unusable cache; dependency changes must update `install-tex.ps1` so its hash invalidates the cache automatically.
