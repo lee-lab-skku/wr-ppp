@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Baseline: merge [1a0a295](https://github.com/lee-lab-skku/wr-ppp/commit/1a0a295ab3df4d38b90ed778b15dd5777b7c5726) of [v1.5.0-beta](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-beta) and [v1.4.1](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.1), whose common parent release is [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).
+Baseline: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-rc).
+
+## [1.5.0-rc] &mdash; 2026-09-23
+
+Parent release tags: [v1.5.0-beta](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-beta) and [v1.4.1](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.1), integrated by merge [1a0a295](https://github.com/lee-lab-skku/wr-ppp/commit/1a0a295ab3df4d38b90ed778b15dd5777b7c5726), whose common parent release is [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).
 The baseline includes the visual-editor drafting-stage and scientific-notation integration fixes; entries below describe changes after that merge.
 
 Bundled Ghostscript 10.08.0 sources: [original source archive](https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz) and [TeX Live Windows patch at revision 80226](https://tug.org/svn/texlive/trunk/Master/source/ghostscript-10.08.0-diff.xz?pathrev=80226&view=co).
@@ -212,7 +216,8 @@ Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0)
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/1a0a295ab3df4d38b90ed778b15dd5777b7c5726...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-rc...HEAD
+[1.5.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-beta...v1.5.0-rc
 [1.4.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.4.1
 [1.5.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.5.0-beta
 [1.4.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-rc...v1.4.0

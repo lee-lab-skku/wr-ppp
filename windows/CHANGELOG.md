@@ -9,6 +9,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ## Unreleased
 
+## 2026-09-23 &mdash; Windows distribution notices and source references
+
+Changes: [57be8ab](https://github.com/lee-lab-skku/wr-ppp/commit/57be8ab), [127f313](https://github.com/lee-lab-skku/wr-ppp/commit/127f313), [4266ed1](https://github.com/lee-lab-skku/wr-ppp/commit/4266ed1), and [cf140f7](https://github.com/lee-lab-skku/wr-ppp/commit/cf140f7a7cded729d27bf8eb00db0b087df523da).
+
 ### Fixed
 
 - Collect the canonical project license and notice plus the KaTeX license in PyInstaller resources; retain the upstream KaTeX text inside editor HTML for source, local-server, and standalone-export use.
