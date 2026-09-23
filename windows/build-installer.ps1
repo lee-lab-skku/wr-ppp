@@ -27,6 +27,8 @@ if ($Version -notmatch '^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(b
     throw 'Bundle version must derive from a repository SemVer tag. Rebuild the package.'
 }
 Invoke-WrChecked $Python @((Join-Path $PSScriptRoot 'sanitize-bundle.py'))
+Invoke-WrChecked $Python @((Join-Path $PSScriptRoot 'distribution_licenses.py'), 'check',
+    '--bundle', $bundle, '--require-tex')
 foreach ($required in @('WeeklyReport.exe', 'WeeklyReportCLI.exe', '_internal\weekly-report.sty', 'tex\bin\windows\xelatex.exe')) {
     if (-not (Test-Path -LiteralPath (Join-Path $bundle $required))) {
         throw "Incomplete offline bundle: $required"

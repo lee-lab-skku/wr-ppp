@@ -45,6 +45,23 @@ The sidecar holds the upstream license verbatim; update its embedded copy togeth
 Portable and installed smoke checks compare these resources and the attributed HTML byte-for-byte with the selected source checkout through `tests/check_license_files.ps1`.
 These checks establish notice preservation for these files, not completeness of all third-party notices or corresponding sources.
 
+Collect runtime notices using the same interpreter as PyInstaller.
+Require that interpreter's base installation `LICENSE.txt`, preserve the installed pypdf/tzdata/PyInstaller license files, and retain the source attribution of runtime hooks actually selected by analysis.
+Record collected native-file hashes and resolved build-distribution versions without leaking host installation paths into the distribution.
+The generated runtime notice index lives under `_internal/licenses`; it supplements the existing package metadata rather than replacing upstream license files.
+
+Keep TeX legal documents independent of the optional full documentation/source installation settings.
+Use `install-tex.ps1 -PrepareDistribution` to prepare notices during TeX setup, as CI does before saving the dependency cache; this uses the configured Windows Python environment or `-Python`.
+Ordinary source-only TeX setup does not perform this additional download, while `package.ps1 -IncludeTeX` always requires preparation or a matching prepared cache.
+Preparation records the installed package database and retrieves named legal/readme files from documentation archives whose SHA512 matches that database.
+Archive checksums require downloading complete documentation containers even though only selected notices are retained in the distribution; allow extra preparation time and disk space on a cache miss.
+The remote package index must identify the same documentation container; never substitute newer notices for an older cached package by name alone.
+Keep the resulting notices and inventory in `tlpkg/wr-licenses` inside prepared TinyTeX so a matching cache can be reused offline.
+If a prepared tree changes, regenerate its notice inventory against matching repository content; `install-tex.ps1 -Repository <snapshot-url>` selects a matching HTTPS repository.
+The archive download cache under `.runtime/tex-notice-cache` is preparation-only and must not be copied into the application.
+The filename-based collection covers explicit legal/readme files; review in-source notices, embedded dependencies and corresponding-source requirements separately.
+It does not acquire complete corresponding sources or establish a source-delivery mechanism.
+
 PowerShell scripts containing non-ASCII literals require UTF-8 with BOM for Windows PowerShell 5.1; otherwise keep their source ASCII.
 
 ## Validation
@@ -101,8 +118,15 @@ Outputs are `windows/dist/installer/WeeklyReport-<version>-Setup.exe` and its SH
 Keep binaries, checksums, credentials, and generated local state out of tracked source; publish distribution artifacts through the root release workflow.
 
 Before installer creation, `sanitize-bundle.py` removes development-machine TeX logs and font caches and normalizes generated paths.
+Offline portable packaging applies the same sanitization and includes the canonical `TeX-NOTICE.txt` as `tex/README.WeeklyReport.txt` to identify these distribution changes.
+Preserve collected legal files during sanitization.
 Keep the sanitizer and its distribution checks aligned when changing the bundled runtime.
 The earlier distribution review was targeted validation, not a guarantee about every bundled dependency or secret.
+
+Packaging, pre-installer validation, and both portable/installed smoke checks verify generated notice manifests, native-file hashes, and the TeX database/notice fingerprints.
+Smoke checks run the source validator with development Python before restricting the application test's PATH.
+They fail for missing/modified legal files or a mismatched TeX inventory; passing them establishes transport integrity rather than complete license compliance.
+Exercise the collector's offline fixtures with `python -B -m unittest discover -s tests -p 'test_distribution_licenses.py' -v`.
 
 The bundle stores the Git-derived repository version in `_internal/VERSION`, including development or dirty suffixes when applicable.
 Do not add a separate application `-Version` option or maintain a Windows-specific version sequence.
@@ -112,7 +136,7 @@ Follow the root contribution guide for release authorization, tag preparation, C
 
 CI caches the complete prepared `.runtime/TinyTeX` tree, including installed packages and generated TeX formats.
 An exact cache hit skips `install-tex.ps1`; a miss uses the existing daily bootstrap and current TeX package repository.
-The cache key includes the Windows runner image label, architecture, installation script and shared PowerShell helper hashes, and `TINYTEX_CACHE_REVISION` in the workflow.
+The cache key includes the Windows runner image label, architecture, installation script, shared PowerShell helper and notice collector hashes, and `TINYTEX_CACHE_REVISION` in the workflow.
 Do not add release tags or source commit IDs to this dependency key, or use partial restore keys that could mix incompatible TeX installations.
 Increment `TINYTEX_CACHE_REVISION` to refresh upstream TeX packages or replace an unusable cache; dependency changes must update `install-tex.ps1` so its hash invalidates the cache automatically.
 Every run validates actual native TeX and administrator builds, including cache hits; a new cache is saved only after those checks pass, before Inno Setup preparation and packaging.

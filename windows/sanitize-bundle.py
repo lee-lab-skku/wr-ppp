@@ -1,6 +1,8 @@
 """Remove build-machine traces from the disposable distribution, before release."""
 from pathlib import Path
+import json
 import re
+import shutil
 
 
 def sanitize(bundle: Path) -> None:
@@ -9,12 +11,16 @@ def sanitize(bundle: Path) -> None:
     if bundle != expected.resolve():
         raise ValueError('Only windows/dist/WeeklyReport may be sanitized')
     tex = bundle / 'tex'
+    notice_manifest = tex / 'tlpkg/wr-licenses/manifest.json'
+    legal_files = set(json.loads(notice_manifest.read_text(encoding='utf-8'))['files']) if notice_manifest.is_file() else set()
     removed = 0
     # TeX recreates logs and font caches locally. Never ship developer caches.
     for path in tex.rglob('*'):
         if not path.is_file():
             continue
         relative = path.relative_to(tex).as_posix()
+        if relative in legal_files or relative.startswith('tlpkg/wr-licenses/'):
+            continue
         unused_format = (path.suffix == '.fmt' and
                          relative.startswith('texmf-var/web2c/') and
                          not relative.startswith('texmf-var/web2c/xetex/'))
@@ -45,6 +51,8 @@ def sanitize(bundle: Path) -> None:
         content = re.sub(r'<dir>[^<]*[/\\]texmf-dist[/\\]fonts[/\\](opentype|truetype)</dir>',
                          r'<dir prefix="relative">../../../texmf-dist/fonts/\1</dir>', content)
         config.write_text(content, encoding='utf-8')
+    if tex.is_dir():
+        shutil.copyfile(Path(__file__).with_name('TeX-NOTICE.txt'), tex / 'README.WeeklyReport.txt')
     print(f'Removed {removed} generated logs/cache files; made TeX configuration portable.')
 
 

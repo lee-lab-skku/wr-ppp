@@ -30,6 +30,8 @@ try {
     if (-not (Test-Path -LiteralPath "HKCU:\$registryKey")) { throw 'Per-user uninstall registration is missing.' }
     & (Join-Path $PSScriptRoot 'check_license_files.ps1') -SourceRoot $script:WrRoot `
         -ResourceRoot (Join-Path $installRoot '_internal')
+    Invoke-WrChecked (Resolve-WrPython) @((Join-Path $script:WrRoot 'windows/distribution_licenses.py'),
+        'check', '--bundle', $installRoot, '--require-tex')
     $env:WR_CONFIG = $config
     $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
     Invoke-WrChecked $app @('setup', '--pdf-output', $output)

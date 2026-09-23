@@ -18,7 +18,7 @@ The baseline includes the visual-editor drafting-stage and scientific-notation i
 
 ### Fixed
 
-- [build] include project license and report-use notices in Windows distributions, and preserve the full KaTeX notice with shared editor assets and standalone HTML exports.
+- [build] preserve project, runtime, and TeX package notices in Windows distributions, describe bundled TeX modifications, and retain the full KaTeX notice with shared editor assets and standalone HTML exports.
 
 ## [1.4.1] &mdash; 2026-09-23
 

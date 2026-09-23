@@ -13,6 +13,8 @@ Uninstall through Windows Settings; user configuration and authored reports are 
 The installer is not currently code-signed.
 The installation's `_internal` directory contains the project's `LICENSE.txt` and `NOTICE.txt`.
 The editor's KaTeX notice is in `_internal/report_editor/assets/KaTeX-LICENSE.txt` and is also preserved inside exported editor HTML.
+Additional runtime notices are indexed in `_internal/licenses/README.txt`.
+The bundled TeX changes and package notices are described in `tex/README.WeeklyReport.txt` and `tex/tlpkg/wr-licenses/README.txt`.
 
 ## Run from Source
 
@@ -30,6 +32,7 @@ Setup creates or reuses the repository's `.venv` and finishes without interactiv
 An existing non-Windows virtual environment is preserved and reported as an error; rename it before retrying.
 TinyTeX is a separate TeX distribution, not a package included with Python.
 `install-tex.ps1` installs it under the project's `.runtime/TinyTeX`.
+Source-only setup keeps TinyTeX's optional documentation/source settings; redistribution preparation is performed separately when packaging the application.
 If Windows TeX Live is already installed, skip this step and select its `bin/windows` directory in the application settings.
 Setup does not change the system PATH or other TeX installations.
 

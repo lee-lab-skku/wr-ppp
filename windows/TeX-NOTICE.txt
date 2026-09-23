@@ -1,0 +1,22 @@
+Weekly Report's bundled TeX distribution
+
+This is a distribution assembled by the Weekly Report project from TinyTeX,
+which is based on TeX Live. It is not an unmodified full TeX Live distribution.
+Upstream TeX Live: https://tug.org/texlive/
+Upstream TinyTeX: https://github.com/rstudio/tinytex-releases
+
+The project starts with TinyTeX-1 and requests the latexrecommended, latexextra,
+langcjk, langkorean, fontsrecommended and xetex collections, plus mhchem.
+The included tlpkg/texlive.tlpdb identifies the actual installed package set;
+prepared installations can include additional packages.
+
+Weekly Report removes generated TeX logs, font caches and non-XeTeX format
+files from its distribution copy. It normalizes generated configuration
+comments and font paths to remove build-machine paths and allow relocation.
+These packaging changes are made by Weekly Report. Direct questions about
+this application bundle to https://github.com/lee-lab-skku/wr-ppp/issues.
+
+TeX Live and its individual packages retain their own copyrights and licenses.
+See LICENSE.TL, LICENSE.CTAN, and tlpkg/wr-licenses/README.txt for the collected
+package notices. Additional notices may be present in the package sources.
+Collecting these notices is separate from providing corresponding sources.

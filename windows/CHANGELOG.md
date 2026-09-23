@@ -13,11 +13,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 - Collect the canonical project license and notice plus the KaTeX license in PyInstaller resources; retain the upstream KaTeX text inside editor HTML for source, local-server, and standalone-export use.
 - Compare full legal resources and attributed editor HTML with the selected checkout in portable and installed smoke tests, with missing-file and changed-content regression cases.
+- Collect the selected Python installation and package licenses, actual PyInstaller runtime-hook attribution, and native payload hashes; verify the generated inventory after packaging and installation.
+- Recover named TeX legal/readme documents from checksum-matched package archives without enabling full documentation installation, retain them with the prepared dependency cache, and reject mismatched repository content.
+- Sanitize offline portable bundles as well as installers, preserve collected notices, and identify TeX packaging modifications in the distributed notice.
 
 ### Validation
 
 - Working-tree notice changes on Linux: five shared-editor tests passed, covering both HTTP adapters and standalone HTML export; geometry, inline rendering, upstream license byte comparison, and whitespace checks passed.
   Chrome/Chromium and native Windows PowerShell were unavailable, so browser and PowerShell checks skipped execution; no new portable bundle or installer was built.
+- Runtime/TeX notice implementation on Linux: all 129 common regression tests passed, followed by all 15 collector/sanitizer tests after the final preservation adjustment.
+  Checksum-verified UnFonts core/extra documentation archives exercised the real archive layout and selective extraction without installation or network access.
+  Python/spec syntax, PowerShell ASCII source, and whitespace checks passed; five native PowerShell tests skipped, and Windows packaging/installation remains untested.
 
 ## 2026-09-21 &mdash; Documentation consolidation and figure compatibility
 
