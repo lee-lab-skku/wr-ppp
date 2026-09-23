@@ -15,6 +15,7 @@ The installation's `_internal` directory contains the project's `LICENSE.txt` an
 The editor's KaTeX notice is in `_internal/report_editor/assets/KaTeX-LICENSE.txt` and is also preserved inside exported editor HTML.
 Additional runtime notices are indexed in `_internal/licenses/README.txt`.
 The bundled TeX changes and package notices are described in `tex/README.WeeklyReport.txt` and `tex/tlpkg/wr-licenses/README.txt`.
+`tex/README.WeeklyReport.txt` also identifies the bundled Ghostscript's original source, Windows patch, checksums, and retrieval/application instructions; its repository copy is [TeX-NOTICE.txt](TeX-NOTICE.txt).
 
 ## Run from Source
 

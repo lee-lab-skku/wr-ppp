@@ -64,7 +64,7 @@ Keep the resulting notices and inventory in `tlpkg/wr-licenses` inside prepared 
 If a prepared tree changes, regenerate its notice inventory against matching repository content; `install-tex.ps1 -Repository <snapshot-url>` selects a matching HTTPS repository.
 The archive download cache under `.runtime/tex-notice-cache` is preparation-only and must not be copied into the application.
 The filename-based collection covers explicit legal/readme files; review in-source notices, embedded dependencies and corresponding-source requirements separately.
-It does not acquire complete corresponding sources or establish a source-delivery mechanism.
+It does not acquire complete corresponding sources; maintain explicit source-access directions for reviewed components as described below.
 
 PowerShell scripts containing non-ASCII literals require UTF-8 with BOM for Windows PowerShell 5.1; otherwise keep their source ASCII.
 
@@ -135,6 +135,25 @@ Exercise the collector's offline fixtures with `python -B -m unittest discover -
 The bundle stores the Git-derived repository version in `_internal/VERSION`, including development or dirty suffixes when applicable.
 Do not add a separate application `-Version` option or maintain a Windows-specific version sequence.
 Follow the root contribution guide for release authorization, tag preparation, CI dispatch, publication, and retries.
+
+### Third-Party Source References
+
+Keep the installed Ghostscript source directions in `TeX-NOTICE.txt`, which packaging copies to `tex/README.WeeklyReport.txt`.
+This file is fixed to LF in Git because distribution checks compare it byte-for-byte, including when inspecting a Windows installation from WSL.
+The Windows README links to this canonical notice; the release's selected root changelog section carries version-specific source links and access instructions next to the installer download.
+Use upstream versioned archives and revision-specific history rather than a generic latest-source link.
+No additional release asset is needed for this external source-access route.
+
+Bind the directions to the installed `tlgs.windows` revision and container SHA512 recorded in `GHOSTSCRIPT_PACKAGE` in `distribution_licenses.py`.
+Preparation and artifact checks reject another package identity, including reuse of a prepared cache, until its matching source and Windows patch have been reviewed and the notice and identity updated together.
+This check prevents stale source directions; it does not establish complete source correspondence or test remote availability.
+When updating, check the source/archive hashes, upstream binary/source/patch history, patch applicability and relevant build/dependency material, and preserve applicable third-party terms.
+Keep patch bytes intact, including non-UTF-8 text.
+The checked Ghostscript source is the upstream archive plus the TeX Live Windows patch; the TeX Live package README separately describes replaced fonts and distribution layout changes.
+
+Before publishing, verify access to both referenced source files and keep a retained copy outside the source checkout for recovery if upstream moves or removes them.
+The current rsync directory follows TeX Live development; its historical Subversion revisions provide the versioned fallback documented in the notice.
+If source access becomes unavailable, restore an accessible location and update the published directions; an integrity manifest or a local temporary copy alone does not provide download access to recipients.
 
 ## TinyTeX Cache
 

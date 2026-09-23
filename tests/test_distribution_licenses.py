@@ -209,6 +209,35 @@ class DistributionLicenseTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             licenses.verify_distribution(self.root, require_tex=True)
 
+    def test_ghostscript_source_references_are_bound_to_the_reviewed_package(self):
+        self.tex_fixture()
+        record = ('\nname tlgs.windows\nrevision 80216\ncontainerchecksum '
+                  + licenses.GHOSTSCRIPT_PACKAGE['containerchecksum'][0] + '\n')
+        (self.tex / 'tlpkg/texlive.tlpdb').write_text(self.installed + record, encoding='utf-8')
+        self.prepare()
+        for changed in (record.replace('80216', '80217'),
+                        record.replace(licenses.GHOSTSCRIPT_PACKAGE['containerchecksum'][0], 'a' * 128)):
+            with self.subTest(record=changed):
+                (self.tex / 'tlpkg/texlive.tlpdb').write_text(self.installed + changed, encoding='utf-8')
+                path = self.tex / licenses.TEX_NOTICES / 'manifest.json'
+                manifest = json.loads(path.read_text())
+                manifest['database_sha256'] = licenses.digest(self.tex / 'tlpkg/texlive.tlpdb')
+                licenses.write_json(path, manifest)
+                with mock.patch.object(licenses, 'download', side_effect=AssertionError('Must fail before network')):
+                    with self.assertRaisesRegex(ValueError, 'Ghostscript does not match'):
+                        licenses.prepare_tex(self.tex, self.cache, fetch=licenses.download)
+
+    def test_artifact_rejects_stale_ghostscript_source_references_with_an_intact_inventory(self):
+        self.complete()
+        database = self.tex / 'tlpkg/texlive.tlpdb'
+        database.write_text(self.installed + '\nname tlgs.windows\nrevision 90000\n', encoding='utf-8')
+        path = self.tex / licenses.TEX_NOTICES / 'manifest.json'
+        manifest = json.loads(path.read_text())
+        manifest['database_sha256'] = licenses.digest(database)
+        licenses.write_json(path, manifest)
+        with self.assertRaisesRegex(ValueError, 'Ghostscript does not match'):
+            licenses.verify_distribution(self.root, require_tex=True)
+
     def test_sanitization_preserves_collected_notices_and_records_modifications(self):
         spec = util.spec_from_file_location('sanitize', ROOT / 'windows/sanitize-bundle.py')
         sanitizer = util.module_from_spec(spec)

@@ -17,6 +17,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 - Prepare TeX packages and named legal/readme documents from one resolved mirror, updating existing packages before installation; retain checksum-matched notices with the dependency cache without enabling full documentation installation.
   Reject mismatched repository content before downloading documentation archives, reporting the selected mirror, package revisions, and differing hashes.
 - Sanitize offline portable bundles as well as installers, preserve collected notices, and identify TeX packaging modifications in the distributed notice.
+- Include Ghostscript 10.08.0 source/Windows-patch locations, hashes, historical retrieval and patch instructions in the distributed TeX notice, with source directions in release notes and a package-identity check to reject stale references.
+  Preserve the canonical notice with LF line endings for byte comparisons across Windows and WSL.
 
 ### Validation
 
@@ -26,7 +28,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
   Checksum-verified UnFonts core/extra documentation archives exercised the real archive layout and selective extraction without installation or network access.
   Python/spec syntax, PowerShell ASCII source, and whitespace checks passed; five native PowerShell tests skipped, and Windows packaging/installation remains untested.
 - Repository alignment changes on Linux: all 16 collector/sanitizer tests passed, including rejection of a late package mismatch before any documentation archive download.
-  Six native PowerShell tests skipped, including the new orchestration check for shared mirror selection, update ordering, and stopping on resolution/update failures; the corrected Windows CI path still requires execution.
+  Six native PowerShell tests skipped locally, including the new orchestration check for shared mirror selection, update ordering, and stopping on resolution/update failures.
+- [CI run 35839416523](https://github.com/lee-lab-skku/wr-ppp/actions/runs/35839416523) passed for `4266ed1`, including Windows packaging, portable/installed checks and uninstallation; the user also confirmed report builds from the installed artifact.
+- Ghostscript source-reference changes on Linux: all 18 collector/sanitizer tests passed, including rejection of changed package revisions/checksums with an otherwise intact prepared inventory.
+  The installed artifact matches the reviewed package identity; source hashes and inclusion of both source directions in a temporary release-note preview passed.
+  The upstream Windows patch passed a zero-fuzz dry run against 41 source files; native Ghostscript compilation, historical Subversion retrieval and a new Windows installer build were not run.
 
 ## 2026-09-21 &mdash; Documentation consolidation and figure compatibility
 

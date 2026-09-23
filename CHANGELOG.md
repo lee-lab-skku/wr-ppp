@@ -12,9 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Baseline: merge [1a0a295](https://github.com/lee-lab-skku/wr-ppp/commit/1a0a295ab3df4d38b90ed778b15dd5777b7c5726) of [v1.5.0-beta](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-beta) and [v1.4.1](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.1), whose common parent release is [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).
 The baseline includes the visual-editor drafting-stage and scientific-notation integration fixes; entries below describe changes after that merge.
 
+Bundled Ghostscript 10.08.0 sources: [original source archive](https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz) and [TeX Live Windows patch at revision 80226](https://tug.org/svn/texlive/trunk/Master/source/ghostscript-10.08.0-diff.xz?pathrev=80226&view=co).
+The patch is also available through `rsync -t tug.org::tldevsrc/Master/source/ghostscript-10.08.0-diff.xz .`; the installed `tex/README.WeeklyReport.txt` contains checksums, historical retrieval and patch-application instructions.
+
 ### Added
 
 - [docs] license original project materials under MIT in the laboratory's name, clarify research-content rights and attribution-free use in reports, credit contributors through Git history, and disclose AI use in project development.
+- [docs] provide version-specific Ghostscript source and Windows patch directions in the installed TeX notice and release notes.
 
 ### Fixed
 

@@ -20,3 +20,60 @@ TeX Live and its individual packages retain their own copyrights and licenses.
 See LICENSE.TL, LICENSE.CTAN, and tlpkg/wr-licenses/README.txt for the collected
 package notices. Additional notices may be present in the package sources.
 Collecting these notices is separate from providing corresponding sources.
+
+Ghostscript source and Windows patch
+-----------------------------------
+
+The source references in this section apply to Ghostscript 10.08.0 from
+TeX Live package tlgs.windows, revision 80216.
+Its license is retained in tlpkg/tlgs/COPYING.
+The TeX Live packaging changes, including replaced fonts and removed files,
+are described in tlpkg/tlgs/README.TEXLIVE.
+
+Obtain both the original source archive and the Windows patch:
+
+Original source: ghostscript-10.08.0.tar.xz
+https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz
+SHA256: c20492bc8ebb96c87fa2e52a0926e1cda8cde95d66145e018ac713fed5da38cf
+
+Windows patch: ghostscript-10.08.0-diff.xz
+rsync://tug.org/tldevsrc/Master/source/ghostscript-10.08.0-diff.xz
+SHA256: 540ae8eed3cf929c57ce3e3508119cbba2c581426eeb0a2003b85e0a265e5a75
+
+TeX Live also provides the original source archive at:
+rsync://tug.org/tldevsrc/Master/source/ghostscript-10.08.0.tar.xz
+
+With rsync installed, download the two files using:
+
+  rsync -t tug.org::tldevsrc/Master/source/ghostscript-10.08.0.tar.xz .
+  rsync -t tug.org::tldevsrc/Master/source/ghostscript-10.08.0-diff.xz .
+
+The rsync directory follows current TeX Live development.
+Historical sources and the patch are recorded in the TeX Live repository at
+revision 80226 (including the original source added in revision 80216):
+https://tug.org/svn/texlive/trunk/Master/source/?pathrev=80226
+
+If the current directory no longer carries these files, retrieve them by
+revision with a Subversion client:
+
+  svn export -r 80226 svn://tug.org/texlive/trunk/Master/source/ghostscript-10.08.0.tar.xz@80226 ghostscript-10.08.0.tar.xz
+  svn export -r 80226 svn://tug.org/texlive/trunk/Master/source/ghostscript-10.08.0-diff.xz@80226 ghostscript-10.08.0-diff.xz
+
+Verify the SHA256 values before extracting or applying the patch.
+For example, PowerShell provides Get-FileHash -Algorithm SHA256 <filename>.
+In a shell with tar, xz and patch, prepare the source with:
+
+  tar -xf ghostscript-10.08.0.tar.xz
+  xz -dk ghostscript-10.08.0-diff.xz
+  cd ghostscript-10.08.0
+  patch --batch --binary --fuzz=0 -p1 -i ../ghostscript-10.08.0-diff
+
+Keep the decompressed patch as bytes; it contains non-UTF-8 text.
+The patch contains Windows-specific source and resource changes and MSVC
+makefile settings, including COMPILE_INITS=0 and the 64-bit target selection.
+Follow the source archive's doc/src/Make.rst for Windows build requirements
+and the patched psi/msvc64.mak; adapt toolchain paths to your installation.
+
+Source provenance:
+https://tug.org/pipermail/tex-live-commits/2026-September/038821.html
+https://tug.org/pipermail/tex-live-commits/2026-September/038831.html

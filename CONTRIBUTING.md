@@ -272,6 +272,8 @@ Do not use other prerelease identifiers, numbered prereleases such as `-beta.1` 
 Compare major, minor, and patch numerically, then order equal base versions as beta, release candidate, and official release.
 Published tags are immutable; use the next allowed release stage or a new base version for subsequent publications rather than rewriting a tag.
 For every confirmed release, move the relevant changelog entries from `Unreleased` into a dated version section, update the version comment at the beginning of `template.tex`, commit those changes, and create the matching tag on that exact commit.
+For releases that distribute bundled third-party binaries, include version-specific source-access directions in the selected changelog section so they appear beside the installer in the published release notes.
+Keep this distribution information outside the incremental change bullets and preserve it when promoting a release; use the [Windows source-reference procedure](windows/CONTRIBUTING.md#third-party-source-references) to check the bundled versions and upstream locations.
 Confirm that the latest-version badge near the beginning of `README.md` remains configured to derive its value from the repository's SemVer tags.
 Do not omit the changelog update, template update, badge check, or tag.
 

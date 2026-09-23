@@ -19,6 +19,15 @@ from urllib.request import urlopen
 
 LEGAL_NAME = re.compile(r'^(license|licence|copying|copyright|notice|readme|ofl|lppl)([._-]|$)', re.I)
 TEX_NOTICES = 'tlpkg/wr-licenses'
+# Reviewed package identity for the source/patch directions in TeX-NOTICE.txt.
+# Update both after checking the corresponding upstream source set; a new
+# package revision must not silently inherit the old version's source links.
+GHOSTSCRIPT_PACKAGE = {
+    'revision': ['80216'],
+    'containerchecksum': [
+        '287ae5e10caaf4dac4ab7e3c3ef36e1faf965473d3e1193be4039220e1dc4cb943'
+        '38b07776bd9bcafbcca78268c328464306614c36165f39673a7aada2eb69a9'],
+}
 
 
 def digest(path):
@@ -149,6 +158,17 @@ def download(url):
         return response.read()
 
 
+def verify_tex_source_references(installed):
+    """Reject Ghostscript versions not covered by the shipped source directions."""
+    ghostscript = installed.get('tlgs.windows')
+    if ghostscript is not None and any(ghostscript.get(key) != value for key, value in GHOSTSCRIPT_PACKAGE.items()):
+        raise ValueError(
+            'Bundled Ghostscript does not match the source references in TeX-NOTICE.txt '
+            f'(tlgs.windows revision {ghostscript.get("revision", [])}). '
+            'Review the matching upstream source and Windows patch, then update '
+            'TeX-NOTICE.txt and GHOSTSCRIPT_PACKAGE together.')
+
+
 def prepare_tex(tex, cache, repository='https://mirror.ctan.org/systems/texlive/tlnet', fetch=download):
     """Preserve named legal/readme files from installed packages and matching docs.
 
@@ -159,13 +179,14 @@ def prepare_tex(tex, cache, repository='https://mirror.ctan.org/systems/texlive/
     tex, cache = Path(tex), Path(cache)
     database = tex / 'tlpkg/texlive.tlpdb'
     database_hash = digest(database)
+    installed = packages(database.read_text(encoding='utf-8'))
+    verify_tex_source_references(installed)
     destination = tex / TEX_NOTICES
     if (destination / 'manifest.json').is_file():
         saved = json.loads((destination / 'manifest.json').read_text(encoding='utf-8'))
         if saved.get('schema') == 1 and saved['database_sha256'] == database_hash:
             verify_files(tex, saved['files'])
             return
-    installed = packages(database.read_text(encoding='utf-8'))
     remote = packages(lzma.decompress(fetch(repository.rstrip('/') + '/tlpkg/texlive.tlpdb.xz')).decode())
     # Check the whole snapshot before downloading any documentation: a late
     # mismatch must not waste all preceding archive downloads. A fixed mirror
@@ -282,6 +303,7 @@ def verify_distribution(bundle, require_tex=False):
         manifest = json.loads((tex / TEX_NOTICES / 'manifest.json').read_text(encoding='utf-8'))
         if manifest.get('schema') != 1 or manifest['database_sha256'] != digest(tex / 'tlpkg/texlive.tlpdb'):
             raise ValueError('TeX notice inventory differs from the installed package database')
+        verify_tex_source_references(packages((tex / 'tlpkg/texlive.tlpdb').read_text(encoding='utf-8')))
         verify_files(tex, manifest['files'])
         notice = Path(__file__).with_name('TeX-NOTICE.txt')
         if digest(tex / 'README.WeeklyReport.txt') != digest(notice):
