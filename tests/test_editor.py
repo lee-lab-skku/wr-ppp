@@ -34,6 +34,7 @@ class EditorTests(unittest.TestCase):
         self.source = self.root / 'main.tex'
         self.original = render(sample_state())
         self.source.write_text(self.original, encoding='utf-8')
+        self.katex_license = (TEMPLATE.parent / 'KaTeX-LICENSE.txt').read_text(encoding='utf-8')
 
     def start(self, server):
         url = server.start()
@@ -53,6 +54,7 @@ class EditorTests(unittest.TestCase):
             html = response.read().decode('utf-8')
         self.assertIn('2026-09-21', html)
         self.assertIn('/api/state?token=', html)
+        self.assertIn('BEGIN KATEX LICENSE\n' + self.katex_license + 'END KATEX LICENSE', html)
         self.assertFalse(backend.output.exists())
         state = backend.load()
         state['title'] = 'Edited report'
@@ -87,7 +89,9 @@ class EditorTests(unittest.TestCase):
         server = NativeEditorServer(form, TEMPLATE, on_save=saved.append)
         url = self.start(server)
         with urlopen(url, timeout=5) as response:
-            self.assertIn('Native', response.read().decode())
+            html = response.read().decode()
+            self.assertIn('Native', html)
+            self.assertIn('BEGIN KATEX LICENSE\n' + self.katex_license + 'END KATEX LICENSE', html)
         state = server.backend.load()
         state['title'] = 'Native edit'
         with self.post(url, '/api/state', json.dumps(state).encode()) as response:
@@ -137,7 +141,9 @@ class EditorTests(unittest.TestCase):
         exported = subprocess.run([sys.executable, str(ROOT / 'scripts/build_artifact.py'),
                                    str(state), str(artifact)], cwd=self.root, capture_output=True, text=True)
         self.assertEqual(exported.returncode, 0, exported.stderr)
-        self.assertIn('<\\/script> in a report', artifact.read_text(encoding='utf-8'))
+        html = artifact.read_text(encoding='utf-8')
+        self.assertIn('<\\/script> in a report', html)
+        self.assertIn('BEGIN KATEX LICENSE\n' + self.katex_license + 'END KATEX LICENSE', html)
 
 
 if __name__ == '__main__':

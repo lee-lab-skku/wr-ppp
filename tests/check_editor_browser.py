@@ -22,6 +22,7 @@ EDITOR = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE.parent / 'report_edito
 HARNESS = r"""
 <script>
 var OUT = {};
+var EXPECTED_KATEX_LICENSE = __KATEX_LICENSE_JSON__;
 window.onerror = function(m,u,l){ OUT.jsError = m + ' @' + l; };
 function rc(el){ var r = el.getBoundingClientRect(); return {x:r.left+Math.min(30,r.width/2), y:r.top+r.height/2}; }
 function press(el, x, y){
@@ -48,7 +49,7 @@ function subs(){ return Array.prototype.map.call(document.querySelectorAll('.sub
 function figShape(){ return Array.prototype.map.call(document.querySelectorAll('.fig-block'), function(b){
   return b.querySelectorAll('.fig-col').length; }).join(','); }
 
-window.addEventListener('load', function(){ setTimeout(function(){
+window.addEventListener('load', function(){ setTimeout(async function(){
   // --- inline rendering ------------------------------------------------
   var probe = document.createElement('div');
   probe.innerHTML = window.__inlineMd('\\textbf{a $+34\\%$ b} \\texttt{x.py} \\qty{50}{ms} \\num{1.71} \\qtyrange{10}{25}{\\micro\\meter} $D_p=\\qty{41.8}{\\micro\\meter}$ ``q\'\'');
@@ -119,6 +120,15 @@ window.addEventListener('load', function(){ setTimeout(function(){
   OUT.hasAbstract = !!document.querySelector('.abstract-box');
   OUT.titleEditable = !!document.querySelector('[data-editable="title"]');
 
+  // Capture the real save handler's output locally, without an Artifact service.
+  var publishedHtml = '';
+  window.claude = {use: async function(){ return {publish: async function(html){
+    publishedHtml = html;
+  }}; }};
+  document.getElementById('saveBtn').click();
+  await new Promise(function(resolve){ setTimeout(resolve, 0); });
+  OUT.exportKeepsLicense = publishedHtml.indexOf(EXPECTED_KATEX_LICENSE) !== -1;
+
   var d = document.createElement('div');
   d.id = 'RESULT';
   d.textContent = '@@' + JSON.stringify(OUT) + '@@';
@@ -148,6 +158,7 @@ CHECKS = [
     ('figure pair splits',            lambda o: o['figShapeAfterSplit'] != o['figShapeStart']),
     ('abstract block present',        lambda o: o['hasAbstract']),
     ('title is editable',             lambda o: o['titleEditable']),
+    ('HTML save preserves KaTeX license', lambda o: o['exportKeepsLicense']),
 ]
 
 
@@ -159,10 +170,12 @@ def main():
 
     html = EDITOR.read_text(encoding='utf-8')
     html = html.replace('  renderAll();\n})();', '  window.__inlineMd = inlineMd;\n  renderAll();\n})();')
+    license_text = (HERE.parent / 'report_editor/assets/KaTeX-LICENSE.txt').read_text(encoding='utf-8')
+    harness = HARNESS.replace('__KATEX_LICENSE_JSON__', json.dumps(license_text))
     with tempfile.TemporaryDirectory() as tmp:
         page = Path(tmp) / 'harness.html'
         page.write_text('<!doctype html><html><head><meta charset="utf-8"></head><body>'
-                        + html + HARNESS + '</body></html>', encoding='utf-8')
+                        + html + harness + '</body></html>', encoding='utf-8')
         dom = subprocess.run([chrome, '--headless', '--disable-gpu', '--no-sandbox',
                               '--window-size=1400,1800', '--virtual-time-budget=7000',
                               '--dump-dom', page.as_uri()],

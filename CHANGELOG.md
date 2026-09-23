@@ -16,6 +16,10 @@ The baseline includes the visual-editor drafting-stage and scientific-notation i
 
 - [docs] license original project materials under MIT in the laboratory's name, clarify research-content rights and attribution-free use in reports, credit contributors through Git history, and disclose AI use in project development.
 
+### Fixed
+
+- [build] include project license and report-use notices in Windows distributions, and preserve the full KaTeX notice with shared editor assets and standalone HTML exports.
+
 ## [1.4.1] &mdash; 2026-09-23
 
 Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).

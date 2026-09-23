@@ -9,6 +9,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ## Unreleased
 
+### Fixed
+
+- Collect the canonical project license and notice plus the KaTeX license in PyInstaller resources; retain the upstream KaTeX text inside editor HTML for source, local-server, and standalone-export use.
+- Compare full legal resources and attributed editor HTML with the selected checkout in portable and installed smoke tests, with missing-file and changed-content regression cases.
+
+### Validation
+
+- Working-tree notice changes on Linux: five shared-editor tests passed, covering both HTTP adapters and standalone HTML export; geometry, inline rendering, upstream license byte comparison, and whitespace checks passed.
+  Chrome/Chromium and native Windows PowerShell were unavailable, so browser and PowerShell checks skipped execution; no new portable bundle or installer was built.
+
 ## 2026-09-21 &mdash; Documentation consolidation and figure compatibility
 
 Changes: [2177d35](https://github.com/lee-lab-skku/wr-ppp/commit/2177d35), [daf9985](https://github.com/lee-lab-skku/wr-ppp/commit/daf9985), and [b7c64d7](https://github.com/lee-lab-skku/wr-ppp/commit/b7c64d7).

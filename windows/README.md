@@ -11,6 +11,8 @@ Python and TinyTeX are included, so no separate installation is required.
 The installer supports Windows 10/11 x64 and installs for the current user.
 Uninstall through Windows Settings; user configuration and authored reports are preserved.
 The installer is not currently code-signed.
+The installation's `_internal` directory contains the project's `LICENSE.txt` and `NOTICE.txt`.
+The editor's KaTeX notice is in `_internal/report_editor/assets/KaTeX-LICENSE.txt` and is also preserved inside exported editor HTML.
 
 ## Run from Source
 

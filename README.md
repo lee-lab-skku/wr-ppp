@@ -32,6 +32,7 @@ The project's original code, templates, style files, documentation, and agent sk
 Copyright is held by Advanced Additive Manufacturing Systems Laboratory, Sungkyunkwan University.
 See [NOTICE](NOTICE.txt) for research-content rights and permission to use project-owned template and style material in report sources and generated reports without project attribution or license notices in those reports.
 Third-party components retain their own licenses.
+The shared browser editor includes KaTeX CSS and fonts under the [KaTeX MIT license](report_editor/assets/KaTeX-LICENSE.txt); editor HTML exports retain its full notice.
 Individual contributions are credited in the [Git history](https://github.com/lee-lab-skku/wr-ppp/commits).
 
 ## Requirements

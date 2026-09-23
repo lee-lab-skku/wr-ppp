@@ -2,6 +2,8 @@
 . (Join-Path (Split-Path -Parent $PSScriptRoot) 'common.ps1')
 $app = Join-Path $script:WrRoot 'windows\dist\WeeklyReport\WeeklyReportCLI.exe'
 if (-not (Test-Path -LiteralPath $app -PathType Leaf)) { throw 'Run package.ps1 -IncludeTeX first.' }
+& (Join-Path $PSScriptRoot 'check_license_files.ps1') -SourceRoot $script:WrRoot `
+    -ResourceRoot (Join-Path (Split-Path -Parent $app) '_internal')
 $qa = Join-Path $script:WrRoot '.runtime\qa'
 $previousConfig, $previousPath = $env:WR_CONFIG, $env:PATH
 try {

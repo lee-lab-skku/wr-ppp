@@ -29,6 +29,36 @@ class PowerShellTests(unittest.TestCase):
                               cwd=self.root.parent, env={**self.env, **(extra_env or {})},
                               capture_output=True, encoding='utf-8', timeout=90)
 
+    def test_license_files_reject_missing_or_changed_packaged_content(self):
+        resources = self.root / 'installed app [test]' / '_internal'
+        names = ('LICENSE.txt', 'NOTICE.txt', 'report_editor/assets/KaTeX-LICENSE.txt',
+                 'report_editor/assets/editor.html')
+        for name in names:
+            source, target = self.root / name, resources / name
+            source.parent.mkdir(parents=True, exist_ok=True)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, source)
+            shutil.copyfile(source, target)
+        checker = ROOT / 'windows/tests/check_license_files.ps1'
+        for shell in SHELLS:
+            with self.subTest(shell=shell, case='complete'):
+                result = self.run_ps(shell, checker, '-SourceRoot', str(self.root),
+                                     '-ResourceRoot', str(resources))
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for name in names:
+                target = resources / name
+                original = target.read_bytes()
+                for case in ('modified', 'missing'):
+                    with self.subTest(shell=shell, file=name, case=case):
+                        if case == 'modified':
+                            target.write_bytes(b'!' + original[1:])
+                        else:
+                            target.unlink()
+                        result = self.run_ps(shell, checker, '-SourceRoot', str(self.root),
+                                             '-ResourceRoot', str(resources))
+                        self.assertNotEqual(result.returncode, 0, result.stdout)
+                        target.write_bytes(original)
+
     def test_setup_repeat_launch_arguments_and_config(self):
         for shell in SHELLS:
             with self.subTest(shell=shell):

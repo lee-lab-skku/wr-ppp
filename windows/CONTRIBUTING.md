@@ -39,6 +39,12 @@ Keep that package independent of Windows modules and preserve the existing nativ
 PyInstaller must analyze both the Windows and repository import roots and bundle `report_editor/assets/editor.html` at its package-relative location.
 Source launchers and native test entry points prepare these import roots explicitly; `wr/__init__.py` must remain free of import-path mutations.
 
+Bundle the canonical root `LICENSE.txt` and `NOTICE.txt` as resources, together with `report_editor/assets/KaTeX-LICENSE.txt`.
+Keep the full KaTeX notice inside the editor's document element so both state injection and browser DOM serialization preserve it in standalone HTML.
+The sidecar holds the upstream license verbatim; update its embedded copy together and verify both editor adapters and HTML export.
+Portable and installed smoke checks compare these resources and the attributed HTML byte-for-byte with the selected source checkout through `tests/check_license_files.ps1`.
+These checks establish notice preservation for these files, not completeness of all third-party notices or corresponding sources.
+
 PowerShell scripts containing non-ASCII literals require UTF-8 with BOM for Windows PowerShell 5.1; otherwise keep their source ASCII.
 
 ## Validation
