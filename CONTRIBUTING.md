@@ -5,6 +5,11 @@ Keep changes focused, preserve the existing report workflow, and read `README.md
 
 ## Compatibility and Ownership
 
+Submit contributions under the project's [MIT License](LICENSE.txt), with the report-use permission described in [NOTICE](NOTICE.txt).
+Contributors must have the right to provide their contributions under these terms and preserve applicable third-party notices.
+Submission alone does not assign copyright; any required assignment to the laboratory is handled separately.
+Individual contributions are credited through Git history.
+
 Treat documented setup, build, output, LaTeX, and skill behavior as stable by default.
 A deliberate breaking change should explain its rationale and impact, update the relevant documentation in the same change, and provide migration guidance when users must take action.
 

@@ -20,6 +20,20 @@ Exceed that limit only when essential research content cannot fit after all reas
 - An optional shared browser editor for supported report sources
 - A shared style file, so routine report writing is limited to the report source
 
+## AI Disclosure
+
+AI tools are used in the development and maintenance of this project's code, documentation, templates, and agent skills.
+The maintainers remain responsible for the project's design decisions and released changes.
+The optional AI-assisted report-writing workflow is described [below](#ai-assisted-workflow).
+
+## License and Contributors
+
+The project's original code, templates, style files, documentation, and agent skills are licensed under the [MIT License](LICENSE.txt).
+Copyright is held by Advanced Additive Manufacturing Systems Laboratory, Sungkyunkwan University.
+See [NOTICE](NOTICE.txt) for research-content rights and permission to use project-owned template and style material in report sources and generated reports without project attribution or license notices in those reports.
+Third-party components retain their own licenses.
+Individual contributions are credited in the [Git history](https://github.com/lee-lab-skku/wr-ppp/commits).
+
 ## Requirements
 
 Linux/macOS use Bash and Docker; macOS compatibility is a source-level design target rather than a tested-platform guarantee.

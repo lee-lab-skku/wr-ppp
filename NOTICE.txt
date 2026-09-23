@@ -1,0 +1,31 @@
+Weekly Research Report Template (wr-ppp)
+Copyright (c) 2026 Advanced Additive Manufacturing Systems Laboratory, Sungkyunkwan University
+
+Project licensing
+
+The project's original code, templates, style files, documentation, and agent
+skills are provided under the MIT License in the LICENSE.txt file.
+Third-party components remain subject to their respective licenses and are
+not covered by the laboratory's copyright notice or the permissions below.
+
+Research content and report output
+
+Research content supplied by users remains subject to the rights of its
+respective rights holders. Using this project does not transfer those rights
+to the laboratory or require that content to be licensed under MIT.
+
+As an additional permission, project-owned template and style material may
+be incorporated into report source documents and generated reports without
+including this project's copyright notice, MIT license text, or attribution
+in those documents or reports. This permission does not waive the MIT notice
+requirement when redistributing the project's tools, standalone templates,
+or standalone style files. It does not waive third-party requirements for
+material such as figures, fonts, or other incorporated content.
+
+Contributors
+
+Individual contributions are credited in the repository's Git history:
+https://github.com/lee-lab-skku/wr-ppp/commits
+Contributor credit is separate from the project's copyright-holder notice.
+
+This NOTICE.txt file imposes no additional restrictions on the MIT License.

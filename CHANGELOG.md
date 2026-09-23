@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+Baseline: merge [1a0a295](https://github.com/lee-lab-skku/wr-ppp/commit/1a0a295ab3df4d38b90ed778b15dd5777b7c5726) of [v1.5.0-beta](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-beta) and [v1.4.1](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.1), whose common parent release is [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).
+The baseline includes the visual-editor drafting-stage and scientific-notation integration fixes; entries below describe changes after that merge.
 
-- [skill] apply the merged drafting-stage and scientific-notation guidance to visual-editor exports.
+### Added
+
+- [docs] license original project materials under MIT in the laboratory's name, clarify research-content rights and attribution-free use in reports, credit contributors through Git history, and disclose AI use in project development.
 
 ## [1.4.1] &mdash; 2026-09-23
 
@@ -201,7 +204,7 @@ Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0)
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-beta...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/1a0a295ab3df4d38b90ed778b15dd5777b7c5726...HEAD
 [1.4.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.4.1
 [1.5.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.5.0-beta
 [1.4.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-rc...v1.4.0
