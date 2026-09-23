@@ -9,7 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- [skill] apply the merged drafting-stage and scientific-notation guidance to visual-editor exports.
+
+## [1.4.1] &mdash; 2026-09-23
+
+Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).
+This maintenance release is later by date but lower in SemVer precedence than `v1.5.0-beta`; the two tags are separate descendants of `v1.4.0`.
+
+### Fixed
+
+- [skill] defer minor pagination, overflow, and alignment repairs until editorial revision while accurately reporting observed issues; retain early repairs for compilation blockers, substantive content loss, and explicit layout requests.
+- [skill] keep drafts based on organized records in the author's research perspective without excessive first-person wording, carry meaningful structure into subsection bodies, and check applicable `siunitx` and `mhchem` notation in text, tables, and captions; silently skip irrelevant checks without adding content to satisfy them.
+
 ## [1.5.0-beta] &mdash; 2026-09-21
+
+Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).
 
 ### Added
 
@@ -186,6 +202,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
 [Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-beta...HEAD
+[1.4.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.4.1
 [1.5.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.5.0-beta
 [1.4.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-rc...v1.4.0
 [1.4.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0-beta...v1.4.0-rc

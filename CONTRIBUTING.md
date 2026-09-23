@@ -255,6 +255,10 @@ Use `[ci]` for CI/CD workflows, automated validation, dependency caches, and rel
 As the repository's responsibilities expand, extend this list when a distinct component needs its own marker, and document the new marker and its scope here in the same change.
 Describe notable user-facing differences rather than copying the commit log, and combine closely related commits into one entry when they deliver one change.
 Keep each version section incremental; do not copy beta or release-candidate entries into the stable section.
+Order dated changelog sections newest first, preserving the actual release sequence for same-date entries when known.
+Chronological order does not determine SemVer precedence or Git ancestry.
+When chronological order reverses SemVer precedence or the releases do not form a linear ancestry chain, identify their parent release tags explicitly.
+For a merged development baseline, identify the merge commit and its parent tags in `Unreleased`, and base its comparison link on that commit; distinguish integration changes in the baseline from subsequent unreleased changes.
 
 If you are an AI agent, do not increment the version or create a release tag without explicit developer confirmation.
 Versions are recorded by Git tags named `vMAJOR.MINOR.PATCH`, optionally followed by exactly `-beta` or `-rc` for prereleases.

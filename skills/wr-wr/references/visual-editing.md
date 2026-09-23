@@ -21,13 +21,15 @@ The native application remains available for normal report writing and administr
 The TeX entry point runs the existing round-trip guard before opening the editor.
 The importer has a limited model: raw environments, custom preambles, comments, labels, or ordering may not survive conversion.
 If the guard refuses a source, keep it in LaTeX and explain the limitation; do not strip content or weaken the guard to force an import.
-A passing similarity check is not proof of semantic equivalence, so compare the exported source with the original, including references and comments.
+A passing similarity check is not proof of semantic equivalence, so compare the exported source with the original, including references, comments, scientific notation, and list hierarchy.
+Apply the relevant notation and reference checks in [latex-and-build.md](latex-and-build.md) to exported LaTeX; browser rendering alone does not establish compliance.
 Do not reword user-edited text while transferring state.
 
 Image previews are not substitutes for the originals needed by TeX.
 The local editor stores uploaded originals in the report's `figures/` directory; verify every referenced image before building.
 The browser uses the shared page dimensions but does not guarantee XeLaTeX pagination.
-Use the existing `report-build` path and the same reporting date, then inspect the PDF and apply the usual page-count and content review.
+Use the existing `report-build` path and the same reporting date when PDF validation is needed, following [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage".
+Editing in the browser does not itself advance an initial draft into finalization; defer incidental cosmetic fixes unless the user requested them, and apply full page-count and content review during editorial revision or finalization.
 
 ## Existing Artifact Integrations
 

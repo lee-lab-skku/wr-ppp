@@ -272,7 +272,17 @@ Include a technical detail only when it is necessary to explain a research resul
 Lead with important takeaways and make the relationships among claims, supporting evidence or reasoning, and research implications clear.
 These relationships do not require three labeled parts, a fixed sentence sequence in every item, or a single finding encompassing the week.
 Give significant developments prominence and keep supporting details subordinate to them.
+Carry this hierarchy into the body beneath each subsection: use lists for parallel findings or actions, subordinate items for their supporting conditions or evidence, and tables when comparison is clearer across shared dimensions.
+Subsection headings alone do not provide enough structure when several distinct points remain buried in continuous prose.
+Use short prose for a connected explanation or transition; neither every sentence nor every subsection needs a list or a fixed set of labels.
 Use concise headings where helpful and remove repeated background and activity-log detail that does not help the reader assess the research.
+
+Write from the report author's research perspective, including when drafting from organized notes or experiment records.
+Describe supported actions, findings, and plans objectively without repeatedly using first-person pronouns or narrating what an outside reviewer learned from the supplied files.
+Preserve the distinction between the author's work, collaborators' contributions, and external findings, as well as between completed work and plans.
+
+Use the scientific notation facilities provided by `weekly-report.sty` where applicable: `siunitx` for scientific numerical values and units, and `mhchem` for chemical formulas and reactions, including in tables and captions.
+Preserve values and meaning; ordinary counts, dates, identifiers, and algebraic expressions do not require mechanical conversion.
 
 Every figure must be referenced at least once in the report's body using a label-based `cleveref` command, in a context that explains its connection to the discussion.
 References to tables and equations are optional, but any such references must also use `cleveref` rather than manually written numbers.
@@ -328,6 +338,7 @@ report-build --here --date 2026-09-21 main.edited.tex
 
 Use the same date for the editor preview and the PDF build.
 Check the actual PDF, references, and page count before replacing the original source with a reviewed revision.
+The [AI-assisted workflow](#ai-assisted-workflow)'s stage-aware layout and scientific-notation checks also apply to visual-editor exports.
 The native Windows application retains its form editor, PDF generation, and administrator screens; its **시각 편집기** button opens this shared browser editor with the existing `.wr.json` save workflow described in the [Windows guide](windows/README.md).
 
 For existing script-based integrations, `scripts/tex_to_state.py`, `state_to_tex.py`, `build_artifact.py`, `check_roundtrip.py`, and `verify_geometry.py` remain entry points to the common implementation.
@@ -346,11 +357,15 @@ the user's current files and intended outcome.
 For drafting, substantive revision, and content review, the skill reads the canonical template's instructional comments and the shared report policy above.
 Before authoring or changing report LaTeX, it first checks the packages and configuration in `weekly-report.sty` and uses the available functionality where appropriate.
 The template includes commented examples for cross-references (`\cref`), units (`\si`, `\SI`), and chemical notation (`\ce`); these illustrate usage without restricting other supported commands, argument forms, or options.
+The agent checks applicable package usage in the resulting source, including existing user-written text; compilation alone does not establish compliance.
 It applies relevant prompts with judgment and preserves useful author choices; matching the example's organization is not a review requirement.
 Its references provide task-specific procedures for source conventions, editorial judgment and evidence, optional visual editing, and LaTeX and build validation.
 During review, the agent must identify manually written figure, table, and equation numbers and correct them to label-based `cleveref` references when editing is in scope; review-only feedback must specify the correction.
 For an unreferenced figure, it must guide the author to a suitable place and context for a body reference, or add one when editing is authorized and the available material supports the connection.
-It checks the rendered page count and revises overlength drafts within the authorized scope; any unavoidable exception must be explained in the handoff.
+Before editorial revision, the agent reports observed minor page-break, overflow, alignment, and length issues accurately and defers layout repairs and page-fitting build iterations.
+It distinguishes log warnings from visually verified defects and discloses checks not performed.
+Compilation blockers, defects that hide or alter substantive content, and explicitly requested layout repairs may be addressed earlier.
+During editorial revision or finalization, it revisits deferred issues, checks the rendered page count, and revises overlength drafts within the authorized scope; any unavoidable exception must be explained in the handoff.
 
 When creating a report from the template, the agent preserves retained instructional comments verbatim.
 Comments exclusively associated with an omitted optional example may be removed with that example; shared guidance remains.
