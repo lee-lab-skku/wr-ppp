@@ -1,15 +1,15 @@
-# Weekly Research Report Template
+# Weekly Report Template
+
+[![latest badge](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=latest)](https://github.com/lee-lab-skku/wr-ppp/tags)
+
+A LaTeX template for concise weekly research reports using **Progress, Problems, and Plans (PPP)** as a communication framework.
+It provides consistent formatting while leaving the organization, form, and level of detail to the author within a strict limit of **two A4 pages per person per week**.
+Exceed that limit only when essential research content cannot fit after all reasonable cuts without compromising its meaning or evidence.
 
 **Native Windows:** use the GUI/CLI and self-contained offline installer described in the [Windows guide](windows/README.md).
 Source users run `Windows-Setup.ps1`, then `Start-Weekly-Report.ps1` from PowerShell.
 The Bash/Docker instructions below apply to Linux/macOS and WSL.
 Validated releases provide a Windows offline installer and its SHA256 checksum through GitHub Releases.
-
-Latest version: [![Latest repository version](https://img.shields.io/github/v/tag/lee-lab-skku/wr-ppp?sort=semver&label=release)](https://github.com/lee-lab-skku/wr-ppp/tags)
-
-A LaTeX template for concise weekly research reports using **Progress, Problems, and Plans (PPP)** as a communication framework.
-It provides consistent formatting while leaving the organization, form, and level of detail to the author within a strict limit of **two A4 pages per person per week**.
-Exceed that limit only when essential research content cannot fit after all reasonable cuts without compromising its meaning or evidence.
 
 ## What It Provides
 
