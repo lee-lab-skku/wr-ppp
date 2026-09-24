@@ -136,6 +136,7 @@ The manifest can be stored on a NAS that manages permissions on the server; setu
 Omitting it with `--admin` selects the existing repository-local `.manager-manifest.toml` and `.admin-wr/manifests/` locations.
 When reading a missing configured file, the workflow falls back to its local counterpart; writes still use the configured destination.
 The admin workflow opens temporary drafts for review and keeps their execution TSVs in the temporary review directory.
+When no review is required, the administrator skill publishes the bundle directly and opens the final PDF from the configured output directory.
 Concurrent publications sharing a PDF or history target are serialized; a busy target times out after 30 seconds with retry and lock-recovery guidance.
 Optional [Slack webhook notifications](skills/admin-wr/references/slack-notifications.md) can notify a channel when the administrator holds a bundle because required reports are missing; this feature requires Python 3.
 

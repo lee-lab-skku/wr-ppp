@@ -50,7 +50,7 @@ Preserve complete source PDFs during review and assembly; do not truncate or ref
 Use the platform's `build-bundle` command after selecting the best candidate for each member and writing the required temporary plan TSV, including cumulative weekly inclusion history as described in the workflow reference.
 Invoke it directly rather than wrapping it in another shell command or pipeline so execution and platform-specific errors remain visible.
 
-- With no issues, build and promote a complete bundle.
+- With no issues, build and promote a complete bundle, then open the final PDF at the builder's printed output path with the platform's `open-bundle` command.
 - With any issue, build a draft outside the configured administrator output and use the printed review path to open it for the user with the platform's `open-bundle` command. Include a clickable PDF path and the evidence in the review request, then obtain explicit approval before promotion.
 - On approval, confirm selected source hashes have not changed and rebuild with `--approved-with-issues`. If they changed, reassess instead of publishing stale choices.
 - Never use `--draft` with the configured administrator output directory or its descendants.
