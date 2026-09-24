@@ -30,7 +30,7 @@ class SlackTests(unittest.TestCase):
         self.rows = [
             ["schema", "admin-wr-bundle/v1"],
             ["bundle", "2026-09-10", "2026-09-W2", "2026-09-07", "2026-09-13",
-             "draft", "required", "2026-09-W2.pdf", "hash"],
+             "draft", "required", "2026-09-W2.pdf", "a" * 64],
             ["entry", "1", "a", "구성원 <@U123>", "required", "missing", "-", "-", "-", "0", "-", "-", "missing-report"],
             ["entry", "2", "b", "Optional person", "optional", "optional-missing", "-", "-", "-", "0", "-", "-", "no-report"],
         ]

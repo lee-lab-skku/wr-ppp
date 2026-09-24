@@ -2,7 +2,6 @@
 """Preview or explicitly send a missing-report hold notice through Slack."""
 
 import argparse
-import csv
 import getpass
 import hashlib
 import json
@@ -14,6 +13,11 @@ import sys
 import tempfile
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+
+# Resolve installed symlinks; frozen Windows imports use the bundled module.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from admin_records import read_manifest
 
 
 def data_directory():
@@ -46,38 +50,19 @@ def configure(directory):
 
 
 def notice(manifest):
-    with manifest.open(encoding="utf-8", newline="") as source:
-        rows = list(csv.reader(source, delimiter="\t", quoting=csv.QUOTE_NONE))
-    schemas = [r for r in rows if r and r[0] == "schema"]
-    bundles = [r for r in rows if r and r[0] == "bundle"]
-    if schemas != [["schema", "admin-wr-bundle/v1"]] or len(bundles) != 1:
-        raise ValueError("Expected one admin-wr-bundle/v1 execution manifest.")
-    bundle = bundles[0]
-    if len(bundle) != 9 or bundle[5:7] != ["draft", "required"]:
+    parsed = read_manifest(manifest)
+    bundle = parsed.bundle
+    if (bundle.state, bundle.approval) != ("draft", "required"):
         raise ValueError("Only a draft awaiting review can have a hold notice.")
-    if not re.fullmatch(r"\d{4}-\d{2}-W[1-5]", bundle[2]):
-        raise ValueError("Invalid reporting week.")
-    for date in (bundle[1], bundle[3], bundle[4]):
-        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
-            raise ValueError("Invalid reporting date.")
-    entries = [r for r in rows if r and r[0] == "entry"]
-    seen = set()
-    for entry in entries:
-        if (len(entry) != 13 or not entry[1].isdigit() or entry[2] in seen
-                or not entry[3] or entry[4] not in ("required", "optional")
-                or entry[5] not in ("included", "exception", "missing", "optional-missing")):
-            raise ValueError("Invalid or duplicate member entry.")
-        seen.add(entry[2])
-        if entry[5] == "missing" and (entry[4] != "required" or entry[6] != "-"):
-            raise ValueError("Invalid missing member entry.")
-    missing = sorted((r for r in entries if r[4:6] == ["required", "missing"]),
-                     key=lambda r: (int(r[1]), r[2]))
+    missing = sorted((entry for entry in parsed.entries
+                      if entry.requirement == "required" and entry.state == "missing"),
+                     key=lambda entry: (entry.order, entry.member_id))
     if not missing:
         raise ValueError("No required reports are missing; no hold notice is applicable.")
-    text = (f"주간보고 취합 보류 · {bundle[2]}\n"
-            f"보고 기간: {bundle[3]} ~ {bundle[4]}\n"
+    text = (f"주간보고 취합 보류 · {bundle.week}\n"
+            f"보고 기간: {bundle.start} ~ {bundle.end}\n"
             f"필수 제출 누락: {len(missing)}명\n"
-            + "\n".join(f"• {r[3]}" for r in missing)
+            + "\n".join(f"• {r.display_name}" for r in missing)
             + "\n누락 보고서가 있어 관리자가 취합을 보류했습니다. 제출 후 관리자에게 알려 주세요.")
     if len(text) > 2900:
         raise ValueError("Notice is too long for one Slack section.")
@@ -86,7 +71,7 @@ def notice(manifest):
     payload = {"text": fallback, "mrkdwn": False,
                "blocks": [{"type": "section", "text": {"type": "plain_text", "text": text}}],
                "unfurl_links": False, "unfurl_media": False}
-    fingerprint = hashlib.sha256(json.dumps([bundle[2], sorted(r[2] for r in missing)],
+    fingerprint = hashlib.sha256(json.dumps([bundle.week, sorted(r.member_id for r in missing)],
                                            ensure_ascii=False).encode()).hexdigest()
     return payload, fingerprint
 

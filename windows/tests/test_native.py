@@ -630,6 +630,18 @@ class NativeTests(unittest.TestCase):
         self.assertEqual(history[0][3], 'unknown')
         self.assertTrue(issues)
 
+    def test_malformed_history_is_rejected_before_pdf_access(self):
+        with patch.object(admin, 'compile_tex', self.compile):
+            result = admin.build_bundle(self.rows, self.storage, self.config, '2026-09-04')
+        manifest = Path(result['manifest'])
+        rows = core.read_tsv(manifest)
+        next(row for row in rows if row[0] == 'entry')[9] = 'not-a-page-count'
+        manifest.write_text(core.tsv(rows), encoding='utf-8')
+        with patch.object(admin, 'sha256', side_effect=AssertionError('PDF accessed before validation')):
+            history, issues = admin.history_rows(self.config, [{'id': 'a'}], '2026-09-11')
+        self.assertEqual(history[0][3], 'unknown')
+        self.assertIn('page_count', issues[0][4])
+
     def test_manager_round_trip_and_no_auto_selection(self):
         manager = {'schema': 1, 'storage_root': str(self.storage), 'timezone': 'Asia/Seoul',
                    'members': [{'id': 'a', 'display_name': '가', 'order': 1, 'required': True, 'search_roots': ['.']}]}

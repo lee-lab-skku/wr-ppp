@@ -13,6 +13,8 @@ Baseline: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0
 
 ### Fixed
 
+- [build] validate administrator execution records before Windows history PDF access and Slack notice generation, with field-specific errors while preserving the v1 TSV format and legacy history.
+
 - [skill] open the published administrator bundle automatically when no review is required, using its final output path.
 
 ## [1.5.0-rc] &mdash; 2026-09-23

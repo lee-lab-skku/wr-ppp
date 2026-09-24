@@ -13,6 +13,9 @@ import unittest
 
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
+from admin_records import read_manifest
+
 BASH = shutil.which("bash")
 
 
@@ -105,6 +108,9 @@ else:
         self.assertEqual(pdf, self.output / "2026-09-W1.pdf")
         self.assertEqual(manifest, self.repo / ".admin-wr/manifests/2026-09-W1.manifest.tsv")
         self.assertEqual(list(self.output.iterdir()), [pdf])
+        parsed = read_manifest(manifest)
+        self.assertEqual(parsed.bundle.pdf_name, pdf.name)
+        self.assertEqual(parsed.entries[0].page_count, 2)
         records = [line.split("\t") for line in manifest.read_text().splitlines()]
         bundle = next(record for record in records if record[0] == "bundle")
         self.assertEqual(bundle[5:9], ["complete", "not-required", pdf.name,

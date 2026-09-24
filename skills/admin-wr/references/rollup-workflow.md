@@ -230,6 +230,12 @@ candidate	<id>	<selected-or-rejected>	<relative-source>	<mtime>	<sha256>	<reason
 issue	<severity>	<code>	<id-or-dash>	<message>
 ```
 
+Python consumers use the shared `admin_records.read_manifest(path)` parser for execution TSVs; its named records expose fields such as `manifest.bundle.pdf_name` and `entry.page_count` (an integer).
+It validates record widths, dates, state/approval pairs, SHA-256 syntax, and source/page metadata before consumers access referenced PDFs or use page counts.
+Errors identify the file, line, and record; invalid history remains untrusted and requires review rather than falling back to a different copy.
+The parser does not verify PDF bytes or authorize notification/publication; consumers retain those checks.
+The TSV format remains unchanged, including literal quotes, missing-entry `0`/`-` values, and optional history records.
+
 Optional `history` records preserve the supplied cumulative snapshot, with the same fields as the plan extension.
 Legacy execution manifests without these records remain valid; their own `entry` records still establish that week's inclusion.
 

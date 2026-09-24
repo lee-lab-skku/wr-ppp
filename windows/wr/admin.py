@@ -13,8 +13,10 @@ import time
 import tomllib
 from zoneinfo import ZoneInfo
 
+from admin_records import read_manifest
+
 from .core import (ROOT, STATE_ROOT, atomic_write, checked_file, compile_tex, inspect_pdf, metadata,
-                   probe, publication_locks, read_tsv, refresh_pdf, sha256, stage_write, tex_escape, tsv)
+                   probe, publication_locks, refresh_pdf, sha256, stage_write, tex_escape, tsv)
 
 STATES = {'included': 'O', 'exception': 'O*', 'missing': 'X', 'optional-missing': '--', 'unknown': '?'}
 TOKEN = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]*')
@@ -118,26 +120,19 @@ def history_rows(config, members, date):
         if not re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])-W[1-5]', week) or week >= current['week-label']:
             continue
         try:
-            rows = read_tsv(file)
-            bundles = [r for r in rows if r[0] == 'bundle']
-            if [r for r in rows if r[0] == 'schema'] != [['schema', 'admin-wr-bundle/v1']] or len(bundles) != 1:
-                raise ValueError('이력 형식 오류')
-            b = bundles[0]
-            if len(b) != 9 or b[2] != week or b[5:7] not in (['complete', 'not-required'], ['approved-with-issues', 'user-confirmed']):
+            parsed = read_manifest(file)
+            bundle = parsed.bundle
+            if bundle.week != week or bundle.state == 'draft':
                 raise ValueError('최종 이력이 아닙니다.')
-            filename = Path(b[7])
-            if filename.is_absolute() or len(filename.parts) != 1 or not config.get('admin_output'):
+            if not config.get('admin_output'):
                 raise ValueError('최종 PDF 경로를 확인하세요.')
-            pdf = Path(config['admin_output']) / filename
-            if sha256(pdf) != b[8]:
+            pdf = Path(config['admin_output']) / bundle.pdf_name
+            if sha256(pdf) != bundle.pdf_sha256:
                 raise ValueError('최종 PDF 해시 불일치')
-            entries = [r for r in rows if r[0] == 'entry']
-            if any(len(r) != 13 or r[5] not in STATES for r in entries) or len({r[2] for r in entries}) != len(entries):
-                raise ValueError('구성원 이력 오류')
-            known[week] = ({r[2]: r[5] for r in entries}, str(file))
-        except (ValueError, OSError, IndexError):
+            known[week] = ({entry.member_id: entry.state for entry in parsed.entries}, str(file))
+        except (ValueError, OSError) as error:
             known[week] = ({}, str(file))
-            issues.append(['issue', 'warning', 'history-unavailable', '-', f'검증할 수 없는 이력: {week}'])
+            issues.append(['issue', 'warning', 'history-unavailable', '-', f'검증할 수 없는 이력: {week}: {error}'])
     if not known:
         return [], [['issue', 'warning', 'first-run', '-', '검증된 이전 합본이 없습니다. 첫 합본을 검토하세요.']]
     # Canonical week labels are the month and ordinal of its Thursday.

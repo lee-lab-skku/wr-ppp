@@ -9,6 +9,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ## Unreleased
 
+### Changed
+
+- Read execution history through the shared `admin_records` parser, using named fields and validating all records before opening the final PDF.
+  Preserve the v1 TSV format, optional cumulative history, and untrusted-history review behavior; include parsing diagnostics in the history issue.
+
+### Validation
+
+- Tested the uncommitted parser changes in WSL/Linux: the common suite passed 138 tests; the parser suite then passed all 6 tests after adding a source-filename compatibility case.
+- Ran `windows/tests/test_native.py` with Python 3.13 and the pinned Windows requirements: 62 tests passed, including malformed-history rejection before PDF access and native bundle-to-Slack compatibility; 2 Windows-only tests skipped, and the junction fallback test failed because this host is Linux.
+  Native Windows, PyInstaller packaging, real TeX compilation, and macOS execution were not tested.
+
 ## 2026-09-23 &mdash; Windows distribution notices and source references
 
 Changes: [57be8ab](https://github.com/lee-lab-skku/wr-ppp/commit/57be8ab), [127f313](https://github.com/lee-lab-skku/wr-ppp/commit/127f313), [4266ed1](https://github.com/lee-lab-skku/wr-ppp/commit/4266ed1), and [cf140f7](https://github.com/lee-lab-skku/wr-ppp/commit/cf140f7a7cded729d27bf8eb00db0b087df523da).

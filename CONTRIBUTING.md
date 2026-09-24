@@ -123,6 +123,9 @@ Preserve lookup compatibility with repository-local and legacy history so migrat
 Keep candidate selection, evidence assessment, issue classification, and approval decisions in the agent workflow.
 The deterministic builder consumes an explicit plan and selected PDFs; it must not discover reports, parse the manager configuration, or judge evidence.
 Keep shared helpers canonical across command and skill entry points.
+Python execution-manifest consumers share the field definitions and structural validation in `admin_records.py`; keep this module independent of Windows and notification dependencies.
+Validate records before accessing referenced files, then apply consumer-specific trust and approval checks.
+Do not introduce a host Python requirement into the Bash/Docker builder merely to share this parser.
 
 Restrict discovery to declared member roots without following directory symlinks or escaping storage.
 Report filenames, internal labels, and templates must remain unrestricted; source PDFs must never be modified or deleted.
