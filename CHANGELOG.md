@@ -13,6 +13,7 @@ Baseline: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0
 
 ### Fixed
 
+- [skill] correct administrator discovery guidance to use direct filesystem enumeration on Linux/macOS and the existing `discover` subcommand on Windows, removing the nonexistent helper from the platform mapping.
 - [build] validate administrator execution records before Windows history PDF access and Slack notice generation, with field-specific errors while preserving the v1 TSV format and legacy history.
 
 - [skill] open the published administrator bundle automatically when no review is required, using its final output path.

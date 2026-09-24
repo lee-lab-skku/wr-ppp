@@ -35,6 +35,9 @@ The helper prints `report-metadata/v1` TSV containing the report date, canonical
 
 On Windows, use `admin-paths` to resolve configuration and history, then `discover` to enumerate candidates from the configured manifest. Do not invoke `scripts/admin-paths` or read `.local-config` directly.
 
+On Linux/macOS, the agent enumerates candidates directly with filesystem tools; no dedicated discovery command is installed.
+Resolve each member's `search_roots` relative to the manifest's `storage_root`, verify that they remain within that storage without traversing directory symlinks, and enumerate only those roots.
+
 For each member in manifest order, recursively enumerate regular files ending in `.pdf`, case-insensitively, below only that member's search roots. Use NUL-delimited filesystem operations so spaces and Unicode names are preserved. Exclude AppleDouble files named `._*.pdf`; do not follow directory symlinks.
 
 On Linux/macOS, run `scripts/admin-paths` from this skill directory to resolve metadata locations from `.local-config`.

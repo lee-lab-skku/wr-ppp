@@ -13,12 +13,12 @@ On native Windows, resolve the real path of this `SKILL.md` through its installa
 
 On Windows, treat every `scripts/<name>` command and every Bash command block in this skill and its references as a Linux/macOS example only. Invoke the matching subcommand through the absolute `Start-Weekly-Report.ps1` or `WeeklyReportCLI.exe` path resolved above. Use a Windows temporary directory and Windows absolute paths instead of `/tmp` and `/absolute/path`. The Windows mapping is:
 
-| Linux/macOS helper | Windows subcommand |
+| Linux/macOS helper or procedure | Windows subcommand |
 |---|---|
 | `scripts/admin-preflight` | `preflight` |
 | `scripts/admin-paths` | `admin-paths` |
 | `scripts/report-metadata.sh` | `report-metadata` |
-| `scripts/discover-reports` | `discover` |
+| Direct filesystem enumeration within each member's declared search roots ([procedure](references/rollup-workflow.md#discover-within-authorized-roots)) | `discover` |
 | `scripts/probe-report` | `probe-report` |
 | `scripts/build-bundle` | `build-bundle` |
 | `scripts/open-bundle` | `open-bundle` |
