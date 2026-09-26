@@ -101,6 +101,17 @@ jobs:
         run: .\Windows-Setup.ps1 -Python (Join-Path $env:pythonLocation 'python.exe')
       - name: Run native, PowerShell and common tests
         run: .\windows\test.ps1 -Gui
+      - name: Check browser preservation and save ordering
+        env:
+          WR_REQUIRE_BROWSER: '1'
+        run: |
+          . .\windows\common.ps1
+          $node = (Get-Command node -CommandType Application -TotalCount 1).Source
+          Invoke-WrChecked $node @('tests/test_inline_render.js')
+          Invoke-WrChecked $node @('tests/test_editor_saves.js')
+          Invoke-WrChecked (Resolve-WrPython) @('tests/check_editor_geometry.py')
+          Invoke-WrChecked (Resolve-WrPython) @('tests/check_editor_browser.py')
+          Invoke-WrChecked (Resolve-WrPython) @('tests/check_preservation_browser.py')
       - name: Restore prepared TinyTeX
         id: tinytex-cache
         uses: actions/cache/restore@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0

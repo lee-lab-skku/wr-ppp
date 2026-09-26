@@ -13,6 +13,8 @@ Baseline: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0
 
 ### Added
 
+- [ci] require real browser preservation, editor rendering, geometry, and save-ordering checks before building a Windows release installer.
+
 - [build] support source-backed visual editing of the commented template and customized reports, preserving untouched source bytes and retaining unsupported or ambiguous regions as read-only.
 
 ### Fixed

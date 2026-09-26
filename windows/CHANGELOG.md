@@ -20,7 +20,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
   Reject layouts the native form cannot represent instead of dropping or relocating content.
 - Serialize revision-aware browser saves and reject stale GUI/browser writes under shared destination locks.
   Stage validated JSON and TeX together, retain JSON as the recovery source on partial publication, and identify delayed GUI updates by exact file fingerprints.
-- Exercise browser behavior with isolated Chrome/Chromium/Edge profiles.
+- Exercise browser behavior with isolated Chrome/Chromium/Edge profiles and make browser availability mandatory in the Windows release job.
 
 ### Validation
 
