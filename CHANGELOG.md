@@ -9,19 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Baseline: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-rc).
+## [1.5.0] &mdash; 2026-09-26
+
+Parent tag: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-rc).
+
+Bundled Ghostscript 10.08.0 sources: [original source archive](https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz) and [TeX Live Windows patch at revision 80226](https://tug.org/svn/texlive/trunk/Master/source/ghostscript-10.08.0-diff.xz?pathrev=80226&view=co).
+The patch is also available through `rsync -t tug.org::tldevsrc/Master/source/ghostscript-10.08.0-diff.xz .`; the installed `tex/README.WeeklyReport.txt` contains checksums, historical retrieval and patch-application instructions.
 
 ### Added
 
 - [ci] require real browser preservation, editor rendering, geometry, and save-ordering checks before building a Windows release installer.
-
 - [build] support source-backed visual editing of the commented template and customized reports, preserving untouched source bytes and retaining unsupported or ambiguous regions as read-only.
 
 ### Fixed
 
 - [build] preserve figure labels and ordering, table columns, comments, and native form metadata through visual-editor saves; reject structural edits that would discard protected source or break references.
 - [build] serialize browser saves, acknowledge only persisted snapshots, and detect stale browser, form, or external writes before publication; retain authoritative Windows form data for recovery after a partial TeX replacement.
-
 - [skill] correct administrator discovery guidance to use direct filesystem enumeration on Linux/macOS and the existing `discover` subcommand on Windows, removing the nonexistent helper from the platform mapping.
 - [build] validate administrator execution records before Windows history PDF access and Slack notice generation, with field-specific errors while preserving the v1 TSV format and legacy history.
 - [skill] open the published administrator bundle automatically when no review is required, using its final output path.
@@ -231,7 +234,8 @@ Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0)
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-rc...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-rc...v1.5.0
 [1.5.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-beta...v1.5.0-rc
 [1.4.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.4.1
 [1.5.0-beta]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.5.0-beta
