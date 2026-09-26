@@ -145,7 +145,10 @@ Follow the root contribution guide for release authorization, tag preparation, C
 
 Keep the installed Ghostscript source directions in `TeX-NOTICE.txt`, which packaging copies to `tex/README.WeeklyReport.txt`.
 This file is fixed to LF in Git because distribution checks compare it byte-for-byte, including when inspecting a Windows installation from WSL.
-The Windows README links to this canonical notice; the release's selected root changelog section carries version-specific source links and access instructions next to the installer download.
+The Windows README links to this canonical notice.
+Keep the concise release-note fragment in `RELEASE-NOTICE.md` aligned with its version-specific source links and access instructions.
+The release generator appends that fragment once from the selected checkout after aggregating change history; do not copy it into individual root changelog sections.
+Git tags retain the notice appropriate to each release, so update the fragment alongside bundled source identities and `TeX-NOTICE.txt`, not on every version bump.
 Use upstream versioned archives and revision-specific history rather than a generic latest-source link.
 No additional release asset is needed for this external source-access route.
 

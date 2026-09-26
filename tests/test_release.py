@@ -29,6 +29,10 @@ class ReleaseTests(unittest.TestCase):
         self.published_notes = []
 
     def metadata(self):
+        self.notice = '## Bundled third-party sources\n\nFixture source-access directions.'
+        notice = self.root / 'windows/RELEASE-NOTICE.md'
+        notice.parent.mkdir(exist_ok=True)
+        notice.write_text(self.notice + '\n', encoding='utf-8')
         (self.root / 'template.tex').write_text(f'% Repository version: {self.tag}\n', encoding='utf-8')
         (self.root / 'CHANGELOG.md').write_text(
             f'# Changelog\n\n## [Unreleased]\n\n## [{self.tag[1:]}] &mdash; 2026-09-15\n\n'
@@ -66,7 +70,8 @@ class ReleaseTests(unittest.TestCase):
                 release.validate_tag(tag)
 
     def test_notes_come_only_from_matching_release(self):
-        self.assertEqual(release.release_notes(self.root, self.tag), '### Added\n\n- [setup] Windows installer.\n')
+        self.assertEqual(release.release_notes(self.root, self.tag),
+                         '### Added\n\n- [setup] Windows installer.\n\n' + self.notice + '\n')
         for tag in ('v2.3.5', 'v2.3.4-rc'):
             with self.assertRaises(ValueError):
                 release.release_notes(self.root, tag)
@@ -111,7 +116,33 @@ class ReleaseTests(unittest.TestCase):
 
 - [setup] Beta feature.
   Continuation with `code`.
-''')
+''' + '\n' + self.notice + '\n')
+
+    def test_notice_comes_once_from_selected_checkout_for_every_release_stage(self):
+        notice_path = self.root / 'windows/RELEASE-NOTICE.md'
+        for stage in ('', '-rc', '-beta'):
+            with self.subTest(stage=stage):
+                self.tag = 'v2.3.4' + stage
+                self.staged_metadata()
+                # Distinct checkout content must replace, not inherit, another
+                # release's notice even when collecting its prerelease changes.
+                notice = self.notice + '\nSource revision for ' + self.tag
+                notice_path.write_bytes((notice + '\n').replace('\n', '\r\n').encode('utf-8'))
+                notes = release.release_notes(self.root, self.tag)
+                self.assertEqual(notes.count('## Bundled third-party sources'), 1)
+                self.assertTrue(notes.endswith(notice + '\n'))
+
+    def test_missing_or_empty_notice_prevents_publication(self):
+        notice = self.root / 'windows/RELEASE-NOTICE.md'
+        for content in (None, '', ' \r\n\t'):
+            with self.subTest(content=content):
+                if content is None:
+                    notice.unlink()
+                else:
+                    notice.write_text(content, encoding='utf-8')
+                with self.assertRaisesRegex(ValueError, 'RELEASE-NOTICE'):
+                    self.publish()
+                self.assertEqual(self.calls, [])
 
     def test_stable_notes_allow_missing_prerelease_stages(self):
         for rc, beta in ((None, '- Beta.'), ('- RC.', None), (None, None)):
@@ -180,6 +211,7 @@ class ReleaseTests(unittest.TestCase):
                 self.assertIn('Beta feature.', notes)
                 self.assertNotIn('Pending change.', notes)
                 self.assertEqual(notes, release.release_notes(self.root, self.tag))
+                self.assertEqual(notes.count(self.notice), 1)
                 self.assertEqual((self.root / 'CHANGELOG.md').read_bytes(), original)
 
     def test_prepare_command_accepts_promotion_with_only_prerelease_changes(self):
@@ -193,7 +225,7 @@ class ReleaseTests(unittest.TestCase):
         git('init', '-q')
         git('config', 'user.name', 'Release test')
         git('config', 'user.email', 'test@example.invalid')
-        git('add', 'template.tex', 'CHANGELOG.md', '.github/scripts/release.py')
+        git('add', 'template.tex', 'CHANGELOG.md', '.github/scripts/release.py', 'windows/RELEASE-NOTICE.md')
         git('commit', '-qm', 'promotion fixture')
         git('tag', '-a', self.tag, '-m', 'promotion fixture')
         commit = git('rev-parse', 'HEAD')

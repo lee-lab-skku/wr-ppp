@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- [ci] append the selected release checkout's third-party source notice once after the release changes, keeping distribution directions out of individual changelog sections.
+
 ## [1.5.0] &mdash; 2026-09-26
 
 Parent tag: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-rc).
-
-Bundled Ghostscript 10.08.0 sources: [original source archive](https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz) and [TeX Live Windows patch at revision 80226](https://tug.org/svn/texlive/trunk/Master/source/ghostscript-10.08.0-diff.xz?pathrev=80226&view=co).
-The patch is also available through `rsync -t tug.org::tldevsrc/Master/source/ghostscript-10.08.0-diff.xz .`; the installed `tex/README.WeeklyReport.txt` contains checksums, historical retrieval and patch-application instructions.
 
 ### Added
 
@@ -33,9 +34,6 @@ The patch is also available through `rsync -t tug.org::tldevsrc/Master/source/gh
 
 Parent release tags: [v1.5.0-beta](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-beta) and [v1.4.1](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.1), integrated by merge [1a0a295](https://github.com/lee-lab-skku/wr-ppp/commit/1a0a295ab3df4d38b90ed778b15dd5777b7c5726), whose common parent release is [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0).
 The baseline includes the visual-editor drafting-stage and scientific-notation integration fixes; entries below describe changes after that merge.
-
-Bundled Ghostscript 10.08.0 sources: [original source archive](https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz) and [TeX Live Windows patch at revision 80226](https://tug.org/svn/texlive/trunk/Master/source/ghostscript-10.08.0-diff.xz?pathrev=80226&view=co).
-The patch is also available through `rsync -t tug.org::tldevsrc/Master/source/ghostscript-10.08.0-diff.xz .`; the installed `tex/README.WeeklyReport.txt` contains checksums, historical retrieval and patch-application instructions.
 
 ### Added
 

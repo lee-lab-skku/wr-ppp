@@ -25,6 +25,8 @@ def release_notes(root, tag):
     includes its optional rc and beta sections, newest stage first, and may have
     no new bullets of its own when it only promotes tested prerelease changes.
     The target section and matching template version are always required.
+    Distribution notices come from this checkout, once after all change sections,
+    so promotion neither repeats prerelease notices nor borrows newer sources.
     """
     prerelease = validate_tag(tag)
     first = (root / 'template.tex').read_text(encoding='utf-8').splitlines()[0]
@@ -52,10 +54,18 @@ def release_notes(root, tag):
         sections.append((version, date[1], body))
     if not any(re.search(r'^- ', body, re.M) for _, _, body in sections):
         raise ValueError('The release changelog must describe at least one change.')
+    notice_path = root / 'windows/RELEASE-NOTICE.md'
+    if not notice_path.is_file():
+        raise ValueError('Release notes require windows/RELEASE-NOTICE.md.')
+    notice = notice_path.read_text(encoding='utf-8').strip()
+    if not notice:
+        raise ValueError('windows/RELEASE-NOTICE.md must not be empty.')
     if len(sections) == 1:
-        return sections[0][2] + '\n'
-    return '\n\n'.join(f'## {version} &mdash; {date}\n\n{body}'.rstrip()
-                       for version, date, body in sections) + '\n'
+        changes = sections[0][2]
+    else:
+        changes = '\n\n'.join(f'## {version} &mdash; {date}\n\n{body}'.rstrip()
+                              for version, date, body in sections)
+    return changes + '\n\n' + notice + '\n'
 
 
 def validate_checkout(root, tag, expected_commit):

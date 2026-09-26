@@ -11,6 +11,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ### Changed
 
+- Maintain release source-access directions in `RELEASE-NOTICE.md`, appended once after the selected changelog sections instead of repeated in each release entry.
+  The installed `TeX-NOTICE.txt` remains the detailed source-reference document.
 - Read execution history through the shared `admin_records` parser, using named fields and validating all records before opening the final PDF.
   Preserve the v1 TSV format, optional cumulative history, and untrusted-history review behavior; include parsing diagnostics in the history issue.
 
@@ -24,6 +26,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ### Validation
 
+- Release-notice extraction checks on 2026-09-26 used the working tree based on `b476cce` in WSL and native Windows Python 3.13.7; all 23 release tests passed on each platform.
+  A preview using the repository changelog retained stable/RC/beta changes and included the Ghostscript notice once; no published release notes or tags were changed.
 - Tested the uncommitted parser changes in WSL/Linux: the common suite passed 138 tests; the parser suite then passed all 6 tests after adding a source-filename compatibility case.
 - Ran `windows/tests/test_native.py` with Python 3.13 and the pinned Windows requirements: 62 tests passed, including malformed-history rejection before PDF access and native bundle-to-Slack compatibility; 2 Windows-only tests skipped, and the junction fallback test failed because this host is Linux.
   Native Windows, PyInstaller packaging, real TeX compilation, and macOS execution were not tested.

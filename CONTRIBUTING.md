@@ -283,8 +283,9 @@ Do not use other prerelease identifiers, numbered prereleases such as `-beta.1` 
 Compare major, minor, and patch numerically, then order equal base versions as beta, release candidate, and official release.
 Published tags are immutable; use the next allowed release stage or a new base version for subsequent publications rather than rewriting a tag.
 For every confirmed release, move the relevant changelog entries from `Unreleased` into a dated version section, update the version comment at the beginning of `template.tex`, commit those changes, and create the matching tag on that exact commit.
-For releases that distribute bundled third-party binaries, include version-specific source-access directions in the selected changelog section so they appear beside the installer in the published release notes.
-Keep this distribution information outside the incremental change bullets and preserve it when promoting a release; use the [Windows source-reference procedure](windows/CONTRIBUTING.md#third-party-source-references) to check the bundled versions and upstream locations.
+For releases that distribute bundled third-party binaries, maintain version-specific source-access directions in `windows/RELEASE-NOTICE.md`; the release generator appends this notice once after the selected change sections so it appears beside the installer.
+Keep distribution directions out of individual changelog sections and retain only change history there.
+The notice belongs to the release checkout: preserve it during promotion and update it when bundled sources change, using the [Windows source-reference procedure](windows/CONTRIBUTING.md#third-party-source-references).
 Confirm that the latest-version badge near the beginning of `README.md` remains configured to derive its value from the repository's SemVer tags.
 Do not omit the changelog update, template update, badge check, or tag.
 
@@ -323,6 +324,8 @@ CI packages the exact triggering tag even if multiple tags refer to the same com
 The release contains only `WeeklyReport-<tag>-Setup.exe` and its `.exe.sha256` file; the publication job revalidates both after artifact transfer.
 `.github/scripts/release.py` uses only the matching changelog section for a prerelease publication.
 For a stable publication, it collects the matching stable section and any same-version `-rc` and `-beta` sections, in that order with version headings, without changing `CHANGELOG.md`.
+After collecting changes, the generator appends `windows/RELEASE-NOTICE.md` from the same checkout exactly once for stable and prerelease publications.
+A missing or blank notice fails release preparation and publication.
 Missing prerelease stages are allowed; duplicate sections or invalid dates in any selected stage fail validation before publication.
 Unreleased changes and other base versions are never included.
 Tags ending in `-beta` or `-rc` produce prereleases and cannot become Latest; stable releases use GitHub's default Latest selection.
