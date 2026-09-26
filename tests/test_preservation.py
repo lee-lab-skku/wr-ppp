@@ -22,8 +22,10 @@ class PreservationTests(unittest.TestCase):
         self.source = (ROOT / 'template.tex').read_bytes().decode('utf-8')
 
     def test_template_noop_and_encoding(self):
-        for source in (self.source, '\ufeff' + self.source.replace('\n', '\r\n')):
-            with self.subTest(crlf='\r\n' in source):
+        lf_source = self.source.replace('\r\n', '\n')
+        for newline, bom in [('\n', ''), ('\r\n', ''), ('\n', '\ufeff'), ('\r\n', '\ufeff')]:
+            source = bom + lf_source.replace('\n', newline)
+            with self.subTest(newline=repr(newline), bom=bool(bom)):
                 state = import_source(source)
                 self.assertEqual(export_source(json.loads(json.dumps(state))), source)
                 self.assertEqual(assess(source), (1.0, []))
@@ -93,7 +95,7 @@ class PreservationTests(unittest.TestCase):
         result = export_source(state)
         self.assertIn('{fig:calibration-curve}', result)
         self.assertIn('{fig:rare-class-errors}', result)
-        self.assertNotIn('\\ReportFigurePair\n', result)
+        self.assertNotIn('\\ReportFigurePair', result)
         self.assertEqual(export_source(import_source(result)), result)
 
     def test_unknown_environment_and_malformed_input(self):
@@ -177,15 +179,23 @@ class PreservationTests(unittest.TestCase):
         self.assertEqual(first['figures'], second['figures'])
 
     def test_figure_comments_survive_caption_edit_and_block_split(self):
-        source = self.source.replace('\\ReportFigurePair\n', '\\ReportFigurePair % paired evidence\n')
-        state = import_source(source)
-        figure = next(e for e in state['flow'] if e['type'] == 'figure')
-        figure['items'][0]['caption'] = 'New caption'
-        result = export_source(state)
-        self.assertEqual(result, source.replace('Calibration curves for the baseline and revised loss.', 'New caption'))
-        figure['items'].pop()
-        with self.assertRaisesRegex(ValueError, 'comments'):
-            export_source(state)
+        # Exercise both checkout styles on every host; byte reads retain CRLF.
+        lf_source = self.source.replace('\r\n', '\n')
+        for newline in ('\n', '\r\n'):
+            with self.subTest(newline=repr(newline)):
+                source = lf_source.replace('\n', newline)
+                marker = '\\ReportFigurePair' + newline
+                self.assertIn(marker, source)
+                source = source.replace(marker, '\\ReportFigurePair % paired evidence' + newline, 1)
+                state = import_source(source)
+                figure = next(e for e in state['flow'] if e['type'] == 'figure')
+                self.assertTrue(figure.get('structureLocked'))
+                figure['items'][0]['caption'] = 'New caption'
+                result = export_source(state)
+                self.assertEqual(result, source.replace('Calibration curves for the baseline and revised loss.', 'New caption'))
+                figure['items'].pop()
+                with self.assertRaisesRegex(ValueError, 'comments'):
+                    export_source(state)
 
     def test_native_partial_failure_reports_json_as_authoritative(self):
         import os
