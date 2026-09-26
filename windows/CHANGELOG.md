@@ -14,11 +14,31 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 - Read execution history through the shared `admin_records` parser, using named fields and validating all records before opening the final PDF.
   Preserve the v1 TSV format, optional cumulative history, and untrusted-history review behavior; include parsing diagnostics in the history issue.
 
+### Fixed
+
+- Preserve native figure identities, pair metadata, unsupported extra fields, and unchanged form text through the shared visual editor.
+  Reject layouts the native form cannot represent instead of dropping or relocating content.
+- Serialize revision-aware browser saves and reject stale GUI/browser writes under shared destination locks.
+  Stage validated JSON and TeX together, retain JSON as the recovery source on partial publication, and identify delayed GUI updates by exact file fingerprints.
+- Exercise browser behavior with isolated Chrome/Chromium/Edge profiles.
+
 ### Validation
 
 - Tested the uncommitted parser changes in WSL/Linux: the common suite passed 138 tests; the parser suite then passed all 6 tests after adding a source-filename compatibility case.
 - Ran `windows/tests/test_native.py` with Python 3.13 and the pinned Windows requirements: 62 tests passed, including malformed-history rejection before PDF access and native bundle-to-Slack compatibility; 2 Windows-only tests skipped, and the junction fallback test failed because this host is Linux.
   Native Windows, PyInstaller packaging, real TeX compilation, and macOS execution were not tested.
+
+- Source-preservation implementation checks on 2026-09-26 used the uncommitted development tree based on `68479f8`, not a packaged release.
+  The WSL common suite passed 156 tests; the 16 preservation checks also passed after the final conservative list-boundary refinement.
+  Node save-ordering and inline-rendering checks and geometry validation passed.
+- Native Windows Python 3.13.7 passed 65 backend regression tests from a temporary local source copy, with the pinned `pypdf` and `tzdata` requirements isolated for testing.
+  An earlier run directly from the WSL UNC share failed one canonical-link test; the local Windows copy resolved that environment limitation.
+  Three actual Tk GUI checks passed for extra-field retention, unsaved form conflicts, and delayed browser callbacks.
+- Windows Edge passed all 21 existing browser checks and the live source-backed editor check, including active-input saving, undo/redo, exported source metadata, and exact saved-source comparison.
+  Test profiles are isolated to avoid interference from an existing browser session.
+- Docker XeLaTeX built the original, unchanged round trip, and title/cell-edited template as two-page A4 PDFs without unresolved-reference or duplicate-label warnings.
+  The original and unchanged round trip had identical extracted text and rendered page images; both edited pages were visually inspected.
+  Native TeX, installer packaging, installed-application checks, and macOS execution were not rerun for this change.
 
 ## 2026-09-23 &mdash; Windows distribution notices and source references
 

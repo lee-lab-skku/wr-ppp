@@ -26,7 +26,14 @@ Keep HTML editing resources, local browser transport, and portable LaTeX convers
 The TeX adapter exposes editing through `scripts/report-edit` and leaves PDF compilation to `report-build`.
 Windows retains its native application and owns form-model conversion and persistence through an adapter to the common editor.
 Keep one HTML source and one implementation of each conversion tool; root script entry points delegate to the shared package.
-Preserve the import fidelity gate and original source when exposing the editor to the Docker workflow; do not broaden the supported LaTeX subset as part of structural refactoring.
+Preserve the source-backed editor contract: no-op exports must retain every source byte, and supported edits must leave unrelated spans intact.
+Keep lexical scanning, protected source regions, stable figure identities, and lossless export in the shared package; the native form adapter retains ownership of its own model.
+Do not execute TeX or expand external inputs to discover editable regions.
+Ambiguous boundaries and unsupported syntax are read-only; reject operations that cross protected boundaries or discard their content.
+Similarity scores are diagnostic, never permission to discard source.
+State format version 2 optionally carries immutable preservation metadata; retain legacy JSON loading without claiming recovery of absent source.
+Browser saves carry a revision and state snapshot; serialize writes, reject stale revisions, and mark only acknowledged snapshots clean.
+Adapters must check destination fingerprints under a publication lock before writing; conflicts must preserve the newer file.
 
 Install command and skill links to canonical repository sources rather than generating duplicate implementations.
 Keep Linux/macOS operational command implementations in root `scripts/`; expose them from `skills/*/scripts/` through relative links rather than placing the canonical implementation inside a skill.
@@ -205,7 +212,8 @@ Page-limit exceptions belong in the authoring and review judgment, with a specif
 
 Validate in proportion to the change and its risks.
 For shared editor changes, exercise both the TeX and Windows form adapters with `python3 -B -m unittest discover -s tests -p 'test_editor.py' -v`.
-Run `python3 tests/check_editor_geometry.py`, `node tests/test_inline_render.js`, and `python3 tests/check_editor_browser.py` for layout constants, inline rendering, and browser behavior respectively; the browser check needs Chrome/Chromium.
+Run `python3 tests/check_editor_geometry.py`, `node tests/test_inline_render.js`, and `python3 tests/check_editor_browser.py` for layout constants, inline rendering, and browser behavior respectively; the browser check needs Chrome/Chromium or native Windows Edge (`WR_BROWSER` overrides discovery).
+Run `node tests/test_editor_saves.js` for controlled save ordering and `python3 tests/check_preservation_browser.py` for the live source-backed editor, persistence, and undo/redo.
 The former browser-check path `tests/run_tests.py` is now `tests/check_editor_browser.py`; `scripts/verify_geometry.py` remains a compatibility entry point for the geometry check.
 Common Python tests use only the standard library, including local HTTP requests, and do not compile TeX or open a browser.
 Exercise the affected workflow and relevant error behavior, confirm documentation against the canonical sources, and compile the example when build or LaTeX behavior changes.

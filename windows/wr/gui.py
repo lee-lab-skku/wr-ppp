@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import csv
 import datetime as dt
 import io
@@ -18,6 +19,7 @@ from zoneinfo import ZoneInfo
 
 from . import admin, core, visual_editor
 from report_editor import TEMPLATE
+from report_editor.persistence import ConflictError, fingerprint, file_lock
 from .cli import notifications
 
 
@@ -29,6 +31,10 @@ class App(ttk.Frame):
         self.config = core.read_config()
         self.source = None
         self.form_file = None
+        self.form_values = {}
+        self.form_baseline = {}
+        self.form_fingerprint = None
+        self.form_tex_fingerprint = None
         self.draft = None
         self.figures = []
         self.tables = []
@@ -166,6 +172,8 @@ class App(ttk.Frame):
         if not messagebox.askyesno('새 보고서', '현재 편집 내용을 닫고 새 보고서를 작성할까요? 저장하지 않은 내용은 사라집니다.'):
             return
         self.source = self.form_file = None
+        self.form_values = {}
+        self.form_fingerprint = self.form_tex_fingerprint = None
         self.figures, self.tables, self.pending_figures = [], [], {}
         for variable in self.fields.values():
             variable.set('')
@@ -175,7 +183,7 @@ class App(ttk.Frame):
         self.editor_tabs.select(0)
 
     def values(self):
-        return {**{k: v.get() for k, v in self.fields.items()},
+        return {**deepcopy(self.form_values), **{k: v.get() for k, v in self.fields.items()},
                 **{k: self.texts[k].get('1.0', 'end-1c') for k in ('abstract', 'Progress', 'Problems', 'Plans')},
                 'figures': self.figures, 'tables': self.tables}
 
@@ -185,6 +193,9 @@ class App(ttk.Frame):
             return
         values = json.loads(Path(name).read_text(encoding='utf-8'))
         self.form_file, self.source = Path(name), None
+        self.form_values = deepcopy(values)
+        self.form_fingerprint = fingerprint(self.form_file)
+        self.form_tex_fingerprint = fingerprint(self.form_file.with_suffix('.tex'))
         for k, variable in self.fields.items():
             variable.set(values.get(k, ''))
         for key in ('abstract', 'Progress', 'Problems', 'Plans'):
@@ -192,6 +203,7 @@ class App(ttk.Frame):
             self.texts[key].insert('1.0', values.get(key, ''))
         self.figures, self.tables = values.get('figures', []), values.get('tables', [])
         self.pending_figures = {}
+        self.form_baseline = deepcopy(self.values())
         self.writer_mode.set(str(self.form_file))
         self.editor_tabs.select(0)
 
@@ -232,6 +244,8 @@ class App(ttk.Frame):
             if not name:
                 return None
             self.form_file = Path(name)
+            self.form_fingerprint = fingerprint(self.form_file)
+            self.form_tex_fingerprint = fingerprint(self.form_file.with_suffix('.tex'))
         for relative, file in self.pending_figures.items():
             target = self.form_file.parent / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -240,8 +254,13 @@ class App(ttk.Frame):
         values = self.values()
         # Form-generated sources have their own name and never overwrite an existing main.tex.
         source = self.form_file.with_suffix('.tex')
-        core.atomic_write(source, core.form_source(values, self.config.get('allow_user_styles', False)))
-        core.atomic_write(self.form_file, json.dumps(values, ensure_ascii=False, indent=2))
+        with file_lock(self.form_file):
+            if fingerprint(self.form_file) != self.form_fingerprint or fingerprint(source) != self.form_tex_fingerprint:
+                raise ConflictError('다른 편집기에서 변경됐습니다. 현재 입력을 보관하고 폼을 다시 여세요.')
+            self.form_fingerprint, self.form_tex_fingerprint = visual_editor.save_form(
+                self.form_file, values, self.config.get('allow_user_styles', False))
+        self.form_values = deepcopy(values)
+        self.form_baseline = deepcopy(self.values())
         self.writer_mode.set(str(self.form_file))
         self.status.set('저장했습니다: ' + str(source))
         return source
@@ -267,28 +286,36 @@ class App(ttk.Frame):
         for existing in self.visual_servers:
             existing.stop()
         self.visual_servers.clear()
+        form_path = self.form_file.resolve()
         server = visual_editor.VisualEditorServer(
             self.form_file, template,
-            on_save=lambda values: self.visual_updates.put(values),
+            on_save=lambda values: self.visual_updates.put((form_path, values, server.backend.expected, server.backend.tex_expected)),
             allow_user_styles=self.config.get('allow_user_styles', False),
         )
         self.visual_servers.append(server)
         os.startfile(server.start())
         self.status.set('시각 편집기를 열었습니다. 변경 내용은 자동 저장됩니다.')
 
-    def apply_visual_values(self, values):
-        if not self.form_file:
+    def apply_visual_values(self, update):
+        form_path, values, saved_form, saved_tex = update
+        if not self.form_file or self.form_file.resolve() != form_path:
             return
+        if fingerprint(self.form_file) != saved_form or fingerprint(self.form_file.with_suffix('.tex')) != saved_tex:
+            return
+        if self.values() != self.form_baseline:
+            self.status.set('브라우저 저장과 현재 폼 입력이 충돌했습니다. 현재 입력을 보관하고 폼을 다시 여세요.')
+            return
+        self.form_values = deepcopy(values)
         for key, variable in self.fields.items():
             variable.set(values.get(key, ''))
         for key in ('abstract', 'Progress', 'Problems', 'Plans'):
-            focused = self.root.focus_get()
-            if focused is self.texts[key]:
-                continue
             self.texts[key].delete('1.0', 'end')
             self.texts[key].insert('1.0', values.get(key, ''))
         self.figures, self.tables = values.get('figures', []), values.get('tables', [])
         self.pending_figures.clear()
+        self.form_baseline = deepcopy(self.values())
+        self.form_fingerprint = saved_form
+        self.form_tex_fingerprint = saved_tex
         self.status.set('시각 편집기의 변경 내용을 자동 저장했습니다.')
 
     def add_figure(self):

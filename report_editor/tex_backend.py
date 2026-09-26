@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 import tempfile
 
-from .check_roundtrip import assess
 from .state_to_tex import render
-from .tex_to_state import convert
+from .preservation import import_source
+from .persistence import ConflictError, fingerprint, file_lock
 
 
 def atomic_write(path, data):
@@ -25,8 +25,8 @@ class TexBackend:
     """Edit a supported source into a separate sibling, retaining the original.
 
     Keep the output beside the input so existing relative figure paths continue
-    to work. The existing importer is deliberately unchanged; its fidelity guard
-    must pass before the browser can trigger any saves.
+    to work. Unknown source stays protected, and every save checks the immutable
+    import snapshot and destination fingerprints before replacing the output.
     """
     def __init__(self, source, output=None, week_start=''):
         source = Path(source).resolve()
@@ -39,12 +39,11 @@ class TexBackend:
             raise ValueError('Choose a .tex output beside the source to preserve relative asset paths.')
         if self.output.exists() or self.output.is_symlink():
             raise ValueError(f'Output already exists; choose another --output: {self.output}')
-        original = source.read_text(encoding='utf-8')
-        ratio, unsupported = assess(original)
-        if ratio < 0.99 or unsupported:
-            detail = '; '.join(unsupported) or 'content or structure changes during conversion'
-            raise ValueError(f'Cannot edit this source safely ({ratio:.1%} fidelity): {detail}. Keep it in LaTeX.')
-        self.state = convert(original, week_start)
+        original = source.read_bytes().decode('utf-8')
+        self.source = source
+        self.source_fingerprint = fingerprint(source)
+        self.output_fingerprint = None
+        self.state = import_source(original, week_start)
 
     def load(self):
         state = deepcopy(self.state)
@@ -56,9 +55,16 @@ class TexBackend:
         return state
 
     def save(self, state):
+        if state.get('preservation') != self.state['preservation']:
+            raise ValueError('The original source metadata cannot be changed')
         tex = render(state)
-        atomic_write(self.output, tex)
-        self.state = deepcopy(state)
+        with file_lock(self.output):
+            if (fingerprint(self.source) != self.source_fingerprint or
+                    fingerprint(self.output) != self.output_fingerprint):
+                raise ConflictError('Source or output changed outside this session; reopen the report.')
+            atomic_write(self.output, tex)
+            self.output_fingerprint = fingerprint(self.output)
+            self.state = deepcopy(state)
 
     def write_image(self, target, data):
         atomic_write(target, data)

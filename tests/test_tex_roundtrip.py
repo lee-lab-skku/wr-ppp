@@ -30,7 +30,7 @@ Final paragraph.
 
 class TexImporterTests(unittest.TestCase):
     def test_preserves_week_and_prose_table_list_order(self):
-        state = convert(tex, '2026-09-07')
+        state = convert(r'\begin{document}' + tex + r'\end{document}', '2026-09-07')
         self.assertEqual(state['weekStart'], '2026-09-07')
         blocks = [entry['text'] for entry in state['flow'] if entry['type'] == 'block']
         self.assertEqual(blocks, [

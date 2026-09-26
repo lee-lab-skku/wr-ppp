@@ -36,6 +36,11 @@ The Git release updater remains specific to Bash; native Windows updates are man
 The native GUI remains responsible for its report form, builds, and administrator screens.
 Its visual-editor adapter in `wr/visual_editor.py` converts `.wr.json` values and persists native form output; it delegates HTTP serving and browser assets to the root `report_editor` package.
 Keep that package independent of Windows modules and preserve the existing native save callbacks when changing the adapter.
+Carry figure identities and additional form fields through both browser and GUI saves; do not derive existing IDs from image filenames.
+The native adapter must reject editor structures its form model cannot represent.
+Validate and stage both JSON and generated TeX before replacing either, commit authoritative JSON first, and report a partial TeX replacement as a recovery-required failure.
+GUI callbacks identify the form path and the exact saved fingerprints, so delayed callbacks cannot make stale form content overwrite a later save.
+Use the shared editor destination lock and fingerprint checks for GUI and browser publication.
 PyInstaller must analyze both the Windows and repository import roots and bundle `report_editor/assets/editor.html` at its package-relative location.
 Source launchers and native test entry points prepare these import roots explicitly; `wr/__init__.py` must remain free of import-path mutations.
 

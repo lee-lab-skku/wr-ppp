@@ -43,7 +43,7 @@ Apply checks only where the actual content and task make them relevant; silently
 - Read [references/report-conventions.md](references/report-conventions.md) when locating, naming, scaffolding, preserving template comments, configuring, or building report sources and outputs.
 - Read [references/content-quality.md](references/content-quality.md) when assessing evidence, drafting from source material, making editorial decisions, revising claims, preserving authorial intent, or working without supporting material.
 - Read [references/latex-and-build.md](references/latex-and-build.md) when formatting content, using template helpers, diagnosing LaTeX, or validating a PDF.
-- Read [references/visual-editing.md](references/visual-editing.md) when the user wants to edit a report in the shared HTML editor or work with its state and exported source.
+- Read [references/visual-editing.md](references/visual-editing.md) when the user wants to edit a report in the shared HTML editor or work with its state and exported source; that reference explains source preservation, read-only regions, and save conflicts.
 
 Consult the resolved repository's `weekly-report.sty` and scripts for exact LaTeX and build behavior, and the README for workflow details as needed.
 

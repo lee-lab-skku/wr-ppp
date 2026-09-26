@@ -18,10 +18,13 @@ The native application remains available for normal report writing and administr
 
 ## Preserve Content
 
-The TeX entry point runs the existing round-trip guard before opening the editor.
-The importer has a limited model: raw environments, custom preambles, comments, labels, or ordering may not survive conversion.
-If the guard refuses a source, keep it in LaTeX and explain the limitation; do not strip content or weaken the guard to force an import.
-A passing similarity check is not proof of semantic equivalence, so compare the exported source with the original, including references, comments, scientific notation, and list hierarchy.
+The TeX entry point retains the original source, including the fully commented template, and edits only supported source spans.
+Custom preambles, comments, and unsupported or ambiguous syntax are preserved as read-only regions; inspect the preserved-source panel or edit them in LaTeX.
+Do not strip content or weaken preservation checks to force a structural operation.
+`check_roundtrip.py` checks exact source preservation; similarity is diagnostic, not proof of rendering equivalence.
+Compare exported changes with the original, including references, comments, scientific notation, and list hierarchy.
+Keep source metadata when passing versioned state through JSON or HTML; legacy state cannot reconstruct source it never stored.
+If concurrent browser, form, or external edits cause a save conflict, preserve unsaved work and reopen to reconcile it rather than retrying a stale overwrite.
 Apply the relevant notation and reference checks in [latex-and-build.md](latex-and-build.md) to exported LaTeX; browser rendering alone does not establish compliance.
 Do not reword user-edited text while transferring state.
 

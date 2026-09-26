@@ -64,6 +64,13 @@ Text edits immediately affect the displayed height and are saved to `.wr.json` a
 Add images by dropping or selecting them, adjust a single figure's height from 15 to 120 mm, or place two figures side by side.
 Original images are stored in the report's `figures` directory.
 Keep the application running while using the browser editor.
+Existing figure IDs, pair membership, per-position order, tables, and additional saved fields survive a browser round trip.
+The native form supports figures after complete sections; unsupported placements and manual page breaks are refused rather than dropped.
+The save button waits for pending changes, and unsaved active text is included in the close warning.
+If browser, form, or external edits conflict, keep the unsaved text and reopen the form to reconcile it; a stale writer does not overwrite the newer file.
+Both outputs are validated and staged before publication.
+If JSON saves but derived TeX replacement fails, reopen the `.wr.json` form and save it to regenerate `.wr.tex`.
+A crash may leave a sibling `.editor-lock` directory; remove it only after verifying that no editor still owns the report.
 The interface currently uses Korean labels; the English control names in this guide describe their functions.
 
 The HTML editing interface is shared with the [Docker workflow's visual editor](../README.md#visual-editing).

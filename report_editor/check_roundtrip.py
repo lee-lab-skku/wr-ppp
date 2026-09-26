@@ -1,32 +1,16 @@
 #!/usr/bin/env python3
-"""Refuse to edit a report the editor cannot hold without losing something.
+"""Check exact source preservation through the editor's lossless model.
 
-tex -> state -> tex, then compare against the original. Anything the importer
-does not understand simply disappears from the state, and would disappear from
-main.tex the moment the edited artifact is written back. This is the gate that
-turns that silent loss into a refusal.
-
-Usage: check_roundtrip.py <main.tex> [--min 0.99]
-Exit:  0 = safe to edit, 1 = would lose content
+The similarity percentage is diagnostic only; --min cannot permit source loss.
+Unsupported syntax remains read-only rather than disappearing during import.
 """
 import difflib
 import re
 import sys
 from pathlib import Path
 
-from .tex_to_state import convert
+from .preservation import import_source
 from .state_to_tex import render
-
-# constructs the state model has no room for; each one is content that would vanish
-UNSUPPORTED = [
-    (r'\\newcommand\{', 'a \\newcommand definition'),
-    (r'\\renewcommand\{', 'a \\renewcommand (e.g. an overridden \\ReportWeekLabel)'),
-    (r'\\begin\{figure\}', 'a hand-written figure environment (use \\ReportFigure/\\ReportFigurePair)'),
-    (r'\\begin\{minipage\}', 'a minipage'),
-    (r'\\clearpage', 'a \\clearpage outside the flow (an appendix or forced break)'),
-    (r'\\begin\{tabular', 'a raw tabular (use \\ReportTable)'),
-    (r'\\section\{|\\subsection\{', 'a \\section/\\subsection'),
-]
 
 
 def normalise(text):
@@ -34,24 +18,12 @@ def normalise(text):
 
 
 def assess(original):
-    """Return the existing fidelity score and unsupported constructs."""
-    preamble, _, body = original.partition(r'\begin{document}')
-
-    found = [why for pat, why in UNSUPPORTED if re.search(pat, body)]
-    # the exporter emits a fixed preamble, so anything declared in this one is lost too
-    for pat, why in ((r'\\newcommand\{', 'a \\newcommand in the preamble'),
-                     (r'\\renewcommand\{', 'a \\renewcommand in the preamble '
-                                           '(e.g. an overridden \\ReportWeekLabel)')):
-        if re.search(pat, preamble):
-            found.append(why)
-    for pkg in re.findall(r'\\usepackage\{([^}]*)\}', preamble):
-        if pkg not in ('weekly-report', 'siunitx'):
-            found.append(f'\\usepackage{{{pkg}}} (the exporter only emits weekly-report + siunitx)')
-
-    back = render(convert(original))
-    ratio = difflib.SequenceMatcher(None, normalise(body),
-                                    normalise(back.split(r'\begin{document}', 1)[-1])).ratio()
-    return ratio, found
+    """Return diagnostic similarity and exact-preservation failures."""
+    state = import_source(original)
+    back = render(state)
+    ratio = difflib.SequenceMatcher(None, normalise(original), normalise(back), autojunk=False).ratio()
+    # Similarity is descriptive, never an authorization to drop source.
+    return ratio, ([] if original == back else ['source is not preserved exactly'])
 
 
 def main():
@@ -63,7 +35,7 @@ def main():
         if a.startswith('--min'):
             floor = float(a.split('=', 1)[1] if '=' in a else sys.argv[sys.argv.index(a) + 1])
     try:
-        ratio, found = assess(src.read_text(encoding='utf-8'))
+        ratio, found = assess(src.read_bytes().decode('utf-8'))
     except (ValueError, KeyError) as error:
         print('FAIL: conversion errored\n' + str(error))
         return 1
@@ -71,10 +43,10 @@ def main():
     for why in found:
         print('  unsupported:', why)
     if ratio >= floor and not found:
-        print('safe to edit')
+        print('Source preserved exactly; unsupported regions remain read-only.')
         return 0
     print('\nNOT safe to edit: writing the artifact back would drop the content above.')
-    print('Either keep this report in plain LaTeX, or lift the unsupported parts out first.')
+    print('Keep this report in LaTeX; do not remove content to pass this check.')
     return 1
 
 

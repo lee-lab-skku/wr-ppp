@@ -21,7 +21,7 @@ def md_inline(s):
     return re.sub(r'\*\*((?:[^*]|\*(?!\*))+)\*\*', r'\\textbf{\1}', s or '')
 
 
-def block_tex(text):
+def block_tex(text, label_prefix=''):
     lines = (text or '').split('\n')
     out, i = [], 0
     while i < len(lines):
@@ -45,7 +45,7 @@ def block_tex(text):
             if i < len(lines) and lines[i].strip().startswith(': '):
                 caption = md_inline(lines[i].strip()[2:])
                 i += 1
-            out += _table_tex(rows, caption, len(out))
+            out += _table_tex(rows, caption, label_prefix + str(len(out)))
             continue
         if lines[i].strip():
             para = []
@@ -54,6 +54,8 @@ def block_tex(text):
                 i += 1
             out.append(md_inline(' '.join(para)))
         else:
+            if out and out[-1] != '':
+                out.append('')
             i += 1
     return '\n'.join(out)
 
@@ -83,6 +85,11 @@ def _table_tex(rows, caption, seq):
 
 
 def render(state):
+    if state.get('formatVersion', 1) not in (1, 2):
+        raise ValueError('Unsupported editor state version')
+    if 'preservation' in state:
+        from .preservation import export_source
+        return export_source(state)
     body, cur = [], None
     for idx, e in enumerate(state['flow']):
         box = e.get('boxId') if e['type'] in ('subsection', 'block') else None
@@ -94,7 +101,7 @@ def render(state):
         if e['type'] == 'subsection':
             body += ['\\ReportSubsection{' + md_inline(e['heading']) + '}', '']
         elif e['type'] == 'block':
-            body += [block_tex(e['text']), '']
+            body += [block_tex(e['text'], str(idx) + '-'), '']
         elif e['type'] == 'pagebreak':
             body += ['\\clearpage', '']
         elif e['type'] == 'figure':
@@ -106,14 +113,14 @@ def render(state):
                 a, b = items[0], items[1]
                 body += ['\\ReportFigurePair',
                          '    {' + a['path'] + '}', '    {' + md_inline(a.get('caption', '')) + '}',
-                         '    {fig:a' + str(idx) + '}',
+                         '    {' + a.get('label', 'fig:a' + str(idx)) + '}',
                          '    {' + b['path'] + '}', '    {' + md_inline(b.get('caption', '')) + '}',
-                         '    {fig:b' + str(idx) + '}', '']
+                         '    {' + b.get('label', 'fig:b' + str(idx)) + '}', '']
             elif items:
                 it = items[0]
                 body += ['\\ReportFigure', '    {' + it['path'] + '}',
                          '    {' + md_inline(it.get('caption', '')) + '}',
-                         '    {fig:' + str(idx) + '}',
+                         '    {' + it.get('label', 'fig:' + str(idx)) + '}',
                          '    {' + str(e.get('heightMm', 40)) + 'mm}', '']
     if cur:
         body += ['\\end{pppbox}', '']
@@ -134,7 +141,7 @@ if __name__ == '__main__':
         sys.exit(__doc__)
     tex = render(json.load(open(sys.argv[1], encoding='utf-8')))
     if len(sys.argv) > 2:
-        open(sys.argv[2], 'w', encoding='utf-8').write(tex)
+        open(sys.argv[2], 'wb').write(tex.encode('utf-8'))
         print(f'{sys.argv[2]}: {len(tex)} chars')
     else:
         print(tex)

@@ -11,11 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Baseline: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-rc).
 
+### Added
+
+- [build] support source-backed visual editing of the commented template and customized reports, preserving untouched source bytes and retaining unsupported or ambiguous regions as read-only.
+
 ### Fixed
+
+- [build] preserve figure labels and ordering, table columns, comments, and native form metadata through visual-editor saves; reject structural edits that would discard protected source or break references.
+- [build] serialize browser saves, acknowledge only persisted snapshots, and detect stale browser, form, or external writes before publication; retain authoritative Windows form data for recovery after a partial TeX replacement.
 
 - [skill] correct administrator discovery guidance to use direct filesystem enumeration on Linux/macOS and the existing `discover` subcommand on Windows, removing the nonexistent helper from the platform mapping.
 - [build] validate administrator execution records before Windows history PDF access and Slack notice generation, with field-specific errors while preserving the v1 TSV format and legacy history.
-
 - [skill] open the published administrator bundle automatically when no review is required, using its final output path.
 
 ## [1.5.0-rc] &mdash; 2026-09-23

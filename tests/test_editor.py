@@ -58,8 +58,8 @@ class EditorTests(unittest.TestCase):
         self.assertFalse(backend.output.exists())
         state = backend.load()
         state['title'] = 'Edited report'
-        with self.post(url, '/api/state', json.dumps(state).encode()) as response:
-            self.assertEqual(response.status, 204)
+        with self.post(url, '/api/state', json.dumps({'revision': 0, 'state': state}).encode()) as response:
+            self.assertEqual(response.status, 200)
         self.assertIn('Edited report', backend.output.read_text(encoding='utf-8'))
         self.assertEqual(self.source.read_text(encoding='utf-8'), self.original)
         self.assertEqual(backend.load()['title'], 'Edited report')
@@ -94,21 +94,37 @@ class EditorTests(unittest.TestCase):
             self.assertIn('BEGIN KATEX LICENSE\n' + self.katex_license + 'END KATEX LICENSE', html)
         state = server.backend.load()
         state['title'] = 'Native edit'
-        with self.post(url, '/api/state', json.dumps(state).encode()) as response:
-            self.assertEqual(response.status, 204)
+        with self.post(url, '/api/state', json.dumps({'revision': 0, 'state': state}).encode()) as response:
+            self.assertEqual(response.status, 200)
         self.assertEqual(json.loads(form.read_text(encoding='utf-8'))['title'], 'Native edit')
         self.assertIn('Native edit', form.with_suffix('.tex').read_text(encoding='utf-8'))
         self.assertEqual(saved[0]['title'], 'Native edit')
+
+    def test_stale_revision_cannot_overwrite_newer_tab(self):
+        backend = TexBackend(self.source)
+        url = self.start(VisualEditorServer(backend))
+        state = backend.load()
+        state['title'] = 'First tab'
+        payload = json.dumps({'revision': 0, 'state': state}).encode()
+        with self.post(url, '/api/state', payload) as response:
+            self.assertEqual(json.load(response)['revision'], 1)
+        state['title'] = 'Stale tab'
+        with self.assertRaises(HTTPError) as failure:
+            self.post(url, '/api/state', json.dumps({'revision': 0, 'state': state}).encode())
+        self.assertEqual(failure.exception.code, 409)
+        self.assertIn('First tab', backend.output.read_text())
+        self.assertNotIn('Stale tab', backend.output.read_text())
 
     def test_guard_and_output_checks_leave_sources_untouched(self):
         self.source.write_text(self.original.replace(r'\begin{document}',
                                                     r'\newcommand{\custom}{value}' + '\n' + r'\begin{document}'),
                                encoding='utf-8')
         before = self.source.read_bytes()
-        with self.assertRaisesRegex(ValueError, 'Cannot edit'):
-            TexBackend(self.source)
+        backend = TexBackend(self.source)
+        backend.save(backend.load())
+        self.assertEqual(backend.output.read_bytes(), before)
         self.assertEqual(self.source.read_bytes(), before)
-        self.assertFalse(self.source.with_name('main.edited.tex').exists())
+        self.assertTrue(self.source.with_name('main.edited.tex').exists())
         with self.assertRaisesRegex(ValueError, 'already exists'):
             TexBackend(self.source, self.source)
         outside = self.root / 'other'

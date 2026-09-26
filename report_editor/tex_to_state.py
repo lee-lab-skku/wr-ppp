@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""main.tex -> editor state JSON.
+"""Import TeX into source-backed editor state.
 
-Inline text is kept as LaTeX verbatim; only the *structure* is converted
-(pppbox -> boxes, \\ReportSubsection -> subsections, prose/lists/tables -> blocks).
-The editor renders that LaTeX subset directly, so nothing has to be
-translated twice and the round trip stays lossless.
-
-Usage: tex_to_state.py <main.tex> [out.json] [--week-start YYYY-MM-DD]
+Complete source and protected spans accompany the editable projection. The
+legacy fragment converter remains available explicitly for older callers.
 """
 import json
 import re
 import sys
+from pathlib import Path
 
 BOXES = ('progress', 'problems', 'plans')
 
@@ -119,7 +116,7 @@ def content_blocks(body):
     return out
 
 
-def convert(tex, week_start=''):
+def legacy_convert(tex, week_start=''):
     flow, n = [], {'s': 0, 'b': 0, 'f': 0}
 
     for name, body in re.findall(r'\\begin\{pppbox\}\{(\w+)\}(.*?)\\end\{pppbox\}', tex, re.S):
@@ -174,6 +171,12 @@ def convert(tex, week_start=''):
             "flow": flow}
 
 
+def convert(tex, week_start=''):
+    """Import source losslessly, protecting documents without clear boundaries."""
+    from .preservation import import_source
+    return import_source(tex, week_start)
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -183,7 +186,7 @@ if __name__ == '__main__':
         if at + 1 >= len(sys.argv):
             sys.exit('--week-start requires YYYY-MM-DD')
         week_start = sys.argv[at + 1]
-    state = convert(open(sys.argv[1], encoding='utf-8').read(), week_start)
+    state = convert(Path(sys.argv[1]).read_bytes().decode('utf-8'), week_start)
     out = json.dumps(state, ensure_ascii=False, indent=1)
     if len(sys.argv) > 2:
         open(sys.argv[2], 'w', encoding='utf-8').write(out)

@@ -9,6 +9,7 @@ torn apart by inline math.
 Usage: check_editor_browser.py [path/to/editor.html]
 """
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -164,9 +165,13 @@ CHECKS = [
 
 def main():
     chrome = next((c for c in ('google-chrome', 'chromium', 'chromium-browser') if shutil.which(c)), None)
+    chrome = os.environ.get('WR_BROWSER') or chrome
     if not chrome:
-        print('skip: no Chrome/Chromium on PATH')
-        return 0
+        edge = Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / 'Microsoft/Edge/Application/msedge.exe'
+        chrome = str(edge) if edge.is_file() else None
+    if not chrome:
+        print('skip: no Chrome/Chromium/Edge on PATH')
+        return 1 if os.environ.get('WR_REQUIRE_BROWSER') else 0
 
     html = EDITOR.read_text(encoding='utf-8')
     html = html.replace('  renderAll();\n})();', '  window.__inlineMd = inlineMd;\n  renderAll();\n})();')
@@ -177,9 +182,10 @@ def main():
         page.write_text('<!doctype html><html><head><meta charset="utf-8"></head><body>'
                         + html + harness + '</body></html>', encoding='utf-8')
         dom = subprocess.run([chrome, '--headless', '--disable-gpu', '--no-sandbox',
+                              '--user-data-dir=' + str(Path(tmp) / 'profile'),
                               '--window-size=1400,1800', '--virtual-time-budget=7000',
                               '--dump-dom', page.as_uri()],
-                             capture_output=True, text=True, timeout=180).stdout
+                             capture_output=True, text=True, encoding='utf-8', timeout=180).stdout
 
     m = re.search(r'@@(\{.*?\})@@', dom, re.S)
     if not m:

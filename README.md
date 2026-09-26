@@ -343,9 +343,19 @@ Uploaded image originals go into the report's `figures/` directory.
 To resume later, pass the edited file as the source and choose another new output filename.
 The command is available directly from the checkout; `setup.sh` continues to install `report-build` and the selected skills.
 
-The existing LaTeX importer supports a subset of the template interfaces.
-A round-trip check refuses sources whose content or structure would be lost, including many customized reports and the fully commented example template.
-Keep refused reports in LaTeX; do not remove their content or comments merely to make the editor accept them.
+The editor retains the original TeX, including the commented example template, preamble, labels, figure order, table columns, whitespace, and line endings.
+Saving without edits preserves the source byte-for-byte; editing a supported field replaces its source span while retaining untouched text.
+Unknown commands, complex tables, comments, and ambiguous regions remain read-only; expand the preserved-source panel to inspect them and use your LaTeX editor to change them.
+Moving or deleting content across protected regions is refused rather than silently changing its scope or losing comments.
+Figure labels survive supported moves and pair splits; referenced figures cannot be deleted while their references remain.
+The round-trip command reports exact source preservation; its similarity percentage is diagnostic and `--min` cannot permit source loss.
+Legacy JSON without source metadata remains readable, but cannot reconstruct previously discarded comments or settings.
+
+Automatic saves are serialized and only acknowledged snapshots are marked saved.
+The save button waits for pending edits, including the active text field.
+If another tab or application changes the source or output, saving stops with a conflict; retain your unsaved text and reopen the report to reconcile it.
+Interrupted publication can leave a sibling `.editor-lock` directory; verify that the editing process has stopped before removing that directory.
+Do not remove content or comments to bypass a preservation check.
 The browser preview is a layout aid, and matching page dimensions does not guarantee the same line or page breaks as XeLaTeX.
 Review the generated source and build the edited file through the usual Docker command:
 
