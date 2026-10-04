@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [ci] append the selected release checkout's third-party source notice once after the release changes, keeping distribution directions out of individual changelog sections.
 
+### Fixed
+
+- [ci] skip the Windows junction fallback check on non-Windows hosts while retaining its native Windows coverage.
+
 ## [1.5.0] &mdash; 2026-09-26
 
 Parent tag: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-rc).

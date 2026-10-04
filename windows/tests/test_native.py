@@ -423,6 +423,7 @@ class NativeTests(unittest.TestCase):
         register.assert_called_once_with(['claude'], administrator=True, home=self.root)
         self.assertTrue(any('Claude' in message for message in messages))
 
+    @unittest.skipUnless(os.name == 'nt', 'Requires Windows junction semantics')
     def test_skill_uses_windows_junction_when_symlink_is_not_permitted(self):
         source = core.ROOT / 'skills/wr-wr'
         destination = self.root / '.agents/skills/wr-wr'

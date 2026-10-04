@@ -16,6 +16,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ### Validation
 
+- Verified the junction skip fix against `8d1feae`: on Linux Python 3.12.3 the original check reached the mocked symlink denial and failed; after the guard it skips with `Requires Windows junction semantics`.
+  The Windows test suite on Linux now passes all 75 checks with 12 platform skips using pypdf 6.19.0.
+  Actual Windows Python 3.11.7 executes and passes the guarded junction check and both notification CLI checks (3 checks, no skips).
+  The native Windows full suite was not rerun for this test-only guard; its previously recorded environment limitations remain.
+
 - Tested the uncommitted notification changes in this working tree on Linux with Python 3.12.3; no implementing commit or packaged artifact exists yet.
   The full common suite passed 168 checks after allowing its local HTTP test servers, and the final Slack-specific suite passed 22 checks with substituted transport and no Slack sends.
   The two affected Windows CLI notification checks passed with pypdf 6.19.0 in a temporary virtual environment.
@@ -33,6 +38,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ### Fixed
 
+- Skip the mocked Windows junction fallback check on non-Windows hosts, matching the adjacent Windows link checks.
 - Preserve native figure identities, pair metadata, unsupported extra fields, and unchanged form text through the shared visual editor.
   Reject layouts the native form cannot represent instead of dropping or relocating content.
 - Serialize revision-aware browser saves and reject stale GUI/browser writes under shared destination locks.
