@@ -198,8 +198,9 @@ scripts/build-bundle \
 If the user changes a candidate, update the plan, rebuild the draft, and request approval again for every remaining issue before promotion.
 If the temporary directory or plan is no longer available, reconstruct it from current evidence and revalidate rather than assuming it is unchanged. A changed source invalidates the approval and requires reassessment.
 
-If the administrator chooses to hold for missing required reports, retain the draft and use the optional [Slack notification workflow](slack-notifications.md).
-An unapproved draft, an unrelated issue, or optional non-submission alone does not trigger a hold notice.
+During draft review, the optional [Slack notification workflow](slack-notifications.md) can report required omissions, ambiguous candidates, unreadable PDFs, overlength reports, and internal week mismatches.
+Show the destination channel and complete message and obtain message-specific administrator approval before sending; a hold decision is not required.
+Notification approval is separate from promotion approval; optional non-submission or history issues alone do not qualify.
 The PDF builder performs no network notification; sending is a separate action after the administrator's decision.
 
 ## Read Execution History

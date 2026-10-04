@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+"""Review issue entry point; reuse the canonical notification implementation."""
+
+from pathlib import Path
+import runpy
+import sys
+
+if __name__ == "__main__":
+    module = runpy.run_path(str(Path(__file__).resolve().with_name("notify-held")))
+    sys.exit(module["issues_main"]())

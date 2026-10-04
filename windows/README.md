@@ -132,7 +132,10 @@ Historical states distinguish included, exceptional, required-missing, optional-
 
 Slack notifications reuse the existing Python implementation.
 Configuration does not send a message.
-Sending requires confirmation of both holding the bundle and notifying about missing required reports in a draft.
+Use `notify-issues` to preview draft review problems, optionally with an agent-authored `--message` JSON file.
+Sending requires administrator approval of the complete message for the destination channel and `--approved <preview-fingerprint> --send`; holding the bundle is not required.
+See the [shared Slack guide](../skills/admin-wr/references/slack-notifications.md) for supported issues, message authoring, and approval.
+The legacy `notify-held --held --send` command and GUI hold button retain missing-report hold behavior.
 Successful sends are deduplicated, and uncertain failures are never retried automatically.
 The webhook is stored in `slack-webhook.url` under the administrator data directory.
 Use Windows or NAS access controls to restrict that directory to you and authorized administrators.
@@ -150,7 +153,7 @@ Use Windows or NAS access controls to restrict that directory to you and authori
 .\Start-Weekly-Report.ps1 probe-report --storage-root C:\Reports --file C:\Reports\member-a\report.pdf
 .\Start-Weekly-Report.ps1 build-bundle --storage-root C:\Reports --plan C:\Review\plan.tsv --date 2026-09-04 --draft --output-dir C:\Review\draft
 .\Start-Weekly-Report.ps1 build-bundle --storage-root C:\Reports --plan C:\Review\plan.tsv --date 2026-09-04 --approved-with-issues --review C:\Review\draft\2026-09-W1.review.json
-.\Start-Weekly-Report.ps1 notify-held --manifest C:\Review\draft\.manifests\2026-09-W1.manifest.tsv
+.\Start-Weekly-Report.ps1 notify-issues --manifest C:\Review\draft\.manifests\2026-09-W1.manifest.tsv
 ```
 
 On Windows, replace the skills' shell commands with the corresponding subcommands above.

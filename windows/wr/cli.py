@@ -59,6 +59,7 @@ def main(argv=None):
     notify.add_argument('--manifest', type=Path)
     notify.add_argument('--held', action='store_true')
     notify.add_argument('--send', action='store_true')
+    notifications().review_options(commands.add_parser('notify-issues'))
     args = parser.parse_args(argv)
     try:
         config = core.read_config(validate=args.command != 'setup')
@@ -130,6 +131,8 @@ def main(argv=None):
             file = Path(args.file).resolve()
             core.inspect_pdf(file)
             os.startfile(file)
+        elif args.command == 'notify-issues':
+            notifications().review_command(args, admin.paths(config)[1].parent)
         elif args.command == 'notify-held':
             module = notifications()
             directory = admin.paths(config)[1].parent

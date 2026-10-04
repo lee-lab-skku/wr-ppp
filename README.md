@@ -140,7 +140,7 @@ See the [discovery procedure](skills/admin-wr/references/rollup-workflow.md#disc
 The admin workflow opens temporary drafts for review and keeps their execution TSVs in the temporary review directory.
 When no review is required, the administrator skill publishes the bundle directly and opens the final PDF from the configured output directory.
 Concurrent publications sharing a PDF or history target are serialized; a busy target times out after 30 seconds with retry and lock-recovery guidance.
-Optional [Slack webhook notifications](skills/admin-wr/references/slack-notifications.md) can notify a channel when the administrator holds a bundle because required reports are missing; this feature requires Python 3.
+Optional [Slack webhook notifications](skills/admin-wr/references/slack-notifications.md) can notify a channel about missing required reports, ambiguous candidates, unreadable PDFs, overlength reports, and internal week mismatches during draft review after approval of each complete message; this feature requires Python 3.
 
 Verify the setup by compiling the included template:
 

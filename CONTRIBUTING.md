@@ -154,26 +154,28 @@ Preserve the builder's stdout contract: absolute PDF and execution-record paths,
 Drafts must never replace final history.
 PDF and execution-record replacement is not a single transaction: an interruption between replacements must be detected through PDF-hash validation on the next run and require approval.
 
-## Slack Hold Notifications
+## Slack Review Notifications
 
 See the [Slack setup and operation guide](skills/admin-wr/references/slack-notifications.md) for configuration, commands, and recovery procedures.
 The command requires Python 3 with the standard library only.
 
-Keep hold decisions and notification authorization in the agent workflow, separate from deterministic PDF building.
-A draft or approval request is not a decision to hold.
-Preview by default; sending requires explicit destination authorization, a hold for missing required reports, and both `--held` and `--send`.
-Use the draft execution manifest as evidence and disclose only the target week, reporting period, and missing required members.
-Do not notify for optional omissions, clean bundles, or already promoted bundles.
+Keep issue judgment and notification authorization in the agent workflow, separate from deterministic PDF building.
+Preview by default; `notify-issues` sends only supported issues from a draft after the administrator approves the complete message for the destination channel.
+Sending requires `--approved <preview-fingerprint> --send`; a prior standing authorization or draft creation alone is not message approval, and the fingerprint does not establish human consent.
+Supported issues are missing required reports, ambiguous candidates, unreadable PDFs, overlength reports, and internal week mismatches.
+Derive member identities and issue scope from the execution record; allow evidence-grounded agent prose for explanations and requested actions without disclosing source paths, raw issue messages, or secrets.
+Do not notify for optional omissions alone, history-only issues, clean bundles, or already promoted bundles.
+Retain `notify-held --held --send` as the legacy missing-report hold path with its existing authorization conditions and receipt keys.
 
 Accept webhook secrets through hidden terminal input and keep them out of command arguments, tracked files, logs, PDFs, and execution records.
 Configuration must not send a message.
 Protect secret files through filesystem access controls without requiring post-creation `chmod` on NAS storage.
 Read secrets only from the configured location; fallback could send to a different channel.
 
-Deduplicate successful notices by target week, missing-member IDs, and webhook destination.
+Deduplicate review notices by target week, member/issue set, rendered message, and webhook destination; ignore private evidence and issue record ordering.
 Serialize identical sends and recheck the receipt after acquiring the lock.
 A failed or interrupted send must retain the lock and never retry automatically because delivery might already have occurred.
-Slack failure must not publish a held bundle, modify execution history, or claim successful notification.
+Slack failure must not publish a bundle, modify execution history, or claim successful notification.
 Use plain-text message blocks to prevent injected mentions or formatting, HTTPS Slack endpoints without redirects, bounded response reads, and a network timeout.
 Tests must substitute transport and never send to Slack.
 

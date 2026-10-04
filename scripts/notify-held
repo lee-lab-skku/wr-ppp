@@ -76,6 +76,151 @@ def notice(manifest):
     return payload, fingerprint
 
 
+ISSUE_TYPES = {
+    "missing-report": ("필수 제출 누락", "해당 기간 보고서를 제출하고 관리자에게 알려 주세요."),
+    "ambiguous-report": ("최종본 후보 모호", "해당 기간의 최종 제출본을 확인해 주세요."),
+    "unreadable-pdf": ("PDF 손상·암호화·검사 불가", "읽고 검사할 수 있는 PDF를 확인해 주세요."),
+    "overlength-report": ("2페이지 초과", "분량을 줄이거나 필수 내용 보존을 위한 예외 사유를 관리자와 확인해 주세요."),
+    "internal-week-mismatch": ("내부 주차 불일치", "보고서의 주차 표기를 확인해 주세요."),
+}
+
+
+def review_notice(manifest, message=None):
+    """Render only evidenced issues; agent prose never supplies identity or scope.
+
+    The fingerprint binds approval and deduplication to the rendered message and
+    its issue identities, excluding private evidence and record ordering.
+    """
+    parsed = read_manifest(manifest)
+    bundle = parsed.bundle
+    if (bundle.state, bundle.approval) != ("draft", "required"):
+        raise ValueError("Only a draft awaiting review can have an issue notice.")
+    members = {entry.member_id: entry for entry in parsed.entries}
+    problems = {(entry.member_id, "missing-report") for entry in parsed.entries
+                if entry.requirement == "required" and entry.state == "missing"}
+    for record in parsed.records:
+        if type(record).__name__ != "Issue" or record.code not in ISSUE_TYPES:
+            continue
+        if record.member_id not in members:
+            raise ValueError("Notification issue references an unknown member.")
+        entry = members[record.member_id]
+        if record.code == "missing-report":
+            if (entry.requirement, entry.state) != ("required", "missing"):
+                raise ValueError("Missing-report issue does not match required missing state.")
+        else:
+            if record.code == "overlength-report" and entry.page_count <= 2:
+                raise ValueError("Overlength issue requires a selected report longer than two pages.")
+            problems.add((entry.member_id, record.code))
+    if not problems:
+        raise ValueError("No supported review issues; no issue notice is applicable.")
+
+    introduction = "검토 중 다음 문제가 확인되었습니다."
+    closing = "요청 사항을 확인하고 관리자에게 알려 주세요."
+    prose = {key: ("", ISSUE_TYPES[key[1]][1]) for key in problems}
+    if message is not None:
+        try:
+            proposal = json.loads(Path(message).read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            raise ValueError("Unable to read message JSON; content omitted.") from None
+        if not isinstance(proposal, dict) or set(proposal) != {"introduction", "closing", "items"}:
+            raise ValueError("Message requires introduction, closing, and items only.")
+        introduction, closing = proposal["introduction"], proposal["closing"]
+        if not isinstance(proposal["items"], list):
+            raise ValueError("Message items must be a list.")
+        prose = {}
+        for item in proposal["items"]:
+            if not isinstance(item, dict) or set(item) != {"member_id", "code", "description", "action"}:
+                raise ValueError("Each message item requires member_id, code, description, and action.")
+            if not all(isinstance(item[k], str) for k in item):
+                raise ValueError("Message item fields must be strings.")
+            key = (item["member_id"], item["code"])
+            if key not in problems or key in prose:
+                raise ValueError("Message items must match evidenced problems exactly, without duplicates.")
+            prose[key] = (item["description"], item["action"])
+        if set(prose) != problems:
+            raise ValueError("Message must cover every notification problem.")
+    for value in [introduction, closing] + [v for pair in prose.values() for v in pair]:
+        if not isinstance(value, str) or any(ord(c) < 32 and c != "\n" for c in value):
+            raise ValueError("Message prose must be text without control characters.")
+        if "hooks.slack" in value or re.search(r"(?:https?://|file://|(?:^|\s)/|[A-Za-z]:[\\/]|\\\\|~/)", value):
+            raise ValueError("Message prose must not contain URLs or local paths.")
+    if any(not action.strip() for _, action in prose.values()):
+        raise ValueError("Every problem requires an action.")
+
+    sections = [f"주간보고 검토 중 확인된 문제 · {bundle.week}\n보고 기간: {bundle.start} ~ {bundle.end}"]
+    if introduction.strip():
+        sections.append(introduction)
+    for entry in sorted(parsed.entries, key=lambda e: (e.order, e.member_id)):
+        lines = []
+        for code in ISSUE_TYPES:
+            key = (entry.member_id, code)
+            if key not in problems:
+                continue
+            label = ISSUE_TYPES[code][0]
+            if code == "overlength-report":
+                label += f" ({entry.page_count}페이지)"
+            description, action = prose[key]
+            lines.append(f"• {label}" + (f": {description}" if description.strip() else "") + f"\n  요청: {action}")
+        if lines:
+            sections.append(entry.display_name + "\n" + "\n".join(lines))
+    if closing.strip():
+        sections.append(closing)
+    if len(sections) > 50 or any(len(section) > 2900 for section in sections):
+        raise ValueError("Notice exceeds Slack block limits; shorten prose without omitting problems.")
+    text = "\n\n".join(sections)
+    if len(text) > 39000:
+        raise ValueError("Notice exceeds Slack total length; shorten prose without omitting problems.")
+    fallback = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    if len(fallback) > 39000:
+        raise ValueError("Notice fallback exceeds Slack total length; shorten prose without omitting problems.")
+    payload = {"text": fallback, "mrkdwn": False,
+               "blocks": [{"type": "section", "text": {"type": "plain_text", "text": s}} for s in sections],
+               "unfurl_links": False, "unfurl_media": False}
+    fingerprint = hashlib.sha256(json.dumps([bundle.week, sorted(problems), payload],
+                                           ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    return payload, fingerprint
+
+
+def review_options(parser):
+    parser.add_argument("--configure", action="store_true", help="save a webhook using hidden input")
+    parser.add_argument("--manifest", type=Path, help="draft execution TSV")
+    parser.add_argument("--message", type=Path, help="agent-authored message JSON")
+    parser.add_argument("--approved", help="fingerprint of the exact preview approved by the administrator")
+    parser.add_argument("--send", action="store_true", help="send approved preview to the authorized channel")
+
+
+def review_command(args, directory):
+    """Shared CLI workflow. Actual human approval remains the agent's responsibility."""
+    if args.configure:
+        if args.manifest or args.message or args.approved or args.send:
+            raise ValueError("--configure cannot be combined with notice options")
+        configure(directory)
+        return
+    if not args.manifest:
+        raise ValueError("--manifest is required")
+    payload, fingerprint = review_notice(args.manifest, args.message)
+    if args.send:
+        if args.approved != fingerprint:
+            raise ValueError("--send requires --approved with the unchanged preview fingerprint and administrator approval.")
+        send(directory, payload, fingerprint)
+    else:
+        print(json.dumps({"payload": payload, "approval": fingerprint}, ensure_ascii=False, indent=2))
+
+
+def issues_main():
+    parser = argparse.ArgumentParser(description="Preview or send administrator-approved review issue notices.")
+    review_options(parser)
+    args = parser.parse_args()
+    try:
+        # Preview requires neither configuration nor a webhook lookup.
+        directory = data_directory() if args.configure or args.send else None
+        review_command(args, directory)
+    except (ValueError, OSError, subprocess.CalledProcessError) as error:
+        print(str(error) if isinstance(error, ValueError) else "Unable to access notification configuration or records.", file=sys.stderr)
+        return 1
+    return 0
+
+
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
@@ -106,7 +251,7 @@ def send(directory, payload, fingerprint):
     receipt = receipts / (key + ".sent")
     lock = receipts / (key + ".lock")
     if receipt.exists():
-        print("Already notified for this week, missing-member set, and webhook.")
+        print("Already notified for this message and webhook.")
         return
     try:
         lock.mkdir()
@@ -114,13 +259,13 @@ def send(directory, payload, fingerprint):
         raise ValueError(f"Notice is already sending or awaiting delivery review; check Slack before removing {lock}.") from None
     if receipt.exists():
         lock.rmdir()
-        print("Already notified for this week, missing-member set, and webhook.")
+        print("Already notified for this message and webhook.")
         return
     # Keep the lock on an uncertain delivery, avoiding an accidental duplicate.
     post(url, payload)
     receipt.write_text("sent\n", encoding="utf-8")
     lock.rmdir()
-    print("Slack hold notice sent.")
+    print("Slack notice sent.")
 
 
 def main():

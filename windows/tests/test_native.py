@@ -668,5 +668,32 @@ class NativeTests(unittest.TestCase):
             self.assertEqual(transport.call_count, 1)
 
 
+    def test_review_notification_cli_approval_without_hold(self):
+        import contextlib
+        from wr.cli import main
+        module = notifications()
+        rows = [self.rows[0], self.rows[1], ['issue', 'warning', 'internal-week-mismatch', 'a', 'Wrong label']]
+        with patch.object(admin, 'compile_tex', self.compile):
+            result = admin.build_bundle(rows, self.storage, self.config, '2026-09-04', output=self.root / 'review', draft=True)
+        manifest = result['manifest']
+        directory = admin.paths(self.config)[1].parent
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / 'slack-webhook.url').write_text('https://hooks.slack.com/services/test/test/test')
+        with patch('wr.cli.notifications', return_value=module), patch.object(core, 'read_config', return_value=self.config), patch.object(module, 'post') as transport:
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                self.assertEqual(main(['notify-issues', '--manifest', manifest]), 0)
+                fingerprint = json.loads(out.getvalue())['approval']
+            transport.assert_not_called()
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(['notify-issues', '--manifest', manifest, '--send']), 1)
+            transport.assert_not_called()
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(['notify-issues', '--manifest', manifest, '--approved', fingerprint, '--send']), 0)
+            self.assertEqual(transport.call_count, 1)
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(['notify-held', '--manifest', manifest, '--held', '--send']), 1)
+            self.assertEqual(transport.call_count, 1)
+
+
 if __name__ == '__main__':
     unittest.main()

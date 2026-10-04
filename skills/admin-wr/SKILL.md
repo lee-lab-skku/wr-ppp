@@ -9,7 +9,7 @@ Create a traceable weekly bundle from only the members and storage locations aut
 
 ## Locate Configuration
 
-On native Windows, resolve the real path of this `SKILL.md` through its installation link to find the resource root above `skills`. Read `windows/README.md` first. Use `Start-Weekly-Report.ps1` subcommands (`preflight`, `admin-paths`, `discover`, `probe-report`, `report-metadata`, `build-bundle`, `open-bundle`, and `notify-held`) instead of the Bash commands below. In a packaged installation the resource root is `_internal`; use `WeeklyReportCLI.exe` beside that directory with the same subcommands. Native configuration is `.windows-config.json`, not `.local-config`; packaged installations use the per-user location documented there. These substitutions change execution only: preserve the evidence, history, selection, and approval policies below and in the references. When approving a native draft, also supply its generated `--review` JSON so changed source files or plans invalidate approval. Do not diagnose a native tool failure as a Docker failure.
+On native Windows, resolve the real path of this `SKILL.md` through its installation link to find the resource root above `skills`. Read `windows/README.md` first. Use `Start-Weekly-Report.ps1` subcommands (`preflight`, `admin-paths`, `discover`, `probe-report`, `report-metadata`, `build-bundle`, `open-bundle`, `notify-issues`, and legacy `notify-held`) instead of the Bash commands below. In a packaged installation the resource root is `_internal`; use `WeeklyReportCLI.exe` beside that directory with the same subcommands. Native configuration is `.windows-config.json`, not `.local-config`; packaged installations use the per-user location documented there. These substitutions change execution only: preserve the evidence, history, selection, and approval policies below and in the references. When approving a native draft, also supply its generated `--review` JSON so changed source files or plans invalidate approval. Do not diagnose a native tool failure as a Docker failure.
 
 On Windows, treat every `scripts/<name>` command and every Bash command block in this skill and its references as a Linux/macOS example only. Invoke the matching subcommand through the absolute `Start-Weekly-Report.ps1` or `WeeklyReportCLI.exe` path resolved above. Use a Windows temporary directory and Windows absolute paths instead of `/tmp` and `/absolute/path`. The Windows mapping is:
 
@@ -22,7 +22,8 @@ On Windows, treat every `scripts/<name>` command and every Bash command block in
 | `scripts/probe-report` | `probe-report` |
 | `scripts/build-bundle` | `build-bundle` |
 | `scripts/open-bundle` | `open-bundle` |
-| `scripts/notify-held` | `notify-held` |
+| `scripts/notify-issues` | `notify-issues` |
+| `scripts/notify-held` (legacy) | `notify-held` |
 
 On Linux/macOS, run `scripts/resolve-repo-root` from this skill directory and read `.local-config` from the resolved repository.
 Run the platform's `admin-paths` command and require success before using its output; read the resolved `manager-manifest` path and use its `history` records for prior-run lookup.
@@ -54,7 +55,7 @@ Invoke it directly rather than wrapping it in another shell command or pipeline 
 - With any issue, build a draft outside the configured administrator output and use the printed review path to open it for the user with the platform's `open-bundle` command. Include a clickable PDF path and the evidence in the review request, then obtain explicit approval before promotion.
 - On approval, confirm selected source hashes have not changed and rebuild with `--approved-with-issues`. If they changed, reassess instead of publishing stale choices.
 - Never use `--draft` with the configured administrator output directory or its descendants.
-- If the administrator decides to hold because required reports are missing, follow [references/slack-notifications.md](references/slack-notifications.md) for an optional Slack notice. A draft alone is not a hold decision; send only when Slack notifications have been authorized for that channel and this condition.
+- For missing required reports, ambiguous candidates, unreadable PDFs, overlength reports, or internal week mismatches in draft review, follow [references/slack-notifications.md](references/slack-notifications.md) to prepare an optional Slack notice. Write evidence-grounded explanations and requested actions, show the destination channel and complete message, and obtain explicit approval of that message before sending with its preview fingerprint. A hold decision is not required; prior standing authorization does not approve a new message. Notification approval does not approve bundle promotion.
 
 Final execution TSVs go to the `history-output` directory reported by the platform's `admin-paths` command (repository-local by default); draft TSVs live under `.manifests/` in the temporary review directory.
 Report the final PDF and execution-manifest paths, member statuses, unresolved limitations, and whether approval was required. Do not distribute the bundle beyond its configured output directory without a separate explicit request.

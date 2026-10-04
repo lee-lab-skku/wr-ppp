@@ -9,6 +9,21 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#documenting-internal-changes) for entry co
 
 ## Unreleased
 
+### Added
+
+- Expose `notify-issues` through the native CLI using the shared review-message renderer and preview-fingerprint approval, and include its launcher in packaged resources.
+  Retain the existing `notify-held` command and GUI hold action for missing-report holds.
+
+### Validation
+
+- Tested the uncommitted notification changes in this working tree on Linux with Python 3.12.3; no implementing commit or packaged artifact exists yet.
+  The full common suite passed 168 checks after allowing its local HTTP test servers, and the final Slack-specific suite passed 22 checks with substituted transport and no Slack sends.
+  The two affected Windows CLI notification checks passed with pypdf 6.19.0 in a temporary virtual environment.
+  The broader Windows suite ran 75 checks with 11 skips and one error in the Windows junction fallback check because this host uses Linux link semantics.
+  A follow-up used actual Windows Python 3.11.7 from the existing PlatformIO environment with temporary pypdf 6.19.0 over the WSL share: the junction fallback check and both notification CLI checks passed.
+  Its full 75-check run did not pass (3 failures, 8 errors), with missing tkinter/tzdata and PowerShell command/output issues; this interpreter is not a complete native development environment.
+  Real TeX builds and packaged/installed application checks were not run.
+
 ### Changed
 
 - Maintain release source-access directions in `RELEASE-NOTICE.md`, appended once after the selected changelog sections instead of repeated in each release entry.

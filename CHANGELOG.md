@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [build] add `notify-issues` for administrator-approved draft review notices covering required omissions, ambiguous candidates, unreadable PDFs, overlength reports, and internal week mismatches, with agent-authored prose and approval tied to the complete preview; preserve legacy `notify-held` calls and receipts.
+
 ### Changed
 
 - [ci] append the selected release checkout's third-party source notice once after the release changes, keeping distribution directions out of individual changelog sections.
