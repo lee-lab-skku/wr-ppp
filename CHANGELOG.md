@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [skill] defer abstract generation until editorial revision, using supported report body content and preserving existing author-written abstracts during initial drafting.
 - [skill] allow selected report body text to be emphasized at the user's request, under applicable guidance, or at the agent's discretion, defaulting to italics unless another style is specified.
+- [skill] require report titles to convey actual research content rather than consist only of a project name, reporting week, a generic label such as "Weekly Report", or their combination.
+- [template] align the worked example with current writing guidance through selective italic body emphasis, structured evidence, consistent research claims, and package-based percentage notation, while preserving bold table values and identifying the example as editorially revised.
 - [ci] append the selected release checkout's third-party source notice once after the release changes, keeping distribution directions out of individual changelog sections.
 
 ### Fixed
