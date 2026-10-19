@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [skill] defer abstract generation until editorial revision, using supported report body content and preserving existing author-written abstracts during initial drafting.
+- [skill] allow selected report body text to be emphasized at the user's request, under applicable guidance, or at the agent's discretion, defaulting to italics unless another style is specified.
 - [ci] append the selected release checkout's third-party source notice once after the release changes, keeping distribution directions out of individual changelog sections.
 
 ### Fixed
