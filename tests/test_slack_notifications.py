@@ -269,6 +269,8 @@ class ReviewNoticeTests(unittest.TestCase):
             with patch('sys.argv', ['notify-issues', '--manifest', str(self.manifest), '--message', str(changed), '--approved', preview['approval'], '--send']), contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(main(), 1)
 
+    @unittest.skipUnless(os.name == 'posix',
+                         'POSIX executable entry points; native CLI coverage is in windows/tests.')
     def test_root_and_skill_entry_points_preview_without_network(self):
         import subprocess
         repository = Path(__file__).resolve().parents[1]
