@@ -31,12 +31,12 @@ Do not generate an abstract while collecting material, organizing evidence, or d
 Begin abstract writing only once the report has entered editorial revision, using the stage criteria in [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage", and base it on the supported body content.
 Preserve an existing author-written abstract; its presence or the template's illustrative abstract does not justify generating a replacement before revision.
 
-Apply the README's research focus when selecting source material.
+Apply the research focus in the [shared report policy](../../../docs/report-policy.md) when selecting source material.
 If suggesting that out-of-scope updates be shared in a project meeting, do not send them or create a separate deliverable unless requested.
 Do not fill a quiet research week with maintenance activity or invented findings.
 
 Use the canonical template comments, as directed by `SKILL.md`, to assess how well the actual research and its support are communicated.
-Apply the README's title requirement when drafting or reviewing: the title must convey actual research content rather than consist only of a project name, reporting week, a generic label such as "Weekly Report", or their combination.
+Apply the shared report policy's title requirement when drafting or reviewing: the title must convey actual research content rather than consist only of a project name, reporting week, a generic label such as "Weekly Report", or their combination.
 Missing a suggested element or using a different grouping is not itself a defect.
 Before reorganizing an existing draft, identify the concrete communication problem the change would address and keep the revision within the requested scope.
 Do not demand metrics, positive findings, or invented blockers to fill the example's structure.
@@ -52,7 +52,7 @@ Unless another emphasis style is specified, use italics (`\textit{...}` in LaTeX
 
 ## Shorten and Recheck
 
-Use the resolved repository's `README.md`, "Length and Exceptions", for the page limit and complete necessity criteria.
+Use [the shared length policy](../../../docs/report-policy.md#length-and-exceptions) for the page limit and complete necessity criteria.
 Before editorial revision, keep content concise but report any observed excess and defer page-fitting iterations under [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage".
 During editorial revision and finalization, check the rendered page count and revise overlength content within the authorized scope before declaring it ready.
 For review-only tasks, identify the necessary cuts and any exception without changing the source.
@@ -64,7 +64,7 @@ Look for content reductions suited to the material, then rebuild and reassess:
 1. Keep only the context, evidence, limitations, and next steps needed to assess the research; leave nonessential supporting detail in its source records, with a reference when useful.
 
 Preserve readable typography and essential caveats during revision.
-Do not declare an overlength report ready unless the README's narrow exception is established.
+Do not declare an overlength report ready unless the shared policy's narrow exception is established.
 In that case, state the verified page count and specific necessity justification in the author handoff, keeping any excess to the minimum necessary.
 If necessity cannot be established, treat the excess as unresolved revision work.
 

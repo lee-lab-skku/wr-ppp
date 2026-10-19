@@ -10,6 +10,7 @@ datas = [(str(repo / name), str(Path(name).parent)) for name in
           'windows/README.md', 'windows/install-tex.ps1', 'windows/common.ps1', 'scripts/notify-held', 'scripts/notify-issues',
           'report_editor/assets/editor.html', 'report_editor/assets/KaTeX-LICENSE.txt')]
 datas.append((str(repo / 'skills'), 'skills'))
+datas.append((str(repo / 'docs'), 'docs'))
 binaries, hiddenimports = [], ['getpass', 'urllib.request', 'urllib.error']
 for package in ('tzdata', 'pypdf'):
     data, binary, hidden = collect_all(package)

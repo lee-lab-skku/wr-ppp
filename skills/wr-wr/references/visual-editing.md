@@ -1,7 +1,7 @@
 # Visual Editing
 
 Use the shared editor when the user wants browser-based layout editing of an existing report.
-Resolve the repository through the skill entry point, and read the README's "Visual Editing" section for commands, dependencies, and output behavior.
+Resolve the repository through the skill entry point, and read [the visual editing guide](../../../docs/visual-editing.md) for commands, dependencies, and output behavior.
 Report content still follows the shared report policy and the skill's evidence and comment-preservation guidance.
 
 ## Choose the Entry Point

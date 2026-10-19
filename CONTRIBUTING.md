@@ -1,7 +1,7 @@
 # Contributing
 
 Thank you for contributing to the weekly research report template.
-Keep changes focused, preserve the existing report workflow, and read `README.md` before changing user-facing behavior.
+Keep changes focused, preserve the existing report workflow, and read [README.md](README.md) before changing user-facing behavior.
 
 ## Compatibility and Ownership
 
@@ -13,332 +13,47 @@ Individual contributions are credited through Git history.
 Treat documented setup, build, output, LaTeX, and skill behavior as stable by default.
 A deliberate breaking change should explain its rationale and impact, update the relevant documentation in the same change, and provide migration guidance when users must take action.
 
-Use the repository sources according to their roles:
+The [development guide](docs/development.md) defines architectural responsibilities, shell portability, build and publication safety, skill maintenance, and documentation scope.
+Follow the [administrator development contracts](docs/admin-development.md) when changing bundles or notifications.
+Native Windows implementation and packaging procedures remain in [windows/CONTRIBUTING.md](windows/CONTRIBUTING.md).
+The [documentation index](docs/README.md) identifies the canonical policy or reference for each topic.
 
-- `README.md` defines shared report policy and describes the user workflow.
-- The files under `scripts/` implement Linux/macOS setup and build behavior; the [Windows guide](windows/README.md) defines the native Windows entry points and workflow.
-- The files under `skills/` define agent workflows and safeguards, with task-specific procedures in selectively loaded references.
-- `weekly-report.sty` defines the shared LaTeX interfaces and presentation.
-- `template.tex` provides contextual writing prompts and an adaptable worked example.
+## Development Setup and Validation
 
-The Docker workflow is the primary report path; native Windows adapts shared capabilities to its GUI and build environment.
-Keep HTML editing resources, local browser transport, and portable LaTeX conversion in `report_editor/`, without imports from `windows/` or a dependency on an Artifact provider.
-The TeX adapter exposes editing through `scripts/report-edit` and leaves PDF compilation to `report-build`.
-Windows retains its native application and owns form-model conversion and persistence through an adapter to the common editor.
-Keep one HTML source and one implementation of each conversion tool; root script entry points delegate to the shared package.
-Preserve the source-backed editor contract: no-op exports must retain every source byte, and supported edits must leave unrelated spans intact.
-Keep lexical scanning, protected source regions, stable figure identities, and lossless export in the shared package; the native form adapter retains ownership of its own model.
-Do not execute TeX or expand external inputs to discover editable regions.
-Ambiguous boundaries and unsupported syntax are read-only; reject operations that cross protected boundaries or discard their content.
-Similarity scores are diagnostic, never permission to discard source.
-State format version 2 optionally carries immutable preservation metadata; retain legacy JSON loading without claiming recovery of absent source.
-Browser saves carry a revision and state snapshot; serialize writes, reject stale revisions, and mark only acknowledged snapshots clean.
-Adapters must check destination fingerprints under a publication lock before writing; conflicts must preserve the newer file.
+Keep automatic updates disabled in development checkouts so builds do not switch them to a release:
 
-Install command and skill links to canonical repository sources rather than generating duplicate implementations.
-Keep Linux/macOS operational command implementations in root `scripts/`; expose them from `skills/*/scripts/` through relative links rather than placing the canonical implementation inside a skill.
-Skill-specific templates and procedural references may remain with the skill; resolve their paths from the repository root so commands work through either entry point.
-Keep development-only checks in `tests/`, with names that identify their scope; preserve a documented older command with a thin wrapper when needed.
-Source launchers and test entry points prepare Python import paths; importing a library package must not modify `sys.path`.
-Routine report content should not require changes to the template, style, or shared build scripts.
+```bash
+./scripts/setup.sh ~/report-output danteev/texlive:latest --auto-update=off
+```
 
-Apply the [shared setup destination policy](README.md#quick-start) to command and skill links, preserving idempotency, explicit replacement, directory protection, and preflight before mutation.
-Normalize supported destination aliases and deduplicate requested destinations, preserving their first occurrence.
-Preflight every requested link's parent path and validate final administrator path settings with the shared path helper before changing installation state.
-Prepare private configuration separately and commit it atomically only after link installation succeeds.
-Journal link changes for reverse-order rollback on failure; preserve existing configuration and never overwrite an unrelated entry during rollback.
-If restoration fails, report the backup path and remaining partial changes.
+Bash/Docker setup requires Docker access and `sudo` for the installed command link; see [setup details](docs/setup.md).
+Python checks require host Python 3 with the standard library; editor rendering checks also use Node.js and browser checks need a supported browser.
+Run checks in proportion to the affected behavior:
 
-## Shell and Build Safety
+- Build or LaTeX changes: `./scripts/test.sh` to compile the example through the canonical build command.
+- Administrator workflow changes: `python3 -B -m unittest discover -s tests -v` for isolated regression checks with substituted Docker and viewers.
+- Shared editor changes: `python3 -B -m unittest discover -s tests -p 'test_editor.py' -v`, plus the rendering, persistence, and browser checks in the [validation guide](docs/development.md#validation).
+- Guidance or skill changes: check the [report policy](docs/report-policy.md), template comments, affected reference routing, and representative report tasks.
 
-Write shell scripts for both Linux and macOS whenever practical.
-Bash is the Linux/macOS automation shell, and those scripts should remain compatible with the Bash version shipped with macOS.
-Avoid features that require newer Bash releases unless the project requirements are updated explicitly.
-Guard expansions of possibly empty arrays with `${items[@]+"${items[@]}"}`: Bash 3.2 treats a direct empty-array expansion as unset under `set -u`, and substituting one empty argument changes command behavior.
+Exercise the affected workflow and failure behavior; substituted dependencies do not verify actual TeX rendering or desktop viewers.
+Report relevant checks not run and platform limitations; do not claim macOS or agent-service verification without exercising that environment.
+Use the [full validation guidance](docs/development.md#validation) and [Windows validation guidance](windows/CONTRIBUTING.md#validation) for their respective scopes.
 
-Linux commonly provides GNU command-line utilities, while macOS provides BSD variants.
-Avoid relying on implementation-specific flags or output formats.
-If GNU and BSD tools require different invocations, detect the implementation and provide both paths in the script.
-Do not require Homebrew packages merely to replace standard macOS utilities when a reasonable portable implementation is available.
+## Contribution Workflow
 
-macOS compatibility is a source-level design target, not a tested-platform guarantee.
-Contributors should account for known macOS differences, but they are not required to own macOS hardware, run the scripts on macOS, or guarantee operation on every macOS and Docker Desktop version.
-State any known limitation that remains after a change.
-
-Quote path and variable expansions, preserve `set -euo pipefail` where it is already used, and resolve script-relative paths without assuming the caller's working directory.
-
-Preserve the builds' isolation and output-safety properties.
-Linux/macOS TeX containers run without network access and compile in temporary storage.
-A completed PDF should replace its target only after a successful build and validation, and containers must not modify source files.
-
-Windows must preserve the shared report policy, plan/manifest formats, publication safety, and skill destination aliases.
-Native Windows builds do not provide container OS/network isolation, and Windows updates remain manual.
-Follow the [Windows development guide](windows/CONTRIBUTING.md) for implementation constraints and platform-specific validation.
-
-Keep POSIX scripts as LF text through `.gitattributes` so Windows checkouts remain usable from WSL.
-When Windows Git materializes repository symlinks as plain files (`core.symlinks=false`), run POSIX checks in a Linux checkout that preserves the Git symlink modes; line-ending normalization alone cannot restore links.
-Validate report readability and a positive page count with container-provided `pdfinfo`; keep PDF tooling off the host.
-Use the shared PDF publisher for user-facing PDFs: stage and verify bytes in the destination directory, atomically replace without a deletion gap, and update mtime for file watchers.
-A timestamp-update error occurs after replacement and must be reported as such; bundle publication must still complete its matching execution record.
-Do not use in-place truncation or pre-build deletion to refresh a viewer.
-
-### Automatic Updates
-
-See the [automatic release update workflow](README.md#automatic-release-updates) for setup options, update intervals, and recovery.
-Keep development clones opted out; enabling updates authorizes release checkout changes during builds.
-Implement version selection with Bash and standard utilities without new language runtimes or package dependencies, retaining the existing Linux/macOS source-level compatibility target.
-
-Validate build arguments and inputs before invoking automatic updates or touching output PDFs.
-Use only eligible tags advertised by the existing origin remote and verify the fetched commit against that advertisement.
-Never force-update conflicting tags, discard tracked changes, or move to a commit that does not contain the current HEAD.
-Preserve branches when switching to a release, retain report arguments and configuration, and restart with the updated build implementation.
-Keep update status on stderr and leave the PDF output contract intact.
-
-Persist check state as data rather than shell code, write it atomically, and invalidate it when the channel changes.
-Hold an installation-wide directory lock through the refreshed build, recheck state after acquiring it, and release it on ordinary exit or handled signals.
-Bound lock and network waits, preserve active locks, and continue with the existing checkout on update failures when no concurrent update lock prevents a consistent build.
-Tests must use local Git remotes and substituted network/build dependencies without updating a real installation or contacting publication remotes.
-
-## Administrator Weekly Bundles
-
-See the [administrator setup](README.md#install-administrator-mode), [manager manifest](skills/admin-wr/references/manager-manifest.md), and [rollup workflow](skills/admin-wr/references/rollup-workflow.md) for installation, configuration schema, discovery, review, and artifact formats.
-Preserve the following contracts when changing this workflow.
-
-### Setup and Storage
-
-`--admin` requires `--skills`; `--admin-data` requires `--admin`.
-Administrator output and metadata paths must be absolute or begin with `~/`.
-Omitting `--admin-output` preserves the saved output location and allows an unconfigured first installation; final promotion requires an output location, but discovery and drafts do not.
-Setup must not create the final output directory.
-
-An administrator setup without `--admin-data` selects repository-local metadata, even if a previous setup saved an external directory.
-Setup without `--admin` preserves the saved metadata directory, and empty or absent `ADMIN_DATA_DIR` means local storage.
-Changing configuration must not copy or move existing metadata.
-Create manifest parent directories as needed, but defer execution-history directory creation until a final build.
-
-Create a missing manager manifest under `umask 077`, requesting mode `0600`.
-Do not require a subsequent `chmod`: NAS filesystems may allow creation while rejecting POSIX permission changes, with effective access governed by server permissions or ACLs.
-Preserve an existing regular manifest or valid symbolic link regardless of `--replace-existing`, reject a conflicting directory, and never infer member or storage values.
-
-Use the shared metadata resolver for reads and final history destinations.
-Fallback applies only to missing files, per week for history; existing invalid content or PDF hashes must be diagnosed rather than bypassed.
-Reads must not move or delete metadata, and final writes must use the configured destination or its unconfigured local default even when reads used fallback.
-Preserve lookup compatibility with repository-local and legacy history so migration remains optional.
-
-### Responsibility and Artifact Safety
-
-Keep candidate selection, evidence assessment, issue classification, and approval decisions in the agent workflow.
-The deterministic builder consumes an explicit plan and selected PDFs; it must not discover reports, parse the manager configuration, or judge evidence.
-Keep shared helpers canonical across command and skill entry points.
-Python execution-manifest consumers share the field definitions and structural validation in `admin_records.py`; keep this module independent of Windows and notification dependencies.
-Validate records before accessing referenced files, then apply consumer-specific trust and approval checks.
-Do not introduce a host Python requirement into the Bash/Docker builder merely to share this parser.
-
-Restrict discovery to declared member roots without following directory symlinks or escaping storage.
-Report filenames, internal labels, and templates must remain unrestricted; source PDFs must never be modified or deleted.
-Preflight must distinguish host, Docker access, image dependency, and runtime failures while preserving the underlying error.
-Keep PDF inspection dependencies in the configured container rather than requiring host Poppler tools.
-
-Preserve all selected source pages and their aspect ratios, manifest ordering, and a single-page A4 index with cumulative inclusion history.
-Reject cover overflow instead of dropping history, and keep missing, exceptional, optional, and unknown states distinguishable.
-The [rollup workflow](skills/admin-wr/references/rollup-workflow.md#write-the-temporary-plan) defines plan fields and cover presentation.
-
-Keep review drafts and their records outside the final output directory and its descendants, available after the builder exits.
-A viewer opening is not approval; source or candidate changes invalidate the previous review.
-Apply the workflow's approval conditions before promotion and revalidate source hashes before rebuilding the final bundle.
-
-Validate the completed PDF before replacing final artifacts, using temporary files in each destination directory and atomic moves.
-Serialize publication against both canonical PDF and execution-record destinations, using a fixed lock order and a bounded total wait.
-Revalidate sources after acquiring the locks, hold them through both replacements, and release only locks acquired by the current run.
-Preserve the builder's stdout contract: absolute PDF and execution-record paths, one per line in that order.
-Drafts must never replace final history.
-PDF and execution-record replacement is not a single transaction: an interruption between replacements must be detected through PDF-hash validation on the next run and require approval.
-
-## Slack Review Notifications
-
-See the [Slack setup and operation guide](skills/admin-wr/references/slack-notifications.md) for configuration, commands, and recovery procedures.
-The command requires Python 3 with the standard library only.
-
-Keep issue judgment and notification authorization in the agent workflow, separate from deterministic PDF building.
-Preview by default; `notify-issues` sends only supported issues from a draft after the administrator approves the complete message for the destination channel.
-Sending requires `--approved <preview-fingerprint> --send`; a prior standing authorization or draft creation alone is not message approval, and the fingerprint does not establish human consent.
-Supported issues are missing required reports, ambiguous candidates, unreadable PDFs, overlength reports, and internal week mismatches.
-Derive member identities and issue scope from the execution record; allow evidence-grounded agent prose for explanations and requested actions without disclosing source paths, raw issue messages, or secrets.
-Do not notify for optional omissions alone, history-only issues, clean bundles, or already promoted bundles.
-Retain `notify-held --held --send` as the legacy missing-report hold path with its existing authorization conditions and receipt keys.
-
-Accept webhook secrets through hidden terminal input and keep them out of command arguments, tracked files, logs, PDFs, and execution records.
-Configuration must not send a message.
-Protect secret files through filesystem access controls without requiring post-creation `chmod` on NAS storage.
-Read secrets only from the configured location; fallback could send to a different channel.
-
-Deduplicate review notices by target week, member/issue set, rendered message, and webhook destination; ignore private evidence and issue record ordering.
-Serialize identical sends and recheck the receipt after acquiring the lock.
-A failed or interrupted send must retain the lock and never retry automatically because delivery might already have occurred.
-Slack failure must not publish a bundle, modify execution history, or claim successful notification.
-Use plain-text message blocks to prevent injected mentions or formatting, HTTPS Slack endpoints without redirects, bounded response reads, and a network timeout.
-Tests must substitute transport and never send to Slack.
-
-## Editing AI Skills
-
-Use this order of reference when updating `skills/wr-wr` or `skills/admin-wr`:
-
-1. Read the selected skill's `SKILL.md` and the reference file governing the behavior being changed.
-1. Consult `README.md` for shared report policy, `template.tex` for contextual writing guidance, and the scripts and `weekly-report.sty` for exact build and LaTeX behavior.
-   Preserve these ownership boundaries when updating skills.
-1. Follow current Codex and Claude skill conventions for platform mechanics without overriding repository behavior.
-
-Keep `SKILL.md` focused on activation scope, task routing, cross-cutting safeguards, and completion behavior.
-Put task-specific procedures and safeguards in the relevant file under `references/`, and keep deterministic repository-location logic in the shared `scripts/resolve-repo-root`.
-Prefer extending an existing reference over adding a new one unless the change introduces a distinct concern.
-
-For report content work, the writing skill must explicitly direct agents to read the canonical template comments and shared report policy.
-Keep the comments focused on writing decisions at each location, and distinguish requirements, adaptable suggestions, and illustrative content.
-Avoid duplicating section-writing prescriptions in skill references or treating the example's organization as a requirement.
-Refer to the [README's AI-assisted workflow](README.md#ai-assisted-workflow) for comment preservation and authoring behavior; keep detailed task procedures in skill references.
-
-When editing `admin-wr`, preserve the responsibility boundary defined in [Administrator Weekly Bundles](#administrator-weekly-bundles) rather than moving judgment into deterministic scripts.
-Changes to the plan or execution-manifest formats must update the workflow reference, tests, and user documentation together.
-
-Do not duplicate the repository's full interfaces in a skill.
-Refer to the canonical sources when exact behavior matters so that skill guidance does not become a stale parallel manual.
-Both skills should remain usable through all supported installation destinations; avoid provider-specific instructions unless they are necessary and clearly scoped.
-
-Keep skill behavior adaptive, evidence-grounded, protective of existing user work, and limited to authorized actions.
-When its capabilities or expectations change, update the entry point, affected references, and the user-facing AI workflow documentation together as applicable.
-
-## Validation
-
-When changing report guidance, skills, or the illustrative template, validate against the [shared report policy](README.md#write-the-report) and [AI-assisted workflow](README.md#ai-assisted-workflow).
-Page-limit exceptions belong in the authoring and review judgment, with a specific necessity rationale; deterministic builders must preserve complete content rather than truncate reports.
-
-Validate in proportion to the change and its risks.
-For shared editor changes, exercise both the TeX and Windows form adapters with `python3 -B -m unittest discover -s tests -p 'test_editor.py' -v`.
-Run `python3 tests/check_editor_geometry.py`, `node tests/test_inline_render.js`, and `python3 tests/check_editor_browser.py` for layout constants, inline rendering, and browser behavior respectively; the browser check needs Chrome/Chromium or native Windows Edge (`WR_BROWSER` overrides discovery).
-Run `node tests/test_editor_saves.js` for controlled save ordering and `python3 tests/check_preservation_browser.py` for the live source-backed editor, persistence, and undo/redo.
-The former browser-check path `tests/run_tests.py` is now `tests/check_editor_browser.py`; `scripts/verify_geometry.py` remains a compatibility entry point for the geometry check.
-Common Python tests use only the standard library, including local HTTP requests, and do not compile TeX or open a browser.
-Exercise the affected workflow and relevant error behavior, confirm documentation against the canonical sources, and compile the example when build or LaTeX behavior changes.
-Skill changes should cover representative activation, reference routing, all shared repository-resolver entry points, and affected report tasks.
-
-Run the administrator workflow regression checks with `python3 -B -m unittest discover -s tests -v` (Python 3 standard library only).
-On native Windows, use `windows/test.ps1` for native tests and common checks; POSIX-only checks must run separately in WSL/Linux.
-Use the [Windows validation guidance](windows/CONTRIBUTING.md#validation) for additional platform checks.
-These checks use isolated repositories and substitute Docker and desktop openers to exercise artifact placement, failure handling, and platform command routing without publishing reports or opening windows.
-Also exercise a real Docker build when available; substituted commands do not validate TeX rendering or a desktop viewer.
-
-Document checks that were not run when they would otherwise be relevant.
-Do not claim macOS compatibility was verified unless the affected workflow was actually exercised on macOS, and identify any supported agent service that was not exercised when the distinction matters.
-An unavailable macOS or agent environment does not by itself block a contribution.
-
-## Documentation and Scope
-
-When editing root documents, treat the Windows implementation as a black box by default.
-Describe its supported capabilities, inputs and outputs, observable behavior, compatibility, and repository-wide contracts without requiring readers to understand its internal components.
-Keep Windows-specific architecture, implementation rules, and dependency or packaging procedures in the [Windows development guide](windows/CONTRIBUTING.md), and link there when detail is needed.
-Use `windows/README.md`, `windows/CONTRIBUTING.md`, and `windows/CHANGELOG.md` as the three Windows documentation entry points.
-Their roles mirror the root documents: user guidance, durable contributor guidance, and internal change history with relevant validation evidence.
-Keep Windows internals that cannot be adequately described through the root documents' external perspective in these subordinate documents, and link to root policy instead of duplicating it.
-The Windows changelog supplements the root history using dated change groups linked to commits or PRs, with relevant validation recorded alongside them; it must not introduce independent version numbers or release authority.
-Keep its detailed entry conventions in [the Windows contribution guide](windows/CONTRIBUTING.md#documenting-internal-changes).
-Preserve the environment, scope, and limitations of historical validation when consolidating records; do not present past checks as verification of current source.
-This perspective does not prohibit describing changes that are entirely internal: explain relevant improvements, their purpose, evidence, and limitations at the level appropriate to the root document, even when the public interface is unchanged.
-For example, root documentation may describe faster CI dependency preparation or more reliable installation; the implementation and cache maintenance steps belong in the Windows guide.
-
-Update `README.md` when setup arguments, generated command behavior, required software, report-writing instructions, or user-visible skill capabilities change.
-Keep administrator development contracts in this document and operating procedures in the administrator references.
-Limit the README's administrator section to a short pointer and basic setup options.
-
+Keep routine report content separate from shared template, style, and script changes.
+Preserve documented setup, output, LaTeX, and skill contracts; explain deliberate breaking changes and provide migration guidance when users must act.
+Update the relevant canonical documentation with behavior changes, keeping the root entry points concise.
 Keep commits limited to meaningful changes and explain user-visible behavior in the commit message.
 Do not include generated PDFs or local configuration unless the contribution specifically requires updating a tracked artifact.
 
 ## Versioning and Releases
 
-Use Semantic Versioning for the repository as a whole.
-The public interface is the union of the documented LaTeX commands and environments, setup and build commands, output semantics, template usage, and skill behavior.
-Determine a release increment from every changed public surface and apply the highest required increment:
-
-- Increment MAJOR for any backward-incompatible public-interface change, such as removing or changing a documented LaTeX interface, command option, default, or output behavior in a way that requires user migration.
-- Increment MINOR for backward-compatible additions or changes to substantive functionality, including a new LaTeX interface, setup capability, or skill capability, and when deprecating public functionality without removing it.
-  A new command option requires MINOR only when it introduces substantive functionality.
-- Increment PATCH for backward-compatible bug fixes, portability and safety corrections, documentation corrections, and internal changes that do not alter the documented interface.
-  Also use PATCH for new options, accepted values, or aliases that expose existing behavior without adding or changing substantive functionality, such as supporting another agent through the existing skill-link installation mechanism.
-
-Compatibility means that documented usage continues to work with its stated semantics; it does not require byte-identical PDFs or prevent presentation refinements that preserve those semantics.
-
-Maintain `CHANGELOG.md` using the Keep a Changelog structure.
-
-Begin every changelog item with the most relevant component marker: `[latex]`, `[template]`, `[build]`, `[setup]`, `[skill]`, `[ci]`, or `[docs]`.
-Use `[ci]` for CI/CD workflows, automated validation, dependency caches, and release packaging or publication automation; use `[build]` for report compilation and artifact generation behavior.
-As the repository's responsibilities expand, extend this list when a distinct component needs its own marker, and document the new marker and its scope here in the same change.
-Describe notable user-facing differences rather than copying the commit log, and combine closely related commits into one entry when they deliver one change.
-Keep each version section incremental; do not copy beta or release-candidate entries into the stable section.
-Order dated changelog sections newest first, preserving the actual release sequence for same-date entries when known.
-Chronological order does not determine SemVer precedence or Git ancestry.
-When chronological order reverses SemVer precedence or the releases do not form a linear ancestry chain, identify their parent release tags explicitly.
-For a merged development baseline, identify the merge commit and its parent tags in `Unreleased`, and base its comparison link on that commit; distinguish integration changes in the baseline from subsequent unreleased changes.
-
-If you are an AI agent, do not increment the version or create a release tag without explicit developer confirmation.
-Versions are recorded by Git tags named `vMAJOR.MINOR.PATCH`, optionally followed by exactly `-beta` or `-rc` for prereleases.
-Each numeric component is `0` or a positive decimal integer without leading zeroes.
-Do not use other prerelease identifiers, numbered prereleases such as `-beta.1` or `-rc.2`, or build metadata in release tags.
-Compare major, minor, and patch numerically, then order equal base versions as beta, release candidate, and official release.
-Published tags are immutable; use the next allowed release stage or a new base version for subsequent publications rather than rewriting a tag.
-For every confirmed release, move the relevant changelog entries from `Unreleased` into a dated version section, update the version comment at the beginning of `template.tex`, commit those changes, and create the matching tag on that exact commit.
-For releases that distribute bundled third-party binaries, maintain version-specific source-access directions in `windows/RELEASE-NOTICE.md`; the release generator appends this notice once after the selected change sections so it appears beside the installer.
-Keep distribution directions out of individual changelog sections and retain only change history there.
-The notice belongs to the release checkout: preserve it during promotion and update it when bundled sources change, using the [Windows source-reference procedure](windows/CONTRIBUTING.md#third-party-source-references).
-Confirm that the latest-version badge near the beginning of `README.md` remains configured to derive its value from the repository's SemVer tags.
-Do not omit the changelog update, template update, badge check, or tag.
-
-The setup and build scripts report the version derived from the current Git checkout.
-A tagged release prints its tag, while later development commits may include a commit suffix and a dirty checkout may include `-dirty`.
-By default the build uses the current checkout; the optional automatic updater may advance it to an eligible published release before compilation.
-This channel-based update is the supported exception; do not add arbitrary per-build version selection.
+Follow the existing [versioning and release policy](docs/releases.md) for SemVer decisions, changelog conventions, tag grammar, and release preparation.
+AI agents must not increment the version or create a release tag without explicit developer confirmation.
+Published tags are immutable.
 
 ### Tag-driven CI and Windows Releases
 
-`.github/workflows/release.yml` runs on pushed `v*` tags.
-It also supports `workflow_dispatch` for manually testing and packaging a selected branch or tag, without running on branch pushes.
-In GitHub Actions, open **Test and release**, choose **Run workflow**, and select the branch to check.
-The workflow must be present on the default branch for manual dispatch to be available.
-Manual runs pin every job to the selected commit, skip release-note preparation checks, and never publish a GitHub Release, even when a tag is selected.
-They run the same platform tests, Windows packaging, installer smoke tests, and checksum verification as tag pushes, retaining the installer and SHA256 in the `windows-installer` Actions artifact for seven days.
-Manual installer versions use the existing Git-derived bundle version, including a development commit suffix when applicable; the checkout must have a reachable supported version tag and must produce a clean version.
-Use the Actions run and its commit SHA to identify the build; manual runs do not create or increment release tags.
-
-For tag pushes, the validation job accepts only the release-tag grammar above, requires the tag and triggering commit to match the checkout, checks the version comment in `template.tex`, and requires exactly one matching dated changelog section.
-Release notes must contain at least one change across the selected sections; a stable section may be empty when promotion adds no changes beyond its prereleases.
-Complete the normal release preparation before pushing the tag; CI does not create tags, increment versions, or edit source files.
-
-Linux and macOS run the common/POSIX regression suite on their own hosted runners, using the operating system's `/bin/bash`.
-These jobs substitute Docker and desktop viewers and do not build release artifacts or install TeX.
-Windows must pass native/common regression checks, actual PDF generation, and portable and installed application checks before publication.
-Validate the offline distribution without relying on development tools, and verify that uninstallation preserves user configuration and PDFs.
-See the [Windows development guide](windows/CONTRIBUTING.md#ci-and-packaging) for build dependencies and packaging procedures.
-
-Only the publication job has `contents: write`, and it runs after every platform succeeds.
-Use the repository's automatic `GITHUB_TOKEN`; no personal access token is required.
-Organization/repository Actions policies must allow the pinned official actions and release-writing job permission.
-Keep third-party action revisions pinned to full commit IDs; follow the Windows development guide when updating installer build dependencies.
-
-CI packages the exact triggering tag even if multiple tags refer to the same commit.
-The release contains only `WeeklyReport-<tag>-Setup.exe` and its `.exe.sha256` file; the publication job revalidates both after artifact transfer.
-`.github/scripts/release.py` uses only the matching changelog section for a prerelease publication.
-For a stable publication, it collects the matching stable section and any same-version `-rc` and `-beta` sections, in that order with version headings, without changing `CHANGELOG.md`.
-After collecting changes, the generator appends `windows/RELEASE-NOTICE.md` from the same checkout exactly once for stable and prerelease publications.
-A missing or blank notice fails release preparation and publication.
-Missing prerelease stages are allowed; duplicate sections or invalid dates in any selected stage fail validation before publication.
-Unreleased changes and other base versions are never included.
-Tags ending in `-beta` or `-rc` produce prereleases and cannot become Latest; stable releases use GitHub's default Latest selection.
-Publication uploads to a draft before making it public.
-Retry a failed run using GitHub Actions' rerun controls: unpublished drafts for the same commit can resume, but published assets are never overwritten.
-An existing complete published release is left unchanged; a published release missing expected assets or a draft targeting a different commit fails for maintainer review.
-Preserve published tags and use a new allowed version when source fixes are needed.
-
-CI reuses prepared Windows build dependencies to reduce setup time while retaining all build and distribution checks.
-Cache misses trigger fresh preparation; finished installers and previous test results are not reused.
-See [dependency cache maintenance](windows/CONTRIBUTING.md#tinytex-cache) for refresh and sharing procedures.
-Release builds are tested artifacts rather than byte-reproducible rebuilds.
-Failures in dependency preparation, any test, checksum verification, or asset upload prevent publication.
-Windows installers and available failure diagnostics are retained as separate Actions artifacts for seven days.
+See the [release procedure](docs/releases.md#tag-driven-ci-and-windows-releases) for manual workflow runs, tag validation, publication, and retry behavior.
+The repository-wide release remains the version authority for native Windows.

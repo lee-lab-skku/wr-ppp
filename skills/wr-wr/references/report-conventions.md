@@ -1,6 +1,6 @@
 # Report Conventions
 
-Use these conventions when helping a user locate, organize, create, or build a report. Read the repository `README.md` and build scripts when exact current behavior is needed.
+Use these conventions when helping a user locate, organize, create, or build a report. Read the repository's [report workflow](../../../docs/report-workflow.md), [setup guide](../../../docs/setup.md), and build scripts when exact current behavior is needed.
 
 ## Find the Relevant Files
 

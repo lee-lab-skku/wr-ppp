@@ -30,11 +30,11 @@ Before authoring or changing report LaTeX, first inspect the package declaration
 Use the loaded packages where they suit the content, following [references/latex-and-build.md](references/latex-and-build.md); template command examples illustrate usage without limiting the supported commands or argument forms.
 Apply its notation checks during authoring and review, including to user-supplied LaTeX; successful compilation is not proof of package compliance.
 
-Before drafting, substantively revising, or reviewing report content, read the instructional comments in the resolved repository's canonical `template.tex` and the `README.md` sections "Write the Report" and "Length and Exceptions".
-The README defines shared report policy; template comments explain how to apply it while writing.
+Before drafting, substantively revising, or reviewing report content, read the instructional comments in the resolved repository's canonical `template.tex` and [the shared report policy](../../docs/report-policy.md), including "Length and Exceptions".
+`docs/report-policy.md` defines shared report policy; template comments explain how to apply it while writing.
 Use the comments with judgment: distinguish report requirements, adaptable suggestions, and illustrative content.
 Suggested elements and example layouts are optional; do not turn them into compulsory fields or treat example data as evidence for the user's report.
-The README's figure, table, and equation reference rules are requirements, not optional example conventions.
+The shared policy's figure, table, and equation reference rules are requirements, not optional example conventions.
 When drafting, revising, or reviewing content, apply the reference checks in [references/latex-and-build.md](references/latex-and-build.md), including to existing user-written prose.
 
 Read only the references needed for the current request. Combine them when a problem crosses boundaries.
@@ -45,7 +45,7 @@ Apply checks only where the actual content and task make them relevant; silently
 - Read [references/latex-and-build.md](references/latex-and-build.md) when formatting content, using template helpers, diagnosing LaTeX, or validating a PDF.
 - Read [references/visual-editing.md](references/visual-editing.md) when the user wants to edit a report in the shared HTML editor or work with its state and exported source; that reference explains source preservation, read-only regions, and save conflicts.
 
-Consult the resolved repository's `weekly-report.sty` and scripts for exact LaTeX and build behavior, and the README for workflow details as needed.
+Consult the resolved repository's `weekly-report.sty` and scripts for exact LaTeX and build behavior, and [report sources and builds](../../docs/report-workflow.md) or [setup and updates](../../docs/setup.md) for workflow details as needed.
 
 ## Work Adaptively
 

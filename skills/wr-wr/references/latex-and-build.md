@@ -65,7 +65,7 @@ Missing figure files intentionally render as placeholders. That can support draf
 
 ## Enforce Body References
 
-Apply the README's reference policy to every figure, including each independently numbered figure in a pair.
+Apply the reference rules in the [shared report policy](../../../docs/report-policy.md) to every figure, including each independently numbered figure in a pair.
 Check that each has at least one label-based `cleveref` reference in the report body; a caption, label declaration, or source comment alone does not satisfy this requirement.
 Table and equation references are optional, but when present must use `cleveref` as well.
 Use `\cref` or a supported variant appropriate to capitalization, multiple targets, ranges, or other calling needs; do not restrict the author to the template's exact syntax.
@@ -87,7 +87,7 @@ Use the canonical `report-build` command so the report sees the shared style and
 
 Note the repository version printed by `report-build` when diagnosing version-sensitive behavior or comparing results from different checkouts.
 If automatic updates are enabled, the checkout may advance to an eligible release before compilation; the displayed build version identifies the checkout actually used.
-See the README's "Automatic Release Updates" for channels, skipped updates, and lock recovery; do not bypass a lock or discard local work to make an update succeed.
+See [Automatic Release Updates](../../../docs/setup.md#automatic-release-updates) for channels, skipped updates, and lock recovery; do not bypass a lock or discard local work to make an update succeed.
 
 For work intended as a final report, check as relevant:
 
@@ -98,10 +98,10 @@ For work intended as a final report, check as relevant:
 - body-reference coverage for every figure and compliance with `cleveref` usage for all figure, table, and equation references;
 - applicable scientific notation in body text, tables, and captions through the style's packages, including `siunitx` and `mhchem`;
 - readable page flow and any meaningful warnings;
-- the actual rendered page count against the README's length policy for the complete weekly report;
+- the actual rendered page count against the [shared length policy](../../../docs/report-policy.md#length-and-exceptions) for the complete weekly report;
 - consistency between rendered content and the available evidence.
 
-Use the resolved repository's `README.md`, "Length and Exceptions", for the page limit and necessity criteria.
+Use [the shared length policy](../../../docs/report-policy.md#length-and-exceptions) for the page limit and necessity criteria.
 Read [content-quality.md](content-quality.md) when overflow requires content revision or final review raises questions about evidence or meaning.
 A successful build alone does not establish that a report meets the length requirement.
 During editorial revision or finalization, if the PDF exceeds the limit, revise content within the authorized scope, rebuild, and inspect again while preserving readable typography and layout.
