@@ -275,6 +275,9 @@ Begin by replacing the three values in `\ReportHeader`:
     {Project / Team}
 ```
 
+Choose a title that conveys the week's actual research topic, question, or significant development, including multiple threads when appropriate.
+Do not use only a project name, reporting week, a generic label such as "Weekly Report", or a combination of these as the report title.
+
 Then replace the illustrative abstract and PPP content with the week's research.
 Adapt sections, subsections, grouping, and presentation to what best communicates that work, including weeks with several research threads.
 The comments in `template.tex` provide section-level prompts alongside a worked example.

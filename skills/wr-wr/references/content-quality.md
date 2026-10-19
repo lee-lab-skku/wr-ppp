@@ -36,6 +36,7 @@ If suggesting that out-of-scope updates be shared in a project meeting, do not s
 Do not fill a quiet research week with maintenance activity or invented findings.
 
 Use the canonical template comments, as directed by `SKILL.md`, to assess how well the actual research and its support are communicated.
+Apply the README's title requirement when drafting or reviewing: the title must convey actual research content rather than consist only of a project name, reporting week, a generic label such as "Weekly Report", or their combination.
 Missing a suggested element or using a different grouping is not itself a defect.
 Before reorganizing an existing draft, identify the concrete communication problem the change would address and keep the revision within the requested scope.
 Do not demand metrics, positive findings, or invented blockers to fill the example's structure.
