@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0-rc] &mdash; 2026-10-19
+
 ### Added
 
 - [build] add `notify-issues` for administrator-approved draft review notices covering required omissions, ambiguous candidates, unreadable PDFs, overlength reports, and internal week mismatches, with agent-authored prose and approval tied to the complete preview; preserve legacy `notify-held` calls and receipts.
@@ -244,7 +246,8 @@ Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0)
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.6.0-rc...HEAD
+[1.6.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0...v1.6.0-rc
 [1.5.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-rc...v1.5.0
 [1.5.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-beta...v1.5.0-rc
 [1.4.1]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.4.0...v1.4.1
