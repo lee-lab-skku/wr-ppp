@@ -295,6 +295,9 @@ Subsection headings alone do not provide enough structure when several distinct 
 Use short prose for a connected explanation or transition; neither every sentence nor every subsection needs a list or a fixed set of labels.
 Use concise headings where helpful and remove repeated background and activity-log detail that does not help the reader assess the research.
 
+Selected body text may be emphasized at the user's request, under applicable guidance, or at the agent's discretion.
+Use italics unless another emphasis style is specified.
+
 Write from the report author's research perspective, including when drafting from organized notes or experiment records.
 Describe supported actions, findings, and plans objectively without repeatedly using first-person pronouns or narrating what an outside reviewer learned from the supplied files.
 Preserve the distinction between the author's work, collaborators' contributions, and external findings, as well as between completed work and plans.

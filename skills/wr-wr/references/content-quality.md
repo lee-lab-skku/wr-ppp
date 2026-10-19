@@ -46,6 +46,9 @@ Adding subsection headings alone does not resolve an unstructured body.
 Retain short prose for a single connected argument and for transitions; do not fragment every sentence into a bullet or require the same labels and nesting depth everywhere.
 Apply author viewpoint, meaningful body structure, and scientific notation while drafting, rather than deferring these content requirements as cosmetic layout work.
 
+Selected body text may be emphasized at the user's request, under applicable guidance, or at the agent's own editorial discretion.
+Unless another emphasis style is specified, use italics (`\textit{...}` in LaTeX).
+
 ## Shorten and Recheck
 
 Use the resolved repository's `README.md`, "Length and Exceptions", for the page limit and complete necessity criteria.
