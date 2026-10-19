@@ -5,6 +5,8 @@
 \begin{document}
 
 % This is an adaptable example of a weekly research report.
+% The worked example shows a report after editorial revision.
+% Figure paths demonstrate placement; supply the files or omit unused figures.
 % Keep the focus on research within two A4 pages per person per week.
 % See the repository README.md, "Write the Report" and "Length and Exceptions",
 % for the full report policy and the narrow exception to the page limit.
@@ -21,6 +23,8 @@
 % narration of what an outside reader discovered in the supplied records.
 % Preserve ownership, uncertainty, and the distinction between work and plans.
 % Replace illustrative content and keep only structures that help the reader.
+% Emphasize selected body text as requested, directed, or editorially useful;
+% default to italics unless another style is specified.
 
 % Inspect weekly-report.sty's package declarations and configuration first;
 % use the loaded packages where they suit the report's content.
@@ -68,10 +72,10 @@
 % =========================================================
 \begin{reportabstract}
 
-Adding a mild calibration penalty improved macro F1 by 2.3 percentage
-points while reducing calibration error. The gain was consistent in
-four of five random seeds, but the rarest class remains unstable. Next
-week's work will therefore focus on label quality and seed sensitivity.
+Adding a moderate calibration penalty improved mean macro F1 by
+2.3 percentage points while reducing calibration error across five
+random seeds. The rarest class remains unstable, so the next priority
+is to assess label quality and seed sensitivity before generalizing the gain.
 
 \end{reportabstract}
 
@@ -92,7 +96,8 @@ week's work will therefore focus on label quality and seed sensitivity.
 \ReportSubsection{Moderate Penalty Improves F1 and Calibration}
 
 A moderate calibration penalty improved macro F1 by 2.3 percentage points
-and reduced ECE from 8.7 to 5.1 across five seeds
+and reduced expected calibration error (ECE) from \SI{8.7}{\percent} to \SI{5.1}{\percent}
+on average across five seeds
 (\cref{tab:main-results}). Data splits and preprocessing were held fixed.
 
 % Use a comparison table when it helps the reader assess the evidence.
@@ -102,7 +107,7 @@ and reduced ECE from 8.7 to 5.1 across five seeds
     {L C C C}
     {
         \toprule
-        Method & Macro F1 $\uparrow$ & ECE $\downarrow$ & Worst-class F1 $\uparrow$ \\
+        Method & Macro F1 (\%) $\uparrow$ & ECE (\%) $\downarrow$ & Worst-class F1 (\%) $\uparrow$ \\
         \midrule
         Baseline & 71.4 & 8.7 & 48.2 \\
         Calibration penalty & \textbf{73.7} & 5.1 & \textbf{52.6} \\
@@ -112,15 +117,19 @@ and reduced ECE from 8.7 to 5.1 across five seeds
     {Illustrative validation results averaged over five random seeds.}
     {tab:main-results}
 
-The moderate penalty therefore offers the best observed balance for
-follow-up validation. The stronger penalty minimized ECE but lost part
-of the rare-class gain, so lower ECE alone does not establish a better model.
+\begin{itemize}
+    \item \textit{The moderate penalty offers the best observed balance}
+          for follow-up validation, with the highest mean macro and
+          worst-class F1 among the tested settings.
+    \item The stronger penalty minimized ECE but lost part of the rare-class
+          gain; lower ECE alone does not establish a better model.
+\end{itemize}
 
 
 \ReportSubsection{Penalty Strength Limits the Gain}
 
 The sweep suggests that calibration strength must remain modest:
-$\lambda=0.05$ improved calibration without reducing accuracy, whereas
+$\lambda=0.05$ improved calibration and macro F1 relative to the baseline, whereas
 larger values produced under-confident predictions. The tested loss was
 
 \[
@@ -130,6 +139,8 @@ larger values produced under-confident predictions. The tested loss was
       \sum_{i=1}^{N}\left\lVert\mathbf{p}_i-\mathbf{y}_i\right\rVert_2^2.
 \]
 
+Here, $N$ is the sample count, $\mathbf{p}_i$ is the predicted probability
+vector, and $\mathbf{y}_i$ is the one-hot class label.
 The effect was strongest near class boundaries, motivating a label audit
 before attributing the rare-class gain to the loss formulation.
 \Cref{fig:calibration-curve,fig:rare-class-errors} present the calibration
@@ -165,23 +176,26 @@ comparison and rare-class error composition for this analysis.
 
 \ReportSubsection{Rare-Class Instability}
 
-Worst-class F1 still varied by 7.8 points across seeds, so the apparent
+Worst-class F1 still varied by 7.8 percentage points across seeds, so the apparent
 gain is not yet strong enough to support a general conclusion
 (\cref{fig:seed-variance}).
 
 \begin{itemize}
-    \item \textbf{Working hypothesis:} a small cluster of inconsistently
-          labeled samples changes the decision boundary between splits.
-    \item \textbf{Attempts and evidence:} class weighting reduced mean
-          performance, while manual inspection found three ambiguous samples.
-    \item \textbf{Next response:} audit the rare-class labels and repeat the
-          comparison with stratified seeds and confidence intervals.
+    \item \textit{Label inconsistency is a working hypothesis}, rather than
+          an established cause of the instability.
+          \begin{itemize}
+              \item Manual inspection found three ambiguous samples that
+                    may affect the decision boundary.
+              \item Class weighting reduced mean performance.
+          \end{itemize}
+    \item Audit the rare-class labels and repeat the comparison with
+          stratified seeds and confidence intervals to assess this explanation.
 \end{itemize}
 
 
 \ReportSubsection{Primary Metric Requires a Decision}
 
-The primary metric remains undecided: macro F1 measures class balance,
+The primary metric remains undecided: macro F1 summarizes class-wise performance,
 whereas ECE measures calibration. Advisor feedback on the deployment
 priority will determine the main claim; both metrics will remain reported.
 
