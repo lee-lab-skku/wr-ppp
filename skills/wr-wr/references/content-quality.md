@@ -27,6 +27,10 @@ Resolve ambiguous ownership or status before making a consequential claim.
 
 ## Exercise Editorial Judgment
 
+Do not generate an abstract while collecting material, organizing evidence, or drafting the initial body.
+Begin abstract writing only once the report has entered editorial revision, using the stage criteria in [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage", and base it on the supported body content.
+Preserve an existing author-written abstract; its presence or the template's illustrative abstract does not justify generating a replacement before revision.
+
 Apply the README's research focus when selecting source material.
 If suggesting that out-of-scope updates be shared in a project meeting, do not send them or create a separate deliverable unless requested.
 Do not fill a quiet research week with maintenance activity or invented findings.

@@ -388,6 +388,7 @@ The template includes commented examples for cross-references (`\cref`), units (
 The agent checks applicable package usage in the resulting source, including existing user-written text; compilation alone does not establish compliance.
 It applies relevant prompts with judgment and preserves useful author choices; matching the example's organization is not a review requirement.
 Its references provide task-specific procedures for source conventions, editorial judgment and evidence, optional visual editing, and LaTeX and build validation.
+The agent does not generate an abstract during material collection or initial drafting; abstract writing begins at editorial revision and draws on the supported report body.
 During review, the agent must identify manually written figure, table, and equation numbers and correct them to label-based `cleveref` references when editing is in scope; review-only feedback must specify the correction.
 For an unreferenced figure, it must guide the author to a suitable place and context for a body reference, or add one when editing is authorized and the available material supports the connection.
 Before editorial revision, the agent reports observed minor page-break, overflow, alignment, and length issues accurately and defers layout repairs and page-fitting build iterations.
