@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- [skill] empty the template's example title, abstract, author, and project values when scaffolding a new report, and defer writing the title until editorial revision like the abstract, without placeholder or filler text.
+
+### Fixed
+
+- [build] report the failing step and its reason when a successful compilation cannot be staged or moved over the output PDF, stating that the build succeeded and that any existing PDF is unchanged.
+
 ## [1.6.0-rc] &mdash; 2026-10-19
 
 ### Added
