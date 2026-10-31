@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] &mdash; 2026-11-01
+
 ### Changed
 
 - [skill] empty the template's example title, abstract, author, and project values when scaffolding a new report, and defer writing the title until editorial revision like the abstract, without placeholder or filler text.
@@ -36,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ci] skip the Windows junction fallback check on non-Windows hosts while retaining its native Windows coverage.
 
 ## [1.5.0] &mdash; 2026-09-26
-
-Parent tag: [v1.5.0-rc](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.5.0-rc).
 
 ### Added
 
@@ -254,7 +254,8 @@ Parent tag: [v1.4.0](https://github.com/lee-lab-skku/wr-ppp/releases/tag/v1.4.0)
 - [docs] a Keep a Changelog release history with component-prefixed entries.
 - [docs] a GitHub badge that reports the latest SemVer tag as the latest repository version.
 
-[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.6.0-rc...HEAD
+[Unreleased]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.6.0-rc...v1.6.0
 [1.6.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0...v1.6.0-rc
 [1.5.0]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-rc...v1.5.0
 [1.5.0-rc]: https://github.com/lee-lab-skku/wr-ppp/compare/v1.5.0-beta...v1.5.0-rc
