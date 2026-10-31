@@ -63,6 +63,7 @@ A failed compilation or staging operation preserves the previous PDF.
 A local PDF that is not the output target is left unchanged.
 This avoids the deletion gap that can interrupt LaTeX Workshop and vscode-pdf file watching; viewer or filesystem limitations may still affect automatic refresh.
 If the final timestamp update fails, the command reports that the PDF has already been replaced.
+If staging or replacement fails after a successful compilation, the command names the failing step and its error, states that the build itself succeeded, and leaves any previous PDF unchanged.
 
 The shared `weekly-report.sty` file does not need to be copied into each report directory; `report-build` makes it available during compilation.
 

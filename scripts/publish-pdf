@@ -19,16 +19,30 @@ check_target() {
 check_target
 PARENT=$(dirname -- "$DEST")
 mkdir -p -- "$PARENT"
-STAGE=$(mktemp "$PARENT/.report-pdf.XXXXXX")
+# Run a publishing step; on failure, name the step, the target, and the reason.
+run_step() {
+    local description=$1 output status=0
+    shift
+    output=$("$@" 2>&1) || status=$?
+    if [[ $status -ne 0 ]]; then
+        echo "PDF not replaced: could not $description: $DEST" >&2
+        echo "reason: ${output:-no error message (exit status $status)}" >&2
+        return 1
+    fi
+    printf '%s' "$output"
+}
+STAGE=$(run_step "create a staging file beside the target" \
+    mktemp "$PARENT/.report-pdf.XXXXXX") || exit 1
 cleanup() { rm -f -- "$STAGE"; }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-cp -- "$SOURCE" "$STAGE"
+run_step "copy the PDF beside the target" cp -- "$SOURCE" "$STAGE" >/dev/null || exit 1
 # Check the transferred bytes before replacing an existing output (also on NAS).
 cmp -s -- "$SOURCE" "$STAGE" || { echo "PDF staging verification failed: $DEST" >&2; exit 1; }
 check_target
-mv -f -- "$STAGE" "$DEST"
+run_step "move the staged PDF over the target (is it open or locked?)" \
+    mv -f -- "$STAGE" "$DEST" >/dev/null || exit 1
 # VS Code PDF viewers refresh on change events; never unlink the open PDF first.
 if ! touch -c -- "$DEST"; then
     echo "PDF was replaced, but its viewer refresh timestamp could not be updated: $DEST" >&2

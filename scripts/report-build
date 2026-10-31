@@ -210,7 +210,15 @@ if tar -C "$SRC_DIR" -cf - . |
             cat "$PDF"
         ' > "$TMP_PDF"
 then
-    "$STYLE_DIR/scripts/publish-pdf" "$TMP_PDF" "$DEST"
+    PUBLISH_STATUS=0
+    "$STYLE_DIR/scripts/publish-pdf" "$TMP_PDF" "$DEST" || PUBLISH_STATUS=$?
+    if [[ $PUBLISH_STATUS -eq 3 ]]; then
+        exit 3
+    elif [[ $PUBLISH_STATUS -ne 0 ]]; then
+        echo "LaTeX build succeeded, but the PDF could not be written to $DEST." >&2
+        echo "Any existing PDF at that path is unchanged." >&2
+        exit "$PUBLISH_STATUS"
+    fi
 
     echo "written: $DEST" >&2
 else

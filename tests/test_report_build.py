@@ -72,3 +72,23 @@ class ReportSerialTests(unittest.TestCase):
         self.source = hidden_source
         (self.output / ".current.pdf").write_bytes(b"fixture")
         self.build(1)
+
+    def test_replace_failure_reports_reason_and_keeps_previous_pdf(self):
+        target = self.output / "current report.pdf"
+        target.write_bytes(b"previous")
+        # Substitute a silent failure for the final replacement step.
+        mv = self.bin / "mv"
+        mv.write_text("#!/bin/sh\nexit 1\n")
+        mv.chmod(0o755)
+        result = subprocess.run(
+            ["bash", str(self.repo / "scripts/report-build")],
+            cwd=self.source,
+            env=dict(os.environ, PATH=f"{self.bin}:{os.environ['PATH']}"),
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("could not move the staged PDF", result.stderr)
+        self.assertIn("reason: no error message (exit status 1)", result.stderr)
+        self.assertIn("LaTeX build succeeded, but the PDF could not be written", result.stderr)
+        self.assertNotIn("written:", result.stderr)
+        self.assertEqual(target.read_bytes(), b"previous")
