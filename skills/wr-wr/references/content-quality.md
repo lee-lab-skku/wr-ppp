@@ -29,7 +29,10 @@ Resolve ambiguous ownership or status before making a consequential claim.
 
 Do not generate an abstract while collecting material, organizing evidence, or drafting the initial body.
 Begin abstract writing only once the report has entered editorial revision, using the stage criteria in [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage", and base it on the supported body content.
-Preserve an existing author-written abstract; its presence or the template's illustrative abstract does not justify generating a replacement before revision.
+Preserve an existing author-written abstract; the template's illustrative abstract is not author-written and is removed when scaffolding, so an empty abstract is not a reason to draft one before revision.
+Defer the title on the same schedule: leave it empty while collecting material and drafting, and write it from the supported body content during editorial revision.
+An empty abstract understates page length by a few lines, so allow for it when judging length before revision.
+Do not add placeholder or filler text; the author is responsible for completing both before submission.
 
 Apply the research focus in the [shared report policy](../../../docs/report-policy.md) when selecting source material.
 If suggesting that out-of-scope updates be shared in a project meeting, do not send them or create a separate deliverable unless requested.

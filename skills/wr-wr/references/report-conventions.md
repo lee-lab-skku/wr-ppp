@@ -21,6 +21,10 @@ There is no mandatory weekly-directory naming scheme. The `W1` directory in the 
 
 When the user wants a new source, create the chosen directory and copy the canonical `template.tex` to `main.tex`.
 Read its instructional comments before adapting the illustrative report content to the user's material.
+Immediately after copying, delete the template's example title and abstract text, leaving `\ReportHeader` with an empty title argument and an empty `reportabstract` body.
+Keep the commands, environments, and instructional comments, and do not replace them with placeholder or filler text.
+Set author and project from the user's known identity, or leave them empty; do not keep the example values.
+Write the title and abstract only under the timing rules in [content-quality.md](content-quality.md).
 Do not copy `weekly-report.sty`; the build command supplies it.
 
 ## Preserve Instructional Comments
