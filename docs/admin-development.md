@@ -1,37 +1,34 @@
 # Administrator Development
 
+This reference defines administrator storage, judgment and builder boundaries, execution-record parsing, publication safety, and notification contracts.
 See the [administrator setup](setup.md#administrator-mode), [manager manifest](../skills/admin-wr/references/manager-manifest.md), and [rollup workflow](../skills/admin-wr/references/rollup-workflow.md) for installation, configuration schema, discovery, review, and artifact formats.
 Preserve the following contracts when changing this workflow.
 
 ## Setup and Storage
 
-`--admin` requires `--skills`; `--admin-data` requires `--admin`.
-Administrator output and metadata paths must be absolute or begin with `~/`.
-Omitting `--admin-output` preserves the saved output location and allows an unconfigured first installation; final promotion requires an output location, but discovery and drafts do not.
-Setup must not create the final output directory.
+Preserve these setup and storage responsibilities:
 
-An administrator setup without `--admin-data` selects repository-local metadata, even if a previous setup saved an external directory.
-Setup without `--admin` preserves the saved metadata directory, and empty or absent `ADMIN_DATA_DIR` means local storage.
-Changing configuration must not copy or move existing metadata.
-Create manifest parent directories as needed, but defer execution-history directory creation until a final build.
-
-Create a missing manager manifest under `umask 077`, requesting mode `0600`.
-Do not require a subsequent `chmod`: NAS filesystems may allow creation while rejecting POSIX permission changes, with effective access governed by server permissions or ACLs.
-Preserve an existing regular manifest or valid symbolic link regardless of `--replace-existing`, reject a conflicting directory, and never infer member or storage values.
-
-Use the shared metadata resolver for reads and final history destinations.
-Fallback applies only to missing files, per week for history; existing invalid content or PDF hashes must be diagnosed rather than bypassed.
-Reads must not move or delete metadata, and final writes must use the configured destination or its unconfigured local default even when reads used fallback.
-Preserve lookup compatibility with repository-local and legacy history so migration remains optional.
+- **Configuration**: `--admin` requires `--skills`; `--admin-data` requires `--admin`.
+  Administrator output and metadata paths must be absolute or begin with `~/`.
+  Omitting `--admin-output` preserves the saved output location and allows an unconfigured first installation; final promotion requires an output location, but discovery and drafts do not.
+  Setup must not create the final output directory.
+- **Metadata selection**: An administrator setup without `--admin-data` selects repository-local metadata, even if a previous setup saved an external directory.
+  Setup without `--admin` preserves the saved metadata directory, and empty or absent `ADMIN_DATA_DIR` means local storage.
+  Changing configuration must not copy or move existing metadata.
+  Create manifest parent directories as needed, but defer execution-history directory creation until a final build.
+- **Manifest creation**: Create a missing manager manifest under `umask 077`, requesting mode `0600`.
+  Do not require a subsequent `chmod`: NAS filesystems may allow creation while rejecting POSIX permission changes, with effective access governed by server permissions or ACLs.
+  Preserve an existing regular manifest or valid symbolic link regardless of `--replace-existing`, reject a conflicting directory, and never infer member or storage values.
+- **Metadata resolution**: Use the shared metadata resolver for reads and final history destinations.
+  Fallback applies only to missing files, per week for history; existing invalid content or PDF hashes must be diagnosed rather than bypassed.
+  Reads must not move or delete metadata, and final writes must use the configured destination or its unconfigured local default even when reads used fallback.
+  Preserve lookup compatibility with repository-local and legacy history so migration remains optional.
 
 ## Responsibility and Artifact Safety
 
 Keep candidate selection, evidence assessment, issue classification, and approval decisions in the agent workflow.
 The deterministic builder consumes an explicit plan and selected PDFs; it must not discover reports, parse the manager configuration, or judge evidence.
 Keep shared helpers canonical across command and skill entry points.
-Python execution-manifest consumers share the field definitions and structural validation in `admin_records.py`; keep this module independent of Windows and notification dependencies.
-Validate records before accessing referenced files, then apply consumer-specific trust and approval checks.
-Do not introduce a host Python requirement into the Bash/Docker builder merely to share this parser.
 
 Restrict discovery to declared member roots without following directory symlinks or escaping storage.
 Report filenames, internal labels, and templates must remain unrestricted; source PDFs must never be modified or deleted.
@@ -40,11 +37,32 @@ Keep PDF inspection dependencies in the configured container rather than requiri
 
 Preserve all selected source pages and their aspect ratios, manifest ordering, and a single-page A4 index with cumulative inclusion history.
 Reject cover overflow instead of dropping history, and keep missing, exceptional, optional, and unknown states distinguishable.
-The [rollup workflow](../skills/admin-wr/references/rollup-workflow.md#write-the-temporary-plan) defines plan fields and cover presentation.
+The [bundle format reference](../skills/admin-wr/references/rollup-workflow/formats.md) defines plan fields, execution records, and cover presentation.
+
+## Execution Records
+
+Python execution-manifest consumers share the field definitions and structural validation in `admin_records.py`; keep this module independent of Windows and notification dependencies.
+Do not introduce a host Python requirement into the Bash/Docker builder merely to share this parser.
+
+Python consumers use the shared `admin_records.read_manifest(path)` parser for execution TSVs; its named records expose fields such as `manifest.bundle.pdf_name` and `entry.page_count` (an integer).
+It validates record widths, dates, state/approval pairs, SHA-256 syntax, and source/page metadata before consumers access referenced PDFs or use page counts.
+Errors identify the file, line, and record; invalid history remains untrusted and requires review rather than falling back to a different copy.
+
+Validate records before accessing referenced files, then apply consumer-specific trust and approval checks.
+The parser does not verify PDF bytes or authorize notification/publication; consumers retain those checks.
+The TSV format remains unchanged, including literal quotes, missing-entry `0`/`-` values, and optional history records.
+
+## Review and Publication
+
+Keep draft review and final publication distinct, and preserve the evidence that authorizes promotion.
+
+### Draft Review
 
 Keep review drafts and their records outside the final output directory and its descendants, available after the builder exits.
 A viewer opening is not approval; source or candidate changes invalidate the previous review.
 Apply the workflow's approval conditions before promotion and revalidate source hashes before rebuilding the final bundle.
+
+### Final Publication
 
 Validate the completed PDF before replacing final artifacts, using temporary files in each destination directory and atomic moves.
 Serialize publication against both canonical PDF and execution-record destinations, using a fixed lock order and a bounded total wait.
@@ -58,6 +76,8 @@ PDF and execution-record replacement is not a single transaction: an interruptio
 See the [Slack setup and operation guide](../skills/admin-wr/references/slack-notifications.md) for configuration, commands, and recovery procedures.
 The command requires Python 3 with the standard library only.
 
+### Eligibility and Approval
+
 Keep issue judgment and notification authorization in the agent workflow, separate from deterministic PDF building.
 Preview by default; `notify-issues` sends only supported issues from a draft after the administrator approves the complete message for the destination channel.
 Sending requires `--approved <preview-fingerprint> --send`; a prior standing authorization or draft creation alone is not message approval, and the fingerprint does not establish human consent.
@@ -66,10 +86,14 @@ Derive member identities and issue scope from the execution record; allow eviden
 Do not notify for optional omissions alone, history-only issues, clean bundles, or already promoted bundles.
 Retain `notify-held --held --send` as the legacy missing-report hold path with its existing authorization conditions and receipt keys.
 
+### Secret Handling
+
 Accept webhook secrets through hidden terminal input and keep them out of command arguments, tracked files, logs, PDFs, and execution records.
 Configuration must not send a message.
 Protect secret files through filesystem access controls without requiring post-creation `chmod` on NAS storage.
 Read secrets only from the configured location; fallback could send to a different channel.
+
+### Delivery and Recovery
 
 Deduplicate review notices by target week, member/issue set, rendered message, and webhook destination; ignore private evidence and issue record ordering.
 Serialize identical sends and recheck the receipt after acquiring the lock.
