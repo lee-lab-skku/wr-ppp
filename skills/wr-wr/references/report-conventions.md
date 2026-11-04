@@ -1,31 +1,41 @@
 # Report Conventions
 
-Use these conventions when helping a user locate, organize, create, or build a report. Read the repository's [report workflow](../../../docs/report-workflow.md), [setup guide](../../../docs/setup.md), and build scripts when exact current behavior is needed.
+Use these conventions when helping a user locate, organize, create, or build a report.
+They cover source discovery, directory naming, scaffolding, comment preservation, report identity, and output.
+Read the repository's [report workflow](../../../docs/report-workflow.md), [setup guide](../../../docs/setup.md), and build scripts when exact current behavior is needed.
 
 ## Find the Relevant Files
 
-- On native Windows, resolve the installed `SKILL.md` link as described in the skill entry point and do not run the POSIX `scripts/resolve-repo-root` helper. On Linux/macOS, resolve the template repository with that helper.
+- **Platform routing**: On native Windows, resolve the installed `SKILL.md` link as described in [Locate the Template Repository](../SKILL.md#locate-the-template-repository) and do not run the POSIX `scripts/resolve-repo-root` helper.
+  On Linux/macOS, resolve the template repository with that helper.
 - Treat the user's report source directory as separate from the template repository unless the existing layout shows otherwise.
 - Look for an existing `main.tex`, another explicitly named `.tex` source, supporting figures, neighboring weekly directories, and previous report sources before proposing new files.
 - If several plausible reports exist and the request does not identify one, ask which report is in scope rather than guessing.
 
 ## Choose a Source Directory
 
-There is no mandatory weekly-directory naming scheme. The `W1` directory in the repository documentation is illustrative.
+There is no mandatory weekly-directory naming scheme.
+The `W1` directory in the repository documentation is illustrative.
 
 - Respect a path or naming scheme supplied by the user.
 - Otherwise, inspect sibling report directories and continue an evident convention.
 - If no convention exists, suggest a stable, readable name such as the reporting-week label, but explain the choice when it affects the output name.
-- The source directory's basename becomes the PDF filename. It does not determine the reporting week printed in the document; the build date does.
-- Do not overwrite an existing `main.tex` merely because the directory looks like the desired week. Treat it as an existing draft and inspect it first.
+- **Directory and output names**: The source directory's basename becomes the PDF filename.
+  It does not determine the reporting week printed in the document; the build date does.
+- **Existing drafts**: Do not overwrite an existing `main.tex` merely because the directory looks like the desired week.
+  Treat it as an existing draft and inspect it first.
 
-When the user wants a new source, create the chosen directory and copy the canonical `template.tex` to `main.tex`.
-Read its instructional comments before adapting the illustrative report content to the user's material.
-Immediately after copying, delete the template's example title and abstract text, leaving `\ReportHeader` with an empty title argument and an empty `reportabstract` body.
-Keep the commands, environments, and instructional comments, and do not replace them with placeholder or filler text.
-Set author and project from the user's known identity, or leave them empty; do not keep the example values.
-Write the title and abstract only under the timing rules in [content-quality.md](content-quality.md).
-Do not copy `weekly-report.sty`; the build command supplies it.
+## Scaffold a New Source
+
+When the user wants a new source, use the canonical template and preserve its instructional role:
+
+1. Create the chosen directory and copy the canonical `template.tex` to `main.tex`.
+   Do not copy `weekly-report.sty`; the build command supplies it.
+1. Immediately after copying, delete the template's example title and abstract text, leaving `\ReportHeader` with an empty title argument and an empty `reportabstract` body.
+   Keep the commands, environments, and instructional comments, and do not replace them with placeholder or filler text.
+1. Read its instructional comments before adapting the illustrative report content to the user's material.
+1. Set author and project from the user's known identity, or leave them empty; do not keep the example values.
+1. Write the title and abstract only under the timing rules in [Exercise Editorial Judgment](content-quality.md#exercise-editorial-judgment).
 
 ## Preserve Instructional Comments
 
@@ -33,6 +43,7 @@ When adapting a new report from the template, preserve retained instructional co
 Comments exclusively associated with an omitted optional example may be removed with that example; retain comments that also apply to remaining content.
 Keep retained comments with the material they guide if it moves, and keep any new author-only notes separate.
 Preserving a comment does not require including every content element it suggests.
+
 Before handing off a newly scaffolded source, compare its retained instructional comments with the canonical template and check that any removed comments belonged exclusively to omitted examples.
 
 For an existing report, preserve its comments and customizations without automatically replacing or inserting comments from the current template.
@@ -40,7 +51,8 @@ An explicit user request to edit or remove comments governs that work; ordinary 
 
 ## Set Report Identity
 
-The source must provide the report title, author, and project through `\ReportHeader`. The build resolves the date, reporting-week label, and serial number.
+The source must provide the report title, author, and project through `\ReportHeader`.
+The build resolves the date, reporting-week label, and serial number.
 
 - Use the current date only when the user intends the current reporting period.
 - Use `--date YYYY-MM-DD` for a backdated report or when the intended week differs from today.
@@ -49,7 +61,12 @@ The source must provide the report title, author, and project through `\ReportHe
 
 ## Build and Output
 
-Run `report-build` from the report source directory. It uses `main.tex` unless another source is supplied. Use `--here` only when a local PDF is desired; it replaces the same-named local PDF after successful compilation and validation.
-Existing PDFs remain available while compiling, and local PDFs outside the selected output target are preserved. Without `--here`, the configured output directory receives the result.
+Run `report-build` from the report source directory.
+It uses `main.tex` unless another source is supplied.
+Use `--here` only when a local PDF is desired; it replaces the same-named local PDF after successful compilation and validation.
 
-If `report-build` or its configuration is unavailable, explain or perform the repository setup appropriate to the user's request. Installing the command or user-level skill links may require permissions outside the report directory, so do not assume authorization beyond the current task.
+Existing PDFs remain available while compiling, and local PDFs outside the selected output target are preserved.
+Without `--here`, the configured output directory receives the result.
+
+If `report-build` or its configuration is unavailable, explain or perform the repository setup appropriate to the user's request.
+Installing the command or user-level skill links may require permissions outside the report directory, so do not assume authorization beyond the current task.

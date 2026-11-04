@@ -1,23 +1,98 @@
 # Content Quality
 
 Use this guidance for any task that changes or evaluates report meaning, whether the starting point is raw material, a partial draft, a completed source, or only rendered output.
+It defines evidence handling, editorial stages, title and abstract timing, author perspective, content revision, and shortening.
+
+## Review Proportionately
+
+Assess the report against shared policy and the relevant template prompts, with attention to factual traceability, decision usefulness, and readability.
+For a focused review, address the requested issue and flag material report-policy problems without silently expanding into a full rewrite.
 
 ## Ground the Work
 
-Build a lightweight mental inventory of available support: user notes, existing prose, experiment outputs, figures, code or commit history, prior reports, and statements supplied in conversation. Use only sources that are in scope and accessible.
+Establish what the available material supports before changing report meaning.
+Continue independent improvements when evidence is missing, preserving the distinction between authoring gaps and reader-facing research findings.
+
+### Inventory the Evidence
+
+Build a lightweight mental inventory of available support: user notes, existing prose, experiment outputs, figures, code or commit history, prior reports, and statements supplied in conversation.
+Use only sources that are in scope and accessible.
 
 - Treat an existing draft as evidence of what the author currently claims, not independent proof that each claim is true.
 - Treat repository activity as evidence that work changed, not by itself as proof of scientific meaning, performance, or completion.
 - Do not turn missing data into plausible-looking numbers, citations, outcomes, or figure descriptions.
-- Preserve useful uncertainty. Distinguish direct observations, interpretations, hypotheses, decisions, and plans.
+- **Uncertainty**: Preserve useful uncertainty.
+  Distinguish direct observations, interpretations, hypotheses, decisions, and plans.
 
-When required factual support is missing, treat it as an authoring gap rather than automatically making it report content. Ask the author when the gap blocks correctness. Otherwise omit the unsupported statement and notify the author in the handoff or an author-only source comment. Do not render `unknown`, `not verified`, TODOs, or placeholder values unless the user explicitly requests a visibly incomplete draft. Describe missing evidence in the report only when its absence is itself a relevant, author-approved finding or problem. Do not block unrelated improvements merely because every fact cannot be independently verified.
+### Handle Missing Support
 
-## Write from the Author's Research Perspective
+When required factual support is missing, treat it as an authoring gap rather than automatically making it report content.
+Ask the author when the gap blocks correctness.
+Otherwise omit the unsupported statement and notify the author in the handoff or an author-only source comment.
+
+Do not render `unknown`, `not verified`, TODOs, or placeholder values unless the user explicitly requests a visibly incomplete draft.
+Describe missing evidence in the report only when its absence is itself a relevant, author-approved finding or problem.
+Do not block unrelated improvements merely because every fact cannot be independently verified.
+
+### Revise Without Overclaiming
+
+When source material is unavailable, continue with work that does not require it.
+Improve clarity, organization, grammar, and LaTeX while preserving factual meaning; identify claims that cannot be strengthened or verified to the author or in author-only source comments instead of converting them into reader-facing uncertainty language.
+
+When supporting material is available, check important claims against it and correct inconsistencies.
+When only a draft is available:
+
+- improve clarity, flow, concision, organization, grammar, and presentation without changing factual meaning;
+- preserve the author's language, voice, degree of certainty, research priorities, and effective presentation choices while applying shared report policy within the requested scope;
+- flag internal contradictions, unexplained metrics, unsupported causal wording, or missing context;
+- do not add stronger conclusions or apparent verification merely to make the report sound more persuasive.
+
+If only a PDF is available, determine whether the user wants feedback on the rendered artifact or an editable reconstruction.
+Do not imply that reconstructed LaTeX is the original source.
+
+## Exercise Editorial Judgment
+
+Choose the report's editorial stage from the requested outcome and existing artifact, then apply the corresponding title, abstract, and content decisions.
+Use the shared report policy and canonical template comments to communicate supported research while preserving the author's intent.
+
+### Determine the Editorial Stage
+
+Infer the current stage from the user's request and artifact: collecting material and producing an initial draft precede editorial revision; a request to polish, finalize, or produce a submission-ready report includes revision.
+Do not advance into layout polishing merely because an initial draft compiles or has a visible defect.
+Use the stage to decide when to write the title and abstract and when to revisit deferred layout and length issues.
+[Match Layout Work to the Stage](latex-and-build.md#match-layout-work-to-the-stage) applies this decision to compilation, substantive defects, explicit layout repairs, and PDF validation.
+
+### Time the Title and Abstract
+
+Do not generate an abstract while collecting material, organizing evidence, or drafting the initial body.
+Begin abstract writing only once the report has entered editorial revision, using [Determine the Editorial Stage](#determine-the-editorial-stage), and base it on the supported body content.
+Preserve an existing author-written abstract; the template's illustrative abstract is not author-written and is removed when scaffolding, so an empty abstract is not a reason to draft one before revision.
+
+Defer the title on the same schedule: leave it empty while collecting material and drafting, and write it from the supported body content during editorial revision.
+An empty abstract understates page length by a few lines, so allow for it when judging length before revision.
+Do not add placeholder or filler text; the author is responsible for completing both before submission.
+
+### Select and Organize Research Content
+
+Apply the research focus in the [shared report policy](../../../docs/report-policy.md) when selecting source material.
+If suggesting that out-of-scope updates be shared in a project meeting, do not send them or create a separate deliverable unless requested.
+Do not fill a quiet research week with maintenance activity or invented findings.
+
+Use the canonical template comments, as directed by [Choose and Combine Relevant Guidance](../SKILL.md#choose-and-combine-relevant-guidance), to assess how well the actual research and its support are communicated.
+Apply the shared report policy's title requirement when drafting or reviewing: the title must convey actual research content rather than consist only of a project name, reporting week, a generic label such as "Weekly Report", or their combination.
+Missing a suggested element or using a different grouping is not itself a defect.
+
+Preserve a useful existing organization.
+Reorganize when requested or when it addresses a concrete communication problem within the authorized task; a difference from the example is not itself a defect.
+Before reorganizing an existing draft, identify the concrete communication problem the change would address and keep the revision within the requested scope.
+Do not demand metrics, positive findings, or invented blockers to fill the example's structure.
+
+### Write from the Author's Research Perspective
 
 Source verification is the agent's working process, not the report's narrative viewpoint.
 When the user supplies experiment logs, summaries, tables, or other organized material, report the supported research actions, results, interpretations, and plans as the author's work rather than as facts an outside observer discovered in those files.
 Prefer the experiment, method, sample, or result as the grammatical subject, or omit the subject where natural in the report's language; do not repeatedly add "I", "we", "the author", or "the researcher" to establish ownership.
+
 For example, if the records support it, write "At the tested temperature, yield increased relative to the baseline" rather than "Reviewing the supplied experiment log revealed that the researcher obtained a higher yield."
 Keep source traceability in appropriate references or author-only notes instead of making every finding a statement about what the supplied material says.
 
@@ -25,28 +100,12 @@ Preserve attribution when the material describes collaborators' work, external l
 Do not convert a documented plan into completed work, assume ownership of external results, or strengthen certainty while changing viewpoint.
 Resolve ambiguous ownership or status before making a consequential claim.
 
-## Exercise Editorial Judgment
-
-Do not generate an abstract while collecting material, organizing evidence, or drafting the initial body.
-Begin abstract writing only once the report has entered editorial revision, using the stage criteria in [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage", and base it on the supported body content.
-Preserve an existing author-written abstract; the template's illustrative abstract is not author-written and is removed when scaffolding, so an empty abstract is not a reason to draft one before revision.
-Defer the title on the same schedule: leave it empty while collecting material and drafting, and write it from the supported body content during editorial revision.
-An empty abstract understates page length by a few lines, so allow for it when judging length before revision.
-Do not add placeholder or filler text; the author is responsible for completing both before submission.
-
-Apply the research focus in the [shared report policy](../../../docs/report-policy.md) when selecting source material.
-If suggesting that out-of-scope updates be shared in a project meeting, do not send them or create a separate deliverable unless requested.
-Do not fill a quiet research week with maintenance activity or invented findings.
-
-Use the canonical template comments, as directed by `SKILL.md`, to assess how well the actual research and its support are communicated.
-Apply the shared report policy's title requirement when drafting or reviewing: the title must convey actual research content rather than consist only of a project name, reporting week, a generic label such as "Weekly Report", or their combination.
-Missing a suggested element or using a different grouping is not itself a defect.
-Before reorganizing an existing draft, identify the concrete communication problem the change would address and keep the revision within the requested scope.
-Do not demand metrics, positive findings, or invented blockers to fill the example's structure.
+### Express Body Relationships
 
 Check the body beneath each subsection as well as its title.
 When several findings, comparisons, conditions, or next steps are buried in continuous prose, expose their relationships with the template's structural guidance: distinct items for parallel points and subordinate support for a parent finding, or a table for comparable dimensions.
 Adding subsection headings alone does not resolve an unstructured body.
+
 Retain short prose for a single connected argument and for transitions; do not fragment every sentence into a bullet or require the same labels and nesting depth everywhere.
 Apply author viewpoint, meaningful body structure, and scientific notation while drafting, rather than deferring these content requirements as cosmetic layout work.
 
@@ -55,10 +114,17 @@ Unless another emphasis style is specified, use italics (`\textit{...}` in LaTeX
 
 ## Shorten and Recheck
 
+Use the report's stage and shared length policy to decide when page-fitting work is required.
+Reduce nonessential content before accepting an overlength report, and document any justified exception in the author handoff.
+
+### Decide When to Fit the Report
+
 Use [the shared length policy](../../../docs/report-policy.md#length-and-exceptions) for the page limit and complete necessity criteria.
-Before editorial revision, keep content concise but report any observed excess and defer page-fitting iterations under [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage".
+Before editorial revision, keep content concise but report any observed excess and defer page-fitting iterations under [Match Layout Work to the Stage](latex-and-build.md#match-layout-work-to-the-stage).
 During editorial revision and finalization, check the rendered page count and revise overlength content within the authorized scope before declaring it ready.
 For review-only tasks, identify the necessary cuts and any exception without changing the source.
+
+### Reduce the Content
 
 Look for content reductions suited to the material, then rebuild and reassess:
 
@@ -66,23 +132,9 @@ Look for content reductions suited to the material, then rebuild and reassess:
 1. Consolidate related claims and supporting evidence; use the clearest compact prose, table, or figure and remove redundant displays.
 1. Keep only the context, evidence, limitations, and next steps needed to assess the research; leave nonessential supporting detail in its source records, with a reference when useful.
 
+### Resolve Remaining Excess
+
 Preserve readable typography and essential caveats during revision.
 Do not declare an overlength report ready unless the shared policy's narrow exception is established.
 In that case, state the verified page count and specific necessity justification in the author handoff, keeping any excess to the minimum necessary.
 If necessity cannot be established, treat the excess as unresolved revision work.
-
-## Revise Without Overclaiming
-
-When supporting material is available, check important claims against it and correct inconsistencies. When only a draft is available:
-
-- improve clarity, flow, concision, organization, grammar, and presentation without changing factual meaning;
-- preserve the author's language, voice, degree of certainty, research priorities, and effective presentation choices while applying shared report policy within the requested scope;
-- flag internal contradictions, unexplained metrics, unsupported causal wording, or missing context;
-- do not add stronger conclusions or apparent verification merely to make the report sound more persuasive.
-
-If only a PDF is available, determine whether the user wants feedback on the rendered artifact or an editable reconstruction. Do not imply that reconstructed LaTeX is the original source.
-
-## Review Proportionately
-
-Assess the report against shared policy and the relevant template prompts, with attention to factual traceability, decision usefulness, and readability.
-For a focused review, address the requested issue and flag material report-policy problems without silently expanding into a full rewrite.
