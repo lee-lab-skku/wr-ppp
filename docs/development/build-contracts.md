@@ -24,7 +24,7 @@ Apply the portability rules for each execution boundary:
 
 ## Setup Transactions
 
-Apply the [shared setup destination policy](../setup.md#install) to command and skill links, preserving idempotency, explicit replacement, directory protection, and preflight before mutation.
+Apply the [shared setup destination policy](../setup.md#existing-destinations) to command and skill links, preserving idempotency, explicit replacement, directory protection, and preflight before mutation.
 
 - **Preflight**: Normalize supported destination aliases and deduplicate requested destinations, preserving their first occurrence.
   Preflight every requested link's parent path and validate final administrator path settings with the shared path helper before changing installation state.
