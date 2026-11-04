@@ -40,6 +40,46 @@ Prepare private configuration separately and commit it atomically only after lin
 Journal link changes for reverse-order rollback on failure; preserve existing configuration and never overwrite an unrelated entry during rollback.
 If restoration fails, report the backup path and remaining partial changes.
 
+## Markdown Structure
+
+Organize and review repository Markdown according to [mddt](https://github.com/mirinae3145/mddt)'s document model.
+Authors and reviewers use the model to judge document purpose, topic boundaries, placement, and relationships within the document tree.
+This adoption covers root documents, shared guides, and skill documentation; Windows documentation remains outside its current scope.
+
+Apply the upstream [document model](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/model.md) through its [writing and restructuring procedure](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md):
+
+1. Identify the reader, the question the content answers, and its [document kind](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/kinds.md).
+1. Locate its canonical home using the [documentation index](README.md) and the repository's [document responsibilities](#documentation-and-scope).
+   Decide whether it belongs in an existing part, a separate topic, or a child document introduced by its parent.
+1. Choose sections, lists, or tables from the information type and the relationships between the content's parts.
+   Judge topic independence, sibling detail, and meaningful nesting when arranging them.
+1. Write or revise the content, then update its overview, parent summaries, and affected links to match the settled structure.
+1. Reread the changed topics as a whole against the model, including judgments the checker cannot make.
+   Explain structural choices in review when their rationale is not evident from the document.
+
+After this review, run the checker to verify the deterministic minimum requirements and identify places that may need further judgment.
+Passing the check establishes only those automated requirements; it does not establish that the document's meaning, organization, or placement follows the model.
+Assess warnings against the model in context, and judge the structure even where the checker reports nothing.
+
+With Git and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run the check from the repository root:
+
+```bash
+bash tests/check_docs.sh
+```
+
+The command fetches mddt's current default branch into temporary storage on every run, prints its commit, and removes the checkout afterward.
+No mddt tag, version, or commit is pinned; upstream changes can therefore change findings without a repository change.
+uv prepares Python and the dependencies declared by the upstream checker, including its local English model.
+The check requires network access, but document text is analyzed locally.
+
+Pass `--review` for additional structural review findings or `--format json` for machine-readable output.
+The `.mddtignore` file excludes `windows/` from checking, while links into Windows documentation still resolve against those files.
+Errors and execution failures fail the check; warnings remain visible for editorial judgment and do not fail CI.
+The checker does not replace a formatting linter.
+
+The **Check documentation** workflow runs this minimum check on branch pushes, pull requests, and manual dispatches.
+The release workflow also calls it before publication, using the same triggering commit as the platform checks.
+
 ## Shell and Build Safety
 
 Write shell scripts for both Linux and macOS whenever practical.

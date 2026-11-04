@@ -30,16 +30,20 @@ Bash/Docker setup requires Docker access and `sudo` for the installed command li
 Python checks require host Python 3 with the standard library; editor rendering checks also use Node.js and browser checks need a supported browser.
 Run checks in proportion to the affected behavior:
 
-- Build or LaTeX changes: `./scripts/test.sh` to compile the example through the canonical build command.
-- Administrator workflow changes: `python3 -B -m unittest discover -s tests -v` for isolated regression checks with substituted Docker and viewers.
-- Shared editor changes: `python3 -B -m unittest discover -s tests -p 'test_editor.py' -v`, plus the rendering, persistence, and browser checks in the [validation guide](docs/development.md#validation).
-- Guidance or skill changes: check the [report policy](docs/report-policy.md), template comments, affected reference routing, and representative report tasks.
+- **Build or LaTeX changes**: `./scripts/test.sh` to compile the example through the canonical build command.
+- **Administrator workflow changes**: `python3 -B -m unittest discover -s tests -v` for isolated regression checks with substituted Docker and viewers.
+- **Shared editor changes**: `python3 -B -m unittest discover -s tests -p 'test_editor.py' -v`, plus the rendering, persistence, and browser checks in the [validation guide](docs/development.md#validation).
+- **Guidance or skill changes**: check the [report policy](docs/report-policy.md), template comments, affected reference routing, and representative report tasks.
+- **Markdown changes**: follow the [writing and review procedure](docs/development.md#markdown-structure), then run `bash tests/check_docs.sh` with Git and uv installed.
 
 Exercise the affected workflow and failure behavior; substituted dependencies do not verify actual TeX rendering or desktop viewers.
 Report relevant checks not run and platform limitations; do not claim macOS or agent-service verification without exercising that environment.
 Use the [full validation guidance](docs/development.md#validation) and [Windows validation guidance](windows/CONTRIBUTING.md#validation) for their respective scopes.
 
 ## Contribution Workflow
+
+For Markdown changes, use mddt's [document model and writing procedure](docs/development.md#markdown-structure) to decide content boundaries, placement, structure, and links.
+Authors and reviewers remain responsible for these judgments; the CI checker verifies only deterministic minimum requirements.
 
 Keep routine report content separate from shared template, style, and script changes.
 Preserve documented setup, output, LaTeX, and skill contracts; explain deliberate breaking changes and provide migration guidance when users must act.

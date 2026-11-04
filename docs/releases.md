@@ -63,7 +63,7 @@ Windows must pass native/common regression checks, actual PDF generation, and po
 Validate the offline distribution without relying on development tools, and verify that uninstallation preserves user configuration and PDFs.
 See the [Windows development guide](../windows/CONTRIBUTING.md#ci-and-packaging) for build dependencies and packaging procedures.
 
-Only the publication job has `contents: write`, and it runs after every platform succeeds.
+Only the publication job has `contents: write`, and it runs after every platform and the shared [Markdown check](development.md#markdown-structure) succeed.
 Use the repository's automatic `GITHUB_TOKEN`; no personal access token is required.
 Organization/repository Actions policies must allow the pinned official actions and release-writing job permission.
 Keep third-party action revisions pinned to full commit IDs; follow the Windows development guide when updating installer build dependencies.

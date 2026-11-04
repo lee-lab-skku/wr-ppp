@@ -1,5 +1,6 @@
 # POSIX entry points must remain executable text when checked out on Windows.
 /scripts/** text eol=lf
+/tests/*.sh text eol=lf
 /skills/**/scripts/** text eol=lf
 # The installed TeX notice is compared byte-for-byte across build platforms.
 /windows/TeX-NOTICE.txt text eol=lf
