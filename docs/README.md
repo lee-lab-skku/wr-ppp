@@ -42,7 +42,7 @@ Use the following documents for the specific contribution concern.
 | --- | --- |
 | Source ownership, repository files, editor boundaries, and command entry points | [Shared Architecture](development/architecture.md) |
 | Shell portability, setup transactions, build isolation, PDF publication, and update safeguards | [Shell and Build Contracts](development/build-contracts.md) |
-| Document ownership, mddt's model, structural review, skill maintenance, and CI minimum checks | [Documentation Maintenance](development/documentation.md) |
+| Document ownership, the mddt writing procedure, skill maintenance, and CI minimum checks | [Documentation Maintenance](development/documentation.md) |
 | Proportionate checks for report guidance, skills, the shared editor, and common workflows | [Development Validation](development/validation.md) |
 | Administrator storage, judgment and builder boundaries, record parsing, publication, and notifications | [Administrator Development](admin-development.md) |
 | Versioning, changelog conventions, tag grammar, and checkout versions | [Versioning and Releases](releases.md) |

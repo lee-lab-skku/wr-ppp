@@ -1,6 +1,6 @@
 # Documentation Maintenance
 
-This guide covers document ownership, model-based writing and review, skill maintenance, and the automated minimum check.
+This guide covers document ownership, writing and review with mddt, skill maintenance, and the automated minimum check.
 Use it when changing repository Markdown, report guidance, or the bundled agent skills.
 
 ## Document Responsibilities
@@ -33,24 +33,22 @@ Shared documentation describes Windows from the repository-wide perspective:
 
 ## Markdown Structure
 
-Organize and review repository Markdown according to [mddt](https://github.com/mirinae3145/mddt)'s document model.
-Authors and reviewers use the model to judge document purpose, topic boundaries, placement, and relationships within the document tree.
+For repository Markdown, follow the [mddt](https://github.com/mirinae3145/mddt) skill's [writing procedure](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md).
+Place content in the document tree before writing it, and reread each changed topic whole once the content settles.
+The checker then covers only the requirements a parser can decide.
 This adoption covers root documents, shared guides, and skill documentation; Windows documentation remains outside its current scope.
 
-Apply the upstream [document model](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/model.md) through its [writing and restructuring procedure](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md):
+Use an installed copy of the mddt skill or a checkout of its repository, which provide the procedure's reference documents and the checker.
+Apply the procedure with these repository-specific decisions:
 
-1. Identify the reader, the question the content answers, and its [document kind](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/kinds.md).
-1. Locate its canonical home using the [documentation index](../README.md) and the repository's [document responsibilities](#document-responsibilities).
-   Decide whether it belongs in an existing part, a separate topic, or a child document introduced by its parent.
-1. Choose sections, lists, or tables from the information type and the relationships between the content's parts.
-   Judge topic independence, sibling detail, and meaningful nesting when arranging them.
-1. Write or revise the content, then update its overview, parent summaries, and affected links to match the settled structure.
-1. Reread the changed topics as a whole against the model, including judgments the checker cannot make.
-   Explain structural choices in review when their rationale is not evident from the document.
-
-After this review, run the checker to verify the deterministic minimum requirements and identify places that may need further judgment.
-Passing the check establishes only those automated requirements; it does not establish that the document's meaning, organization, or placement follows the model.
-Assess warnings against the model in context, and judge the structure even where the checker reports nothing.
+- **Placement**: Before writing, identify the reader, the question the content answers, and its [document kind](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/kinds.md).
+  Locate its canonical home with the [documentation index](../README.md) and the [document responsibilities](#document-responsibilities), as [placing a document](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#placing-a-document) describes.
+- **Settled content**: Once the content settles, update its overview, parent summaries, and affected links.
+  Then reread the changed topics whole against the [document model](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/model.md), including judgments the checker cannot make.
+  Explain structural choices in review when their rationale is not evident from the document.
+- **Findings**: After this review, run the [automated minimum check](#automated-minimum-check) and judge its warnings in context, as [checking](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#checking) describes.
+  Passing establishes only the automated requirements, not that the document's meaning, organization, or placement follows the model.
+- **Reports**: Report the mddt commit the check printed, the files it covered, and the warnings kept after judgment with their reasons.
 
 ## Editing AI Skills
 
@@ -88,13 +86,20 @@ bash tests/check_docs.sh
 ```
 
 The command fetches mddt's current default branch into temporary storage on every run, prints its commit, and removes the checkout afterward.
-No mddt tag, version, or commit is pinned; upstream changes can therefore change findings without a repository change.
 uv prepares Python and the dependencies declared by the upstream checker, including its local English model.
 The check requires network access, but document text is analyzed locally.
 
+The check deliberately follows mddt without pinning a tag, version, or commit:
+
+- **Current rules**: Upstream rules and fixes apply without a repository change.
+- **Run identity**: The printed commit identifies the checker a run used, for reports and for reproducing a result.
+- **New rules**: A new upstream rule can report errors in unchanged documents and fail CI; fix them in a change of their own.
+
 Pass `--review` for additional structural review findings or `--format json` for machine-readable output.
 The `.mddtignore` file excludes `windows/` from checking, while links into Windows documentation still resolve against those files.
+
 Errors and execution failures fail the check; warnings remain visible for editorial judgment and do not fail CI.
+The check lists warnings across the whole tree, so judge those in the files a change touched and leave the rest to their own changes.
 The checker does not replace a formatting linter.
 
 The **Check documentation** workflow runs this minimum check on branch pushes, pull requests, and manual dispatches.

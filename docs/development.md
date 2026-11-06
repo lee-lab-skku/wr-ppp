@@ -10,7 +10,7 @@ Use it to place implementation and preserve the shared responsibilities of the D
 
 ## Markdown Structure
 
-[Documentation Maintenance](development/documentation.md) explains how to judge document purpose, placement, and structure with mddt's document model.
+[Documentation Maintenance](development/documentation.md) explains how to follow mddt's writing procedure, from placing content before writing to rereading changed topics.
 Its automated checker verifies only deterministic minimum requirements alongside author and reviewer judgment.
 
 ## Shell and Build Safety

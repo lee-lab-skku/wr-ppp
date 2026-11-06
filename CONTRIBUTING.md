@@ -42,7 +42,7 @@ Use the [full validation guidance](docs/development/validation.md) and [Windows 
 
 ## Contribution Workflow
 
-For Markdown changes, use mddt's [document model and writing procedure](docs/development/documentation.md#markdown-structure) to decide content boundaries, placement, structure, and links.
+For Markdown changes, follow mddt's writing procedure as [Markdown structure](docs/development/documentation.md#markdown-structure) applies it: place content before writing, and reread changed topics whole once they settle.
 Authors and reviewers remain responsible for these judgments; the CI checker verifies only deterministic minimum requirements.
 
 Keep routine report content separate from shared template, style, and script changes.
