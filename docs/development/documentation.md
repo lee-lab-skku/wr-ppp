@@ -49,6 +49,7 @@ Apply the procedure with these repository-specific decisions:
 - **Findings**: After this review, run the [automated minimum check](#automated-minimum-check) and judge its warnings in context, as [checking](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#checking) describes.
   Passing establishes only the automated requirements, not that the document's meaning, organization, or placement follows the model.
 - **Reports**: Report the mddt commit the check printed, the files it covered, and the warnings kept after judgment with their reasons.
+- **Reorganization**: A requested reorganization of existing documents follows the procedure's [restructuring order](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#restructuring-an-existing-tree).
 
 ## Editing AI Skills
 
@@ -89,7 +90,7 @@ The command fetches mddt's current default branch into temporary storage on ever
 uv prepares Python and the dependencies declared by the upstream checker, including its local English model.
 The check requires network access, but document text is analyzed locally.
 
-The check deliberately follows mddt without pinning a tag, version, or commit:
+The check deliberately follows mddt without pinning a tag, version, or commit, one of the two approaches in mddt's [adoption guide](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/adopting.md#continuous-integration):
 
 - **Current rules**: Upstream rules and fixes apply without a repository change.
 - **Run identity**: The printed commit identifies the checker a run used, for reports and for reproducing a result.
