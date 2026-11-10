@@ -1,7 +1,7 @@
 # Visual Editing
 
 Use the shared editor when the user wants browser-based layout editing of an existing report.
-Resolve the repository through the skill entry point, and read [the visual editing guide](../../../docs/visual-editing.md) for commands, dependencies, and output behavior.
+Resolve the repository through [Locate the Template Repository](../SKILL.md#locate-the-template-repository), and read [the visual editing guide](../../../docs/visual-editing.md) for commands, dependencies, and output behavior.
 Report content still follows the shared report policy and the skill's evidence and comment-preservation guidance.
 
 ## Choose the Entry Point
@@ -23,15 +23,16 @@ Custom preambles, comments, and unsupported or ambiguous syntax are preserved as
 Do not strip content or weaken preservation checks to force a structural operation.
 `check_roundtrip.py` checks exact source preservation; similarity is diagnostic, not proof of rendering equivalence.
 Compare exported changes with the original, including references, comments, scientific notation, and list hierarchy.
+
 Keep source metadata when passing versioned state through JSON or HTML; legacy state cannot reconstruct source it never stored.
 If concurrent browser, form, or external edits cause a save conflict, preserve unsaved work and reopen to reconcile it rather than retrying a stale overwrite.
-Apply the relevant notation and reference checks in [latex-and-build.md](latex-and-build.md) to exported LaTeX; browser rendering alone does not establish compliance.
+Apply the relevant notation and reference checks in [LaTeX and Build Support](latex-and-build.md) to exported LaTeX; browser rendering alone does not establish compliance.
 Do not reword user-edited text while transferring state.
 
 Image previews are not substitutes for the originals needed by TeX.
 The local editor stores uploaded originals in the report's `figures/` directory; verify every referenced image before building.
 The browser uses the shared page dimensions but does not guarantee XeLaTeX pagination.
-Use the existing `report-build` path and the same reporting date when PDF validation is needed, following [latex-and-build.md](latex-and-build.md), "Match Layout Work to the Stage".
+Use the existing `report-build` path and the same reporting date when PDF validation is needed, following [Match Layout Work to the Stage](latex-and-build.md#match-layout-work-to-the-stage).
 Editing in the browser does not itself advance an initial draft into finalization; defer incidental cosmetic fixes unless the user requested them, and apply full page-count and content review during editorial revision or finalization.
 
 ## Existing Artifact Integrations

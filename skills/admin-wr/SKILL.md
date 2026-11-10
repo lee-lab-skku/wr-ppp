@@ -5,13 +5,26 @@ description: Collect and review multiple members' weekly-report PDFs, create an 
 
 # Assemble Administrator Weekly Reports
 
-Create a traceable weekly bundle from only the members and storage locations authorized by the administrator manifest. Candidate discovery and selection require judgment; PDF assembly must remain deterministic.
+Create a traceable weekly bundle from only the members and storage locations authorized by the administrator manifest.
+This entry selects platform tools and task references and preserves the shared evidence, source, and approval boundaries.
+Candidate discovery and selection require judgment; PDF assembly must remain deterministic.
 
 ## Locate Configuration
 
-On native Windows, resolve the real path of this `SKILL.md` through its installation link to find the resource root above `skills`. Read `windows/README.md` first. Use `Start-Weekly-Report.ps1` subcommands (`preflight`, `admin-paths`, `discover`, `probe-report`, `report-metadata`, `build-bundle`, `open-bundle`, `notify-issues`, and legacy `notify-held`) instead of the Bash commands below. In a packaged installation the resource root is `_internal`; use `WeeklyReportCLI.exe` beside that directory with the same subcommands. Native configuration is `.windows-config.json`, not `.local-config`; packaged installations use the per-user location documented there. These substitutions change execution only: preserve the evidence, history, selection, and approval policies below and in the references. When approving a native draft, also supply its generated `--review` JSON so changed source files or plans invalidate approval. Do not diagnose a native tool failure as a Docker failure.
+On native Windows, resolve the real path of this `SKILL.md` through its installation link to find the resource root above `skills`.
+Read `windows/README.md` first.
+Use `Start-Weekly-Report.ps1` subcommands (`preflight`, `admin-paths`, `discover`, `probe-report`, `report-metadata`, `build-bundle`, `open-bundle`, `notify-issues`, and legacy `notify-held`) instead of the Bash commands below.
+In a packaged installation the resource root is `_internal`; use `WeeklyReportCLI.exe` beside that directory with the same subcommands.
+Native configuration is `.windows-config.json`, not `.local-config`; packaged installations use the per-user location documented there.
 
-On Windows, treat every `scripts/<name>` command and every Bash command block in this skill and its references as a Linux/macOS example only. Invoke the matching subcommand through the absolute `Start-Weekly-Report.ps1` or `WeeklyReportCLI.exe` path resolved above. Use a Windows temporary directory and Windows absolute paths instead of `/tmp` and `/absolute/path`. The Windows mapping is:
+These substitutions change execution only: preserve the evidence, history, selection, and approval policies below and in the references.
+When approving a native draft, also supply its generated `--review` JSON so changed source files or plans invalidate approval.
+Do not diagnose a native tool failure as a Docker failure.
+
+On Windows, treat every `scripts/<name>` command and every Bash command block in this skill and its references as a Linux/macOS example only.
+Invoke the matching subcommand through the absolute `Start-Weekly-Report.ps1` or `WeeklyReportCLI.exe` path resolved in [Locate Configuration](#locate-configuration).
+Use a Windows temporary directory and Windows absolute paths instead of `/tmp` and `/absolute/path`.
+The Windows mapping is:
 
 | Linux/macOS helper or procedure | Windows subcommand |
 |---|---|
@@ -28,34 +41,40 @@ On Windows, treat every `scripts/<name>` command and every Bash command block in
 On Linux/macOS, run `scripts/resolve-repo-root` from this skill directory and read `.local-config` from the resolved repository.
 Run the platform's `admin-paths` command and require success before using its output; read the resolved `manager-manifest` path and use its `history` records for prior-run lookup.
 It prefers configured administrator data files and falls back to repository-local files when they are absent, as described in the workflow reference.
-Run the platform's preflight command as a standalone command before discovery. On Windows this is `preflight`, which checks native Python and XeLaTeX; on Linux/macOS this is `scripts/admin-preflight`, which checks Docker and the configured image.
+
+Run the platform's preflight command as a standalone command before discovery.
+On Windows this is `preflight`, which checks native Python and XeLaTeX; on Linux/macOS this is `scripts/admin-preflight`, which checks Docker and the configured image.
 If Docker works for the user but the direct helper reports socket permission denial in the agent environment, request execution authorization for that exact helper instead of asking the user to reconfigure Docker.
 
-- If the manager manifest is incomplete, help configure it only when the user asks, and do not search beyond paths they authorize.
-- An administrator output directory is required only when promoting a final bundle. A draft may be built in temporary storage without it.
-- Read [references/manager-manifest.md](references/manager-manifest.md) when configuring or validating the manifest.
+Read [Administrator Manifest](references/manager-manifest.md) when configuring or validating authorized storage roots, member fields, or incomplete setup.
+If the manifest is incomplete, help configure it only when the user asks, and do not search beyond paths they authorize.
+An administrator output directory is required only when promoting a final bundle; a draft may be built in temporary storage without it.
 
 ## Select Reports
 
-Read [references/rollup-workflow.md](references/rollup-workflow.md) before discovering candidates, comparing prior runs, preparing a bundle plan, or classifying issues.
+Read [Administrator Rollup Workflow](references/rollup-workflow.md) before discovering candidates, comparing prior runs, preparing a bundle plan, or classifying issues.
+It guides preflight, period resolution, evidence-based selection, PDF probing, page-limit review, and the draft-to-final sequence.
+Its child references define TSV formats and verified cumulative history.
 
-Treat filenames, directory depth, document layout, and embedded dates as evidence rather than contracts. A report need not use the repository template or contain a reporting-week label. Never invent a date, author, submission, selection reason, or approval.
+Treat filenames, directory depth, document layout, and embedded dates as evidence rather than contracts.
+A report need not use the repository template or contain a reporting-week label.
+Never invent a date, author, submission, selection reason, or approval.
 
-Stay within every member's declared search roots, do not follow directory symlinks, and do not broaden the search because an expected report is absent. Preserve source files.
-Run the platform's `probe-report` command as a standalone command for every proposed source before writing the plan.
-Check each person's weekly report against the two-page maximum using the probe's page count; follow the workflow reference for overlength warnings and the narrow necessity exception.
-Preserve complete source PDFs during review and assembly; do not truncate or reformat them to satisfy the limit.
+Stay within every member's declared search roots, do not follow directory symlinks, and do not broaden the search because an expected report is absent.
+Preserve source files and complete source PDFs during review and assembly; do not truncate or reformat them to satisfy the two-page limit.
 
 ## Build and Promote
 
-Use the platform's `build-bundle` command after selecting the best candidate for each member and writing the required temporary plan TSV, including cumulative weekly inclusion history as described in the workflow reference.
-Invoke it directly rather than wrapping it in another shell command or pipeline so execution and platform-specific errors remain visible.
+Follow the [build, review, and promotion procedure](references/rollup-workflow.md#build-confirm-and-promote) after selecting candidates and preparing the plan.
+Invoke each platform helper directly as a standalone command so execution and platform-specific errors remain visible.
+With no issues, publish and open the final PDF without requesting approval.
+With any issue, build a temporary draft outside the administrator output and obtain explicit approval before promotion.
+Changed sources invalidate approval and require reassessment.
 
-- With no issues, build and promote a complete bundle, then open the final PDF at the builder's printed output path with the platform's `open-bundle` command.
-- With any issue, build a draft outside the configured administrator output and use the printed review path to open it for the user with the platform's `open-bundle` command. Include a clickable PDF path and the evidence in the review request, then obtain explicit approval before promotion.
-- On approval, confirm selected source hashes have not changed and rebuild with `--approved-with-issues`. If they changed, reassess instead of publishing stale choices.
-- Never use `--draft` with the configured administrator output directory or its descendants.
-- For missing required reports, ambiguous candidates, unreadable PDFs, overlength reports, or internal week mismatches in draft review, follow [references/slack-notifications.md](references/slack-notifications.md) to prepare an optional Slack notice. Write evidence-grounded explanations and requested actions, show the destination channel and complete message, and obtain explicit approval of that message before sending with its preview fingerprint. A hold decision is not required; prior standing authorization does not approve a new message. Notification approval does not approve bundle promotion.
+For eligible draft issues, read [Slack 검토 문제 알림](references/slack-notifications.md).
+It covers destination setup, message preparation, approval, sending, and recovery.
+Show the destination channel and complete message and obtain message-specific approval before sending with its preview fingerprint.
+A hold decision is not required, prior standing authorization does not approve a new message, and notification approval does not approve promotion.
 
-Final execution TSVs go to the `history-output` directory reported by the platform's `admin-paths` command (repository-local by default); draft TSVs live under `.manifests/` in the temporary review directory.
-Report the final PDF and execution-manifest paths, member statuses, unresolved limitations, and whether approval was required. Do not distribute the bundle beyond its configured output directory without a separate explicit request.
+Report the final PDF and execution-manifest paths, member statuses, unresolved limitations, and whether approval was required.
+Do not distribute the bundle beyond its configured output directory without a separate explicit request.

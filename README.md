@@ -48,13 +48,13 @@ Use a title that conveys the actual research topic or development, and focus on 
 The [shared report policy](docs/report-policy.md) is authoritative for content, organization, scientific notation, and body references.
 The comments in [template.tex](template.tex) help apply it; example layouts and suggested elements are adaptable.
 
-### Length and Exceptions
+<a id="length-and-exceptions"></a>
 
 The complete weekly report must fit within two A4 pages per person, including figures, tables, and references.
 An exception requires indispensable research content after every reasonable cut or reorganization, with a specific explanation in the submission note or handoff.
 Follow the full [length and exception criteria](docs/report-policy.md#length-and-exceptions).
 
-## Visual Editing
+### Visual Editing
 
 The optional shared browser editor opens existing report sources on Linux/macOS or WSL:
 
@@ -66,7 +66,7 @@ It requires host Python 3.9 or newer and saves a separate `main.edited.tex`, pre
 Read the [visual editing guide](docs/visual-editing.md) for supported edits, source preservation, save conflicts, and PDF validation.
 Native Windows opens the same interface through the application's **시각 편집기** button; see the [Windows guide](windows/README.md).
 
-## AI-Assisted Workflow
+### AI-Assisted Workflow
 
 The optional `wr-wr` skill helps with orientation, evidence-grounded drafting, revision, LaTeX or build repair, visual editing, and final review, starting from the user's current files and intended outcome.
 AI assistance does not replace the author's responsibility for accuracy.
@@ -74,7 +74,7 @@ The skill preserves author choices and source comments, avoids invented claims, 
 Its references are the canonical task procedures:
 
 - [Report conventions](skills/wr-wr/references/report-conventions.md): sources, identity, scaffolding, and comment preservation.
-- [Content quality](skills/wr-wr/references/content-quality.md): evidence, editorial judgment, abstract timing, revision, and shortening.
+- [Content quality](skills/wr-wr/references/content-quality.md): evidence, editorial stages, title and abstract timing, revision, and shortening.
 - [LaTeX and build support](skills/wr-wr/references/latex-and-build.md): package use, body references, stage-aware layout checks, and PDF validation.
 - [Visual editing assistance](skills/wr-wr/references/visual-editing.md): editor routing, preservation, and export review.
 
@@ -87,7 +87,7 @@ Optional [Slack notices](skills/admin-wr/references/slack-notifications.md) requ
 ## Automatic Release Updates
 
 Bash installations can opt in with `./scripts/setup.sh --auto-update`; development clones should use `--auto-update=off`.
-See [update channels, safeguards, and recovery](docs/setup.md#automatic-release-updates).
+See [Automatic Release Updates](docs/setup/updates.md) for channels, checks, safeguards, and recovery.
 Native Windows updates remain manual.
 
 ## Documentation and Contributions

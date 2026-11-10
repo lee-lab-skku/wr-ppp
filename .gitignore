@@ -28,3 +28,5 @@ tmp/
 .env.*
 !.env.example
 slack-webhook.url
+# Track the repository Markdown check scope.
+!/.mddtignore
