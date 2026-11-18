@@ -33,23 +33,20 @@ Shared documentation describes Windows from the repository-wide perspective:
 
 ## Markdown Structure
 
-For repository Markdown, follow the [mddt](https://github.com/mirinae3145/mddt) skill's [writing procedure](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md).
+For repository Markdown, start from the [mddt](https://github.com/mirinae3145/mddt) skill's [entry](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/SKILL.md) and follow its [writing procedure](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md).
 Place content in the document tree before writing it, and reread each changed topic whole once the content settles.
 The checker then covers only the requirements a parser can decide.
-This adoption covers root documents, shared guides, and skill documentation; Windows documentation remains outside its current scope.
+To find or verify information in these documents, follow the skill's [reading procedure](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/reading.md).
 
-Use an installed copy of the mddt skill or a checkout of its repository, which provide the procedure's reference documents and the checker.
+This adoption covers root documents, shared guides, and skill documentation; Windows documentation remains outside its current scope.
+Use an installed copy of the mddt skill or a checkout of its repository, which provide the procedures' reference documents and the checker.
 Apply the procedure with these repository-specific decisions:
 
-- **Placement**: Before writing, identify the reader, the question the content answers, and its [document kind](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/kinds.md).
-  Locate its canonical home with the [documentation index](../README.md) and the [document responsibilities](#document-responsibilities), as [placing a document](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#placing-a-document) describes.
-- **Settled content**: Once the content settles, update its overview, parent summaries, and affected links.
-  Then reread the changed topics whole against the [document model](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/model.md), including judgments the checker cannot make.
-  Explain structural choices in review when their rationale is not evident from the document.
-- **Findings**: After this review, run the [automated minimum check](#automated-minimum-check) and judge its warnings in context, as [checking](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#checking) describes.
+- **Placement**: Locate the content's canonical home with the [documentation index](../README.md) and the [document responsibilities](#document-responsibilities).
+- **Review**: Explain structural choices in review when their rationale is not evident from the document.
+- **Findings**: Run the [automated minimum check](#automated-minimum-check) as part of the procedure's [checking](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#checking).
   Passing establishes only the automated requirements, not that the document's meaning, organization, or placement follows the model.
-- **Reports**: Report the mddt commit the check printed, the files it covered, and the warnings kept after judgment with their reasons.
-- **Reorganization**: A requested reorganization of existing documents follows the procedure's [restructuring order](https://github.com/mirinae3145/mddt/blob/main/skills/mddt/references/writing.md#restructuring-an-existing-tree).
+- **Kept warnings**: When a change keeps a warning after judgment, say why in the commit message or pull request.
 
 ## Editing AI Skills
 
