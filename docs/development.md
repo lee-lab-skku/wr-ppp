@@ -17,7 +17,6 @@ Its automated checker verifies only deterministic minimum requirements alongside
 
 [Shell and Build Contracts](development/build-contracts.md) defines portability, setup transactions, build isolation, and safe PDF publication.
 
-<a id="automatic-updates"></a>
 The same reference covers [automatic-update safeguards](development/build-contracts.md#automatic-updates), including version selection and installation locking.
 
 ## Editing AI Skills

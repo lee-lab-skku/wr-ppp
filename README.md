@@ -48,8 +48,6 @@ Use a title that conveys the actual research topic or development, and focus on 
 The [shared report policy](docs/report-policy.md) is authoritative for content, organization, scientific notation, and body references.
 The comments in [template.tex](template.tex) help apply it; example layouts and suggested elements are adaptable.
 
-<a id="length-and-exceptions"></a>
-
 The complete weekly report must fit within two A4 pages per person, including figures, tables, and references.
 An exception requires indispensable research content after every reasonable cut or reorganization, with a specific explanation in the submission note or handoff.
 Follow the full [length and exception criteria](docs/report-policy.md#length-and-exceptions).

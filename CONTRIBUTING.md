@@ -57,7 +57,5 @@ Follow the existing [versioning and release policy](docs/releases.md) for SemVer
 AI agents must not increment the version or create a release tag without explicit developer confirmation.
 Published tags are immutable.
 
-<a id="tag-driven-ci-and-windows-releases"></a>
-
 See the [release procedure](docs/releases/publishing.md) for confirmed release preparation, manual workflow runs, tag validation, publication, and retry behavior.
 The repository-wide release remains the version authority for native Windows.
