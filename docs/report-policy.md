@@ -44,6 +44,9 @@ PPP and the abstract provide useful perspectives on the week:
 - **Problems:** relevant unresolved research issues and their consequences
 - **Plans:** next research directions and intended learning or outcomes
 
+Results that readers already heard in earlier reports, meetings, or presentations are not new progress.
+Present such a result only through what changed, such as a new use, interpretation, or comparison.
+
 ## Evidence and Emphasis
 
 Lead with important takeaways and make the relationships among claims, supporting evidence or reasoning, and research implications clear.

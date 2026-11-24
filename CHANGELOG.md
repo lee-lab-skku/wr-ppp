@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [docs] report manuscript and presentation work by what it changes in the research argument or its communication, not by page counts, typesetting, or layout.
+- [docs] present results that readers already heard in earlier reports, meetings, or presentations only through what changed, such as a new use or interpretation.
 
 ## [1.6.0] &mdash; 2026-11-01
 
