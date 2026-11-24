@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [docs] report manuscript and presentation work by what it changes in the research argument or its communication, not by page counts, typesetting, or layout.
 - [docs] present results that readers already heard in earlier reports, meetings, or presentations only through what changed, such as a new use or interpretation.
+- [docs] pair each reported problem with a planned response or direction, and have the writing skill ask the author when the records hold none.
 
 ## [1.6.0] &mdash; 2026-11-01
 

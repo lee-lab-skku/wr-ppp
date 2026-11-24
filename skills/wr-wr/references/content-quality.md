@@ -29,6 +29,8 @@ Use only sources that are in scope and accessible.
 When required factual support is missing, treat it as an authoring gap rather than automatically making it report content.
 Ask the author when the gap blocks correctness.
 Otherwise omit the unsupported statement and notify the author in the handoff or an author-only source comment.
+A problem that lacks a planned response or direction is incomplete under the shared report policy.
+Ask the author for one before drafting the problem, rather than inventing a response or leaving it out silently.
 
 Do not render `unknown`, `not verified`, TODOs, or placeholder values unless the user explicitly requests a visibly incomplete draft.
 Describe missing evidence in the report only when its absence is itself a relevant, author-approved finding or problem.

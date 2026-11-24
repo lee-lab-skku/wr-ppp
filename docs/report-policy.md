@@ -46,6 +46,7 @@ PPP and the abstract provide useful perspectives on the week:
 
 Results that readers already heard in earlier reports, meetings, or presentations are not new progress.
 Present such a result only through what changed, such as a new use, interpretation, or comparison.
+Pair each problem with a planned response or direction, even a tentative one, so that the reader can assess how it will be addressed.
 
 ## Evidence and Emphasis
 
