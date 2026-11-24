@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- [docs] report manuscript and presentation work by what it changes in the research argument or its communication, not by page counts, typesetting, or layout.
+
 ## [1.6.0] &mdash; 2026-11-01
 
 ### Changed

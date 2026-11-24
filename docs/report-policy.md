@@ -21,6 +21,7 @@ Do not use only a project name, reporting week, a generic label such as "Weekly 
 
 Keep the report focused on research progress, problems, and plans.
 Share software, tooling, administrative, and workflow updates briefly in project meetings instead.
+Report manuscript and presentation work by what it changes in the research argument or its communication, not by page counts, typesetting, or layout.
 Include a technical detail only when it is necessary to explain a research result, its validity, or a research blocker; describe that research consequence rather than the implementation activity.
 
 Write from the report author's research perspective, including when drafting from organized notes or experiment records.
