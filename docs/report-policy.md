@@ -21,6 +21,7 @@ Do not use only a project name, reporting week, a generic label such as "Weekly 
 
 Keep the report focused on research progress, problems, and plans.
 Share software, tooling, administrative, and workflow updates briefly in project meetings instead.
+Report manuscript and presentation work by what it changes in the research argument or its communication, not by page counts, typesetting, or layout.
 Include a technical detail only when it is necessary to explain a research result, its validity, or a research blocker; describe that research consequence rather than the implementation activity.
 
 Write from the report author's research perspective, including when drafting from organized notes or experiment records.
@@ -42,6 +43,10 @@ PPP and the abstract provide useful perspectives on the week:
 - **Progress:** changes in research results or understanding and their support and significance
 - **Problems:** relevant unresolved research issues and their consequences
 - **Plans:** next research directions and intended learning or outcomes
+
+Results that readers already heard in earlier reports, meetings, or presentations are not new progress.
+Present such a result only through what changed, such as a new use, interpretation, or comparison.
+Pair each problem with a planned response or direction, even a tentative one, so that the reader can assess how it will be addressed.
 
 ## Evidence and Emphasis
 
